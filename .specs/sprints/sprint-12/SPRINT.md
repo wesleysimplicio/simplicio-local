@@ -1,8 +1,8 @@
 ---
 sprint: sprint-12
 status: todo
-start: TBD
-end: TBD
+start: 2026-10-15
+end: 2026-10-28
 owner: us4-core
 ---
 
