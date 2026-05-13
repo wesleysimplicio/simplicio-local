@@ -1,4 +1,4 @@
-model = "gpt-5.4-codex"
+model = "gpt-5.4"
 # Codex CLI config - <PRODUCT_NAME>
 #
 # Lido automaticamente pelo Codex CLI quando rodado nesta pasta de trabalho.
