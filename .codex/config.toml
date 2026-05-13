@@ -1,0 +1,77 @@
+# Codex CLI config - <PRODUCT_NAME>
+#
+# Lido automaticamente pelo Codex CLI quando rodado nesta pasta de trabalho.
+# Documentacao: https://github.com/openai/codex
+#
+# Mantenha em sync com AGENTS.md (instruction file mestre) e
+# .claude/settings.json (config equivalente do Claude Code).
+
+# ---------------------------------------------------------------------------
+# Sandbox
+# ---------------------------------------------------------------------------
+# `workspace-write` permite o agent ler tudo no workdir e escrever apenas
+# dentro dele. Bloqueia escrita em `~/`, `/etc`, etc. Eh o modo mais seguro
+# que ainda permite Codex editar codigo livremente.
+[sandbox]
+mode = "workspace-write"
+
+# ---------------------------------------------------------------------------
+# Approval
+# ---------------------------------------------------------------------------
+# `on-request`: Codex pede confirmacao antes de comandos que podem ser
+# destrutivos (rm, git push --force, network call). Para tudo na lista de
+# `safe_commands` abaixo, roda direto sem prompt.
+[approval]
+policy = "on-request"
+
+# ---------------------------------------------------------------------------
+# History
+# ---------------------------------------------------------------------------
+# Historico de conversa ilimitado. Util pra retomar sessao longa sem perder
+# contexto. Ajuste pra valor finito se quiser limitar tamanho do disco.
+[history]
+max_entries = 0  # 0 = ilimitado
+
+# ---------------------------------------------------------------------------
+# Model
+# ---------------------------------------------------------------------------
+# Modelo padrao usado pra tasks neste repo. Substitua pelo modelo disponivel
+# na sua conta (ex: "gpt-5.3-codex", "o4-mini", etc.).
+[model]
+default = "gpt-5.3-codex"
+
+# ---------------------------------------------------------------------------
+# Features (experimental)
+# ---------------------------------------------------------------------------
+# `goals = true` habilita o comando `/goal <objective>` (Codex CLI >= 0.128.0).
+# OpenAI chama internamente esse loop de "Ralph Loop" — agente persistente
+# que planeja, executa, testa e itera ate o objetivo ser verificavelmente
+# completo (ou o budget de iteracoes/tokens acabar).
+#
+# Uso tipico:
+#   > /goal Fechar task .specs/sprints/sprint-XX/<id>.task.md com lint+unit+e2e verde + AC + evidencia Playwright
+#   > /goal pause   # pausa
+#   > /goal resume  # retoma
+#   > /goal clear   # limpa
+#
+# Refs: https://developers.openai.com/codex/cli/slash-commands
+[features]
+goals = true
+
+# ---------------------------------------------------------------------------
+# Shell
+# ---------------------------------------------------------------------------
+# Comandos sempre permitidos sem prompt de aprovacao. Mantenha curto: so
+# comandos read-only ou que nao fazem efeito fora do workdir.
+[shell]
+safe_commands = [
+  "npm test",
+  "npm run lint",
+  "npm run build",
+  "npx playwright test",
+  "git status",
+  "git diff",
+  "git log",
+  "gh pr view",
+  "gh run list",
+]

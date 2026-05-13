@@ -1,0 +1,72 @@
+# Cross-platform line endings: macOS, Linux, Windows.
+# Default: auto-normalize text files to LF on commit, restore native on checkout.
+* text=auto eol=lf
+
+# Shell scripts MUST be LF (CRLF quebra `#!/usr/bin/env bash` no Linux/macOS).
+*.sh        text eol=lf
+*.bash      text eol=lf
+
+# Windows scripts MUST be CRLF (cmd.exe/PowerShell lidam mal com LF puro).
+*.ps1       text eol=crlf
+*.psm1      text eol=crlf
+*.psd1      text eol=crlf
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+
+# Config / source comum (text auto, sem eol fixo, deixa o normalize rodar).
+*.md        text
+*.json      text
+*.jsonc     text
+*.yml       text
+*.yaml      text
+*.toml      text
+*.xml       text
+*.html      text
+*.css       text
+*.scss      text
+*.js        text
+*.jsx       text
+*.ts        text
+*.tsx       text
+*.mjs       text
+*.cjs       text
+*.py        text
+*.cs        text
+*.csproj    text
+*.sln       text eol=crlf
+*.go        text
+*.rs        text
+*.java      text
+*.kt        text
+*.kts       text
+*.gradle    text
+
+# Binarios: nunca normalizar.
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.pdf       binary
+*.zip       binary
+*.gz        binary
+*.tar       binary
+*.7z        binary
+*.exe       binary
+*.dll       binary
+*.so        binary
+*.dylib     binary
+*.woff      binary
+*.woff2     binary
+*.ttf       binary
+*.eot       binary
+*.mp3       binary
+*.mp4       binary
+*.mov       binary
+
+# Lockfiles: text mas sem diff ruidoso.
+package-lock.json    text -diff
+pnpm-lock.yaml       text -diff
+yarn.lock            text -diff
+poetry.lock          text -diff
+Cargo.lock           text -diff

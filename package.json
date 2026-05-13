@@ -1,0 +1,73 @@
+{
+  "name": "@wesleysimplicio/agentic-starter",
+  "version": "0.1.0",
+  "description": "AI-friendly project scaffold with AGENTS.md ecosystem (Claude Code, Codex, Copilot, Cursor, Aider, Hermes, OpenClaw). Specs as code, atomic tasks, automated Definition of Done, reusable skills, multi-agent ready.",
+  "type": "commonjs",
+  "bin": {
+    "agentic-starter": "bin/cli.js"
+  },
+  "files": [
+    "bin/",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "INIT.md",
+    "_BOOTSTRAP.md",
+    "README.md",
+    ".agents/",
+    ".claude/",
+    ".codex/",
+    ".github/",
+    ".skills/",
+    ".specs/",
+    "bootstrap.sh",
+    "bootstrap.ps1",
+    "playwright.config.ts",
+    "tests/"
+  ],
+  "engines": {
+    "node": ">=16.7.0"
+  },
+  "keywords": [
+    "agentic",
+    "ai-agent",
+    "agents",
+    "agents-md",
+    "claude-code",
+    "codex",
+    "copilot",
+    "cursor",
+    "aider",
+    "hermes",
+    "openclaw",
+    "scaffold",
+    "starter",
+    "bootstrap",
+    "specs",
+    "playwright",
+    "ralph-loop",
+    "tdd",
+    "ddd"
+  ],
+  "author": {
+    "name": "Wesley Simplicio",
+    "email": "wesleybob4@gmail.com",
+    "url": "https://github.com/wesleysimplicio"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/wesleysimplicio/agentic-starter#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wesleysimplicio/agentic-starter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/wesleysimplicio/agentic-starter/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "test:cli": "node bin/cli.js --help",
+    "pack:dry": "npm pack --dry-run",
+    "release": "npm publish --access public"
+  }
+}

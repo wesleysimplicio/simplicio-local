@@ -1,0 +1,63 @@
+# Dependências
+node_modules/
+jspm_packages/
+bower_components/
+
+# Build / dist
+dist/
+build/
+out/
+.next/
+.nuxt/
+.svelte-kit/
+.turbo/
+.vercel/
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Variáveis de ambiente
+.env
+.env.*
+!.env.example
+
+# Test artifacts
+test-results/
+playwright-report/
+playwright/.cache/
+coverage/
+.nyc_output/
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+
+# Locks de cache
+.eslintcache
+.stylelintcache
+.parcel-cache
+
+# Claude / Codex (estado local, não vai pro repo)
+.codex/local
+.codex/history
+.claude/sessions
+.claude/cache
+
+# Tarballs / debug
+*.tgz
+*.tar.gz
+.pnpm-store/
