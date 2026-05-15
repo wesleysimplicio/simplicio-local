@@ -160,6 +160,9 @@ TEST(AdapterGenerationContractTest,
   EXPECT_EQ(result.weightDType, "fp16");
   EXPECT_EQ(result.neonKernelFlavor, "fp16-lane8");
   EXPECT_EQ(result.dequantPath, "none");
+  EXPECT_FALSE(result.kvCacheHit);
+  EXPECT_EQ(result.kvPageCount, 1U);
+  EXPECT_EQ(result.kvHotPages, 1U);
   EXPECT_EQ(result.generatedTokens.size(), 3U);
 }
 
@@ -201,6 +204,101 @@ TEST(AdapterGenerationContractTest,
   ASSERT_EQ(result.promptTokens.size(), 1U);
   EXPECT_EQ(result.promptTokens[0], "hello");
   EXPECT_EQ(result.generatedTokens.size(), 4U);
+  EXPECT_EQ(result.kvPageCount, 1U);
+}
+
+TEST(AdapterGenerationContractTest,
+     RepeatedLlamaGenerateReusesPromptKvWithinSharedRuntimeContext) {
+  const us4::IUS4V6Adapter *adapter = us4::FindAdapterByModel("llama-3.1-8b");
+  ASSERT_NE(adapter, nullptr);
+
+  us4::ModelAsset asset;
+  std::string error;
+  const std::filesystem::path manifestDirectory =
+      RepoRoot() / "tests" / "fixtures" / "models" / "llama-3.1-8b";
+  ASSERT_TRUE(us4::LoadModelAsset(manifestDirectory, asset, &error)) << error;
+
+  us4::RuntimeContext context(MakeProbe());
+  adapter->ConfigureRuntime(context);
+
+  const us4::GenerationResult first = adapter->Generate(
+      {.prompt = "hello llama", .maxTokens = 3, .asset = &asset}, context);
+  const us4::GenerationResult second = adapter->Generate(
+      {.prompt = "hello llama", .maxTokens = 3, .asset = &asset}, context);
+
+  EXPECT_FALSE(first.kvCacheHit);
+  EXPECT_TRUE(second.kvCacheHit);
+  EXPECT_EQ(first.text, second.text);
+  EXPECT_EQ(second.backend, "neon");
+  EXPECT_EQ(second.kvPageCount, 1U);
+  EXPECT_EQ(second.kvHotPages, 1U);
+  EXPECT_EQ(second.prefixCacheEntries, 1U);
+}
+
+TEST(AdapterGenerationContractTest,
+     LlamaScalarBackendKeepsFp16AssetsRunnableWithoutMatmulError) {
+  const us4::IUS4V6Adapter *adapter = us4::FindAdapterByModel("llama-3.1-8b");
+  ASSERT_NE(adapter, nullptr);
+
+  us4::ModelAsset asset;
+  std::string error;
+  const std::filesystem::path manifestDirectory =
+      RepoRoot() / "tests" / "fixtures" / "models" / "llama-3.1-8b";
+  ASSERT_TRUE(us4::LoadModelAsset(manifestDirectory, asset, &error)) << error;
+
+  us4::RuntimeContext context(MakeProbe());
+  adapter->ConfigureRuntime(context);
+
+  const us4::GenerationResult result =
+      adapter->Generate({.prompt = "hello",
+                         .maxTokens = 3,
+                         .asset = &asset,
+                         .requestedBackend = us4::BackendType::kScalarCpu},
+                        context);
+
+  EXPECT_EQ(result.backend, "scalar");
+  EXPECT_EQ(result.backendReason, "requested");
+  EXPECT_FALSE(result.fellBack);
+  EXPECT_EQ(result.weightDType, "fp16");
+  EXPECT_EQ(result.neonKernelFlavor, "none");
+  EXPECT_EQ(result.sharedAllocations, 0U);
+  EXPECT_EQ(result.metalDispatches, 0U);
+  EXPECT_EQ(result.generatedTokens.size(), 3U);
+  EXPECT_EQ(result.generatedTokens[0], "llama");
+  EXPECT_EQ(result.text.find("matmul-error"), std::string::npos);
+  EXPECT_EQ(result.kvPageCount, 1U);
+}
+
+TEST(AdapterGenerationContractTest,
+     LlamaDedicatedPathKeepsKvReuseScopedToSharedRuntimeContext) {
+  const us4::IUS4V6Adapter *adapter = us4::FindAdapterByModel("llama-3.1-8b");
+  ASSERT_NE(adapter, nullptr);
+
+  us4::ModelAsset asset;
+  std::string error;
+  const std::filesystem::path manifestDirectory =
+      RepoRoot() / "tests" / "fixtures" / "models" / "llama-3.1-8b";
+  ASSERT_TRUE(us4::LoadModelAsset(manifestDirectory, asset, &error)) << error;
+
+  us4::RuntimeContext firstContext(MakeProbe());
+  firstContext.SetMode(us4::RuntimeMode::kMicro);
+  const us4::GenerationResult first = adapter->Generate(
+      {.prompt = "hello llama", .maxTokens = 3, .asset = &asset}, firstContext);
+
+  us4::RuntimeContext secondContext(MakeProbe());
+  secondContext.SetMode(us4::RuntimeMode::kMicro);
+  const us4::GenerationResult second = adapter->Generate(
+      {.prompt = "hello llama", .maxTokens = 3, .asset = &asset},
+      secondContext);
+
+  EXPECT_FALSE(first.kvCacheHit);
+  EXPECT_FALSE(first.kvRestoredFromColdStore);
+  EXPECT_EQ(first.kvSummaryRows, 0U);
+  EXPECT_FALSE(second.kvCacheHit);
+  EXPECT_FALSE(second.kvRestoredFromColdStore);
+  EXPECT_EQ(second.kvSummaryRows, 0U);
+  EXPECT_EQ(second.kvPageCount, 1U);
+  EXPECT_EQ(second.kvHotPages, 1U);
 }
 
 TEST(AdapterGenerationContractTest, LowBitAssetsSurfaceNeonDequantIntent) {
