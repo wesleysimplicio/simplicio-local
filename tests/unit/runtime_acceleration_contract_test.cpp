@@ -1,10 +1,16 @@
 #include <gtest/gtest.h>
 
 #include "adapters/llama/llama_adapter.h"
+#include "adapters/gemma/gemma_adapter.h"
+#include "adapters/qwen/qwen_adapter.h"
 #include "core/runtime_context.h"
 #include "memory/unified_allocator.h"
+#include "metal/autorelease_scope.h"
 #include "metal/command_queue.h"
+#include "metal/device_info.h"
+#include "metal/dense_dispatch.h"
 #include "metal/kernel_library.h"
+#include "mlx/dense_plan.h"
 #include "mlx/mlx_bridge.h"
 
 namespace {
@@ -39,8 +45,19 @@ TEST(RuntimeAccelerationContractTest, RuntimeContextExposesMetalQueueAndMlxBridg
 
   EXPECT_TRUE(context.metalQueue().Available());
   EXPECT_EQ(context.metalQueue().Reason(), "metal-queue-ready");
+  EXPECT_EQ(context.metalQueue().Device().queueLabel, "us4.metal.default");
+  EXPECT_TRUE(context.metalQueue().Device().supportsUnifiedMemory);
   EXPECT_TRUE(context.mlxBridge().Available());
   EXPECT_EQ(context.mlxBridge().Reason(), "mlx-bridge-ready");
+}
+
+TEST(RuntimeAccelerationContractTest, MetalDeviceProbeAndAutoreleaseScopeStayCallable) {
+  const us4::MetalDeviceInfo device = us4::ProbeMetalDevice(MakeAppleProbe());
+  const us4::ScopedAutoreleasePool pool;
+
+  EXPECT_TRUE(device.available);
+  EXPECT_EQ(device.maxThreadsPerThreadgroup, 1024U);
+  EXPECT_FALSE(pool.Active());
 }
 
 TEST(RuntimeAccelerationContractTest, MetalQueueRecordsSharedDispatches) {
@@ -67,6 +84,15 @@ TEST(RuntimeAccelerationContractTest, MetalKernelCatalogExposesKernelMetadata) {
   EXPECT_FALSE(catalog[0].source.empty());
 }
 
+TEST(RuntimeAccelerationContractTest, DenseMetalDispatchPlanBuildsThreeStageSequence) {
+  const us4::DenseMetalDispatchPlan plan = us4::BuildDenseMetalDispatchPlan(8, 8, 16);
+
+  ASSERT_EQ(plan.steps.size(), 3U);
+  EXPECT_EQ(plan.steps[0].kernel, us4::MetalKernelKind::kMatmul);
+  EXPECT_EQ(plan.steps[1].kernel, us4::MetalKernelKind::kSoftmax);
+  EXPECT_EQ(plan.steps[2].kernel, us4::MetalKernelKind::kRmsNorm);
+}
+
 TEST(RuntimeAccelerationContractTest, MlxBridgeBuildsAndEvaluatesDensePlan) {
   us4::RuntimeContext context(MakeAppleProbe());
   const auto shared = context.allocator().Allocate(1024, true);
@@ -75,9 +101,22 @@ TEST(RuntimeAccelerationContractTest, MlxBridgeBuildsAndEvaluatesDensePlan) {
   ASSERT_TRUE(context.mlxBridge().LastPlan().has_value());
   EXPECT_EQ(context.mlxBridge().LastPlan()->family, "llama");
   EXPECT_TRUE(context.mlxBridge().LastPlan()->usesUnifiedAllocation);
+  ASSERT_EQ(context.mlxBridge().LastPlan()->operations.size(), 3U);
+  EXPECT_EQ(context.mlxBridge().LastPlan()->operations[0].kind, us4::MlxOperationKind::kEmbeddingLookup);
+  EXPECT_EQ(context.mlxBridge().LastPlan()->operations[1].kind, us4::MlxOperationKind::kAttention);
+  EXPECT_EQ(context.mlxBridge().LastPlan()->operations[2].kind, us4::MlxOperationKind::kProjection);
   EXPECT_TRUE(context.mlxBridge().EvaluateLastPlan());
   EXPECT_TRUE(context.mlxBridge().LastEvaluationSucceeded());
   EXPECT_EQ(context.mlxBridge().Reason(), "mlx-plan-evaluated");
+}
+
+TEST(RuntimeAccelerationContractTest, MlxDensePlanBuildsThreeOperations) {
+  const us4::MlxDensePlan plan = us4::BuildMlxDensePlan(8, 8, 16);
+
+  ASSERT_EQ(plan.operations.size(), 3U);
+  EXPECT_EQ(plan.operations[0].kind, us4::MlxOperationKind::kEmbeddingLookup);
+  EXPECT_EQ(plan.operations[1].kind, us4::MlxOperationKind::kAttention);
+  EXPECT_EQ(plan.operations[2].kind, us4::MlxOperationKind::kProjection);
 }
 
 TEST(RuntimeAccelerationContractTest, LlamaGenerationTouchesMetalScaffoldWhenSelected) {
@@ -90,8 +129,16 @@ TEST(RuntimeAccelerationContractTest, LlamaGenerationTouchesMetalScaffoldWhenSel
 
   EXPECT_EQ(result.backend, "metal");
   EXPECT_EQ(result.sharedAllocations, 1U);
-  EXPECT_EQ(result.metalDispatches, 1U);
+  EXPECT_EQ(result.metalDispatches, 3U);
   EXPECT_FALSE(result.mlxPlanBuilt);
-  EXPECT_EQ(context.metalQueue().DispatchCount(), 1U);
+  EXPECT_EQ(context.metalQueue().DispatchCount(), 3U);
   EXPECT_EQ(context.allocator().SharedAllocationCount(), 1U);
+}
+
+TEST(RuntimeAccelerationContractTest, QwenAndGemmaDeclareMetalSupport) {
+  const us4::QwenAdapter qwen;
+  const us4::GemmaAdapter gemma;
+
+  EXPECT_TRUE(qwen.SupportsMetalBackend());
+  EXPECT_TRUE(gemma.SupportsMetalBackend());
 }

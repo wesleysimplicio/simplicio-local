@@ -7,6 +7,7 @@ namespace us4 {
 class QwenAdapter final : public DenseAdapterBase {
  public:
   QwenAdapter();
+  bool SupportsMetalBackend() const override;
 
  protected:
   std::uint32_t Seed() const override;

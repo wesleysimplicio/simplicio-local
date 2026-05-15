@@ -17,10 +17,16 @@ bool MlxBridge::BuildDensePlan(const std::string_view family,
     return false;
   }
 
+  const MlxDensePlan densePlan = BuildMlxDensePlan(tokenCount, 8U, 16U);
+  if (densePlan.operations.empty()) {
+    return false;
+  }
+
   lastPlan_ = MlxGraphPlan{
       .family = std::string(family),
       .tokenCount = tokenCount,
       .usesUnifiedAllocation = allocation != nullptr && allocation->gpuVisible,
+      .operations = densePlan.operations,
   };
   lastEvaluationSucceeded_ = false;
   reason_ = "mlx-plan-built";

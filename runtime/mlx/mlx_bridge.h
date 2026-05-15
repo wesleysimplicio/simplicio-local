@@ -5,9 +5,11 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include "core/hardware_probe.h"
 #include "memory/unified_allocator.h"
+#include "mlx/dense_plan.h"
 
 namespace us4 {
 
@@ -15,6 +17,7 @@ struct MlxGraphPlan {
   std::string family;
   std::size_t tokenCount = 0;
   bool usesUnifiedAllocation = false;
+  std::vector<MlxDenseOperation> operations;
 };
 
 class MlxBridge {

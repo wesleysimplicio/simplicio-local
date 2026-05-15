@@ -115,8 +115,11 @@ void PrintRunText(const us4::GenerationResult& result) {
       << "fallback: " << (result.fellBack ? "true" : "false") << "\n"
       << "shared_allocations: " << result.sharedAllocations << "\n"
       << "metal_dispatches: " << result.metalDispatches << "\n"
+      << "mlx_operation_count: " << result.mlxOperationCount << "\n"
       << "mlx_plan_built: " << (result.mlxPlanBuilt ? "true" : "false") << "\n"
       << "mlx_evaluated: " << (result.mlxEvaluated ? "true" : "false") << "\n"
+      << "metal_device: " << result.metalDevice << "\n"
+      << "metal_queue_label: " << result.metalQueueLabel << "\n"
       << "prompt_tokens: " << result.promptTokens.size() << "\n"
       << "generated_tokens: " << result.generatedTokens.size() << "\n"
       << "text: " << result.text << "\n";
@@ -152,32 +155,41 @@ void PrintRunJson(const us4::GenerationResult& result) {
       << "\"fallback\":" << (result.fellBack ? "true" : "false") << ","
       << "\"shared_allocations\":" << result.sharedAllocations << ","
       << "\"metal_dispatches\":" << result.metalDispatches << ","
+      << "\"mlx_operation_count\":" << result.mlxOperationCount << ","
       << "\"mlx_plan_built\":" << (result.mlxPlanBuilt ? "true" : "false") << ","
       << "\"mlx_evaluated\":" << (result.mlxEvaluated ? "true" : "false") << ","
+      << "\"metal_device\":\"" << EscapeJson(result.metalDevice) << "\","
+      << "\"metal_queue_label\":\"" << EscapeJson(result.metalQueueLabel) << "\","
       << "\"prompt_tokens\":[" << promptTokens.str() << "],"
       << "\"generated_tokens\":[" << generatedTokens.str() << "],"
       << "\"text\":\"" << EscapeJson(result.text) << "\""
       << "}\n";
 }
 
-void PrintAdapterList() {
+void PrintAdapterList(const us4::HardwareProbeResult& probe) {
   std::cout << "Available models:\n";
   for (const us4::IUS4V6Adapter* adapter : us4::ListAdapters()) {
+    const us4::BackendSelection preferred =
+        us4::SelectBackend(probe, probe.recommendedMode, *adapter);
     std::cout
         << "  - " << adapter->ModelName()
         << " [" << adapter->Family() << "]"
         << " arch=" << ArchitectureToString(adapter->Architecture())
         << " min_mode=" << us4::ToString(adapter->MinimumMode())
         << " mlx=" << (adapter->SupportsMlxBackend() ? "true" : "false")
+        << " metal=" << (adapter->SupportsMetalBackend() ? "true" : "false")
         << " moe=" << (adapter->SupportsMoe() ? "true" : "false")
+        << " preferred_backend=" << us4::ToString(preferred.selected)
         << "\n";
   }
 }
 
-void PrintAdapterListJson() {
+void PrintAdapterListJson(const us4::HardwareProbeResult& probe) {
   std::ostringstream models;
   bool first = true;
   for (const us4::IUS4V6Adapter* adapter : us4::ListAdapters()) {
+    const us4::BackendSelection preferred =
+        us4::SelectBackend(probe, probe.recommendedMode, *adapter);
     if (!first) {
       models << ",";
     }
@@ -189,7 +201,10 @@ void PrintAdapterListJson() {
            << "\"supports_moe\":" << (adapter->SupportsMoe() ? "true" : "false") << ","
            << "\"supports_mlx\":" << (adapter->SupportsMlxBackend() ? "true" : "false") << ","
            << "\"supports_metal\":" << (adapter->SupportsMetalBackend() ? "true" : "false") << ","
-            << "\"supports_prompt_run\":" << (adapter->SupportsPromptRun() ? "true" : "false")
+           << "\"supports_prompt_run\":" << (adapter->SupportsPromptRun() ? "true" : "false") << ","
+           << "\"preferred_backend\":\"" << EscapeJson(us4::ToString(preferred.selected)) << "\","
+           << "\"preferred_backend_reason\":\"" << EscapeJson(preferred.reason) << "\","
+           << "\"preferred_mode\":\"" << EscapeJson(us4::ToString(probe.recommendedMode)) << "\""
             << "}";
     first = false;
   }
@@ -308,7 +323,7 @@ int main(int argc, char** argv) {
 
     if (!modelName.has_value() && (!loadedAsset.has_value() || loadedAsset->modelName.empty())) {
       std::cerr << "--model is required for run\n";
-      PrintAdapterList();
+      PrintAdapterList(probe);
       return 1;
     }
 
@@ -317,7 +332,7 @@ int main(int argc, char** argv) {
     const us4::IUS4V6Adapter* adapter = us4::FindAdapterByModel(resolvedModelName);
     if (adapter == nullptr) {
       std::cerr << "Unknown model: " << resolvedModelName << "\n";
-      PrintAdapterList();
+      PrintAdapterList(probe);
       return 1;
     }
 
@@ -346,9 +361,9 @@ int main(int argc, char** argv) {
 
   if (listModels) {
     if (outputJson) {
-      PrintAdapterListJson();
+      PrintAdapterListJson(probe);
     } else {
-      PrintAdapterList();
+      PrintAdapterList(probe);
     }
     return 0;
   }

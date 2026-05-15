@@ -7,6 +7,7 @@ namespace us4 {
 class GemmaAdapter final : public DenseAdapterBase {
  public:
   GemmaAdapter();
+  bool SupportsMetalBackend() const override;
 
  protected:
   std::uint32_t Seed() const override;

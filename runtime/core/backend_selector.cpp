@@ -30,13 +30,16 @@ bool SupportsBackend(const HardwareProbeResult& hardware,
     case BackendType::kScalarCpu:
       return true;
     case BackendType::kNeon:
-      return hardware.hasNeon && mode != RuntimeMode::kFull;
+      return hardware.hasNeon &&
+             (mode == RuntimeMode::kDegraded || mode == RuntimeMode::kUltraLow || mode == RuntimeMode::kMicro ||
+              mode == RuntimeMode::kMicroPlus || mode == RuntimeMode::kNano);
     case BackendType::kMlx:
       return hardware.hasMlx && adapter.SupportsMlxBackend() &&
-             mode != RuntimeMode::kMicro && mode != RuntimeMode::kMicroPlus && mode != RuntimeMode::kNano;
+             (mode == RuntimeMode::kFull || mode == RuntimeMode::kBalancedPlus || mode == RuntimeMode::kDegraded ||
+              mode == RuntimeMode::kUltraLow);
     case BackendType::kMetal:
       return hardware.hasMetal && adapter.SupportsMetalBackend() &&
-             mode != RuntimeMode::kMicro && mode != RuntimeMode::kMicroPlus && mode != RuntimeMode::kNano;
+             (mode == RuntimeMode::kFull || mode == RuntimeMode::kBalancedPlus);
     case BackendType::kAne:
       return hardware.hasAne && adapter.SupportsAneBackend() && mode == RuntimeMode::kFull;
   }
@@ -56,6 +59,22 @@ BackendType PreferredBackend(const HardwareProbeResult& hardware,
     return BackendType::kNeon;
   }
   return BackendType::kScalarCpu;
+}
+
+std::string_view AutoReasonFor(const BackendType backend) {
+  switch (backend) {
+    case BackendType::kMetal:
+      return "auto-metal";
+    case BackendType::kMlx:
+      return "auto-mlx";
+    case BackendType::kNeon:
+      return "auto-neon";
+    case BackendType::kScalarCpu:
+      return "auto-scalar";
+    case BackendType::kAne:
+      return "auto-ane";
+  }
+  return "auto-scalar";
 }
 
 }  // namespace
@@ -114,7 +133,7 @@ BackendSelection SelectBackend(const HardwareProbeResult& hardware,
   }
 
   selection.selected = PreferredBackend(hardware, mode, adapter);
-  selection.reason = "auto";
+  selection.reason = AutoReasonFor(selection.selected);
   return selection;
 }
 

@@ -10,6 +10,8 @@ What already exists:
   kernel set
 - `kernels/{matmul,softmax,rmsnorm}.metal` already exist as versioned source
   files inside the repo
+- `dense_dispatch.{h,cpp}` materializes the current dense dispatch sequence
+  (`matmul -> softmax -> rmsnorm`)
 - queue availability is driven by `HardwareProbeResult::hasMetal`
 - shared allocations from `UnifiedAllocator` can be attached to dispatch
   records

@@ -39,7 +39,36 @@ TEST(BackendSelectorContractTest, AutoSelectionPrefersMetalBeforeOtherBackends) 
 
   EXPECT_EQ(selection.selected, us4::BackendType::kMetal);
   EXPECT_FALSE(selection.fellBack);
-  EXPECT_EQ(selection.reason, "auto");
+  EXPECT_EQ(selection.reason, "auto-metal");
+}
+
+TEST(BackendSelectorContractTest, AutoSelectionPrefersMlxWhenMetalModeIsDisallowed) {
+  us4::HardwareProbeResult probe = MakeProbe();
+  probe.hasMetal = true;
+  probe.hasMlx = true;
+  probe.hasNeon = true;
+
+  const us4::LlamaAdapter adapter;
+  const us4::BackendSelection selection =
+      us4::SelectBackend(probe, us4::RuntimeMode::kDegraded, adapter);
+
+  EXPECT_EQ(selection.selected, us4::BackendType::kMlx);
+  EXPECT_FALSE(selection.fellBack);
+  EXPECT_EQ(selection.reason, "auto-mlx");
+}
+
+TEST(BackendSelectorContractTest, AutoSelectionFallsToNeonForLowModesWithoutMlx) {
+  us4::HardwareProbeResult probe = MakeProbe();
+  probe.hasMetal = true;
+  probe.hasNeon = true;
+
+  const us4::QwenAdapter adapter;
+  const us4::BackendSelection selection =
+      us4::SelectBackend(probe, us4::RuntimeMode::kMicroPlus, adapter);
+
+  EXPECT_EQ(selection.selected, us4::BackendType::kNeon);
+  EXPECT_FALSE(selection.fellBack);
+  EXPECT_EQ(selection.reason, "auto-neon");
 }
 
 TEST(BackendSelectorContractTest, RequestedUnavailableBackendFallsBackToPreferredBackend) {

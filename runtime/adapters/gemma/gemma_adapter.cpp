@@ -4,6 +4,8 @@ namespace us4 {
 
 GemmaAdapter::GemmaAdapter() : DenseAdapterBase("gemma", "gemma-2b-it") {}
 
+bool GemmaAdapter::SupportsMetalBackend() const { return true; }
+
 std::uint32_t GemmaAdapter::Seed() const { return 22073U; }
 
 std::vector<std::string> GemmaAdapter::Vocabulary() const {

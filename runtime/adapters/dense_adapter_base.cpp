@@ -12,6 +12,7 @@
 #include "core/tensor.h"
 #include "cpu/scalar_attention.h"
 #include "cpu/scalar_matmul.h"
+#include "metal/dense_dispatch.h"
 
 namespace us4 {
 
@@ -62,10 +63,10 @@ void RecordBackendScaffold(const IUS4V6Adapter& adapter,
 
   switch (backendSelection.selected) {
     case BackendType::kMetal:
-      (void)mutableContext.metalQueue().Dispatch(MetalKernelKind::kMatmul,
-                                                 std::max<std::size_t>(request.maxTokens, 1U),
-                                                 kHiddenSize,
-                                                 allocation);
+      (void)ExecuteDenseMetalDispatchPlan(
+          mutableContext.metalQueue(),
+          BuildDenseMetalDispatchPlan(std::max<std::size_t>(request.maxTokens, 1U), kHiddenSize, 16U),
+          allocation);
       break;
     case BackendType::kMlx:
       if (mutableContext.mlxBridge().BuildDensePlan(adapter.Family(), std::max<std::size_t>(request.maxTokens, 1U),
@@ -233,8 +234,12 @@ GenerationResult DenseAdapterBase::Generate(const GenerationRequest& request, co
   result.text = JoinTokens(generatedTokens);
   result.sharedAllocations = context.allocator().SharedAllocationCount();
   result.metalDispatches = context.metalQueue().DispatchCount();
+  result.mlxOperationCount =
+      context.mlxBridge().LastPlan().has_value() ? context.mlxBridge().LastPlan()->operations.size() : 0U;
   result.mlxPlanBuilt = context.mlxBridge().LastPlan().has_value();
   result.mlxEvaluated = context.mlxBridge().LastEvaluationSucceeded();
+  result.metalDevice = context.metalQueue().Device().deviceName;
+  result.metalQueueLabel = context.metalQueue().Device().queueLabel;
   result.mode = context.mode();
   result.fellBack = backendSelection.fellBack;
   return result;

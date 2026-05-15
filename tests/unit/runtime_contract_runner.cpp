@@ -15,8 +15,12 @@
 #include "kv/prefix_cache.h"
 #include "kv/summarizer.h"
 #include "memory/unified_allocator.h"
+#include "metal/autorelease_scope.h"
 #include "metal/command_queue.h"
+#include "metal/device_info.h"
+#include "metal/dense_dispatch.h"
 #include "metal/kernel_library.h"
+#include "mlx/dense_plan.h"
 #include "mlx/mlx_bridge.h"
 #include "moe/expert_pager.h"
 #include "moe/router.h"
@@ -38,6 +42,7 @@ us4::HardwareProbeResult MakeProbe() {
   probe.architecture = "arm64";
   probe.chip = "apple-m";
   probe.unifiedMemoryGiB = 24;
+  probe.isAppleSilicon = true;
   probe.hasNeon = true;
   probe.recommendedMode = us4::RuntimeMode::kDegraded;
   return probe;
@@ -96,6 +101,12 @@ int main() {
     const us4::BackendSelection autoSelection =
         us4::SelectBackend(probe, us4::RuntimeMode::kBalancedPlus, llama);
     ok &= Expect(autoSelection.selected == us4::BackendType::kMetal, "auto backend should prefer metal");
+    ok &= Expect(autoSelection.reason == "auto-metal", "auto metal reason should stay explicit");
+
+    const us4::BackendSelection degradedSelection =
+        us4::SelectBackend(probe, us4::RuntimeMode::kDegraded, llama);
+    ok &= Expect(degradedSelection.selected == us4::BackendType::kMlx, "degraded should prefer mlx before neon");
+    ok &= Expect(degradedSelection.reason == "auto-mlx", "auto mlx reason should stay explicit");
 
     const us4::QwenAdapter qwen;
     const us4::BackendSelection fallbackSelection =
@@ -126,6 +137,10 @@ int main() {
     probe.hasMlx = true;
     us4::RuntimeContext context(probe);
     ok &= Expect(context.metalQueue().Available(), "metal queue should be available on metal probe");
+    ok &= Expect(context.metalQueue().Device().queueLabel == "us4.metal.default",
+                 "metal queue should expose queue label");
+    ok &= Expect(context.metalQueue().Device().supportsUnifiedMemory,
+                 "metal queue should expose unified memory support");
     ok &= Expect(context.mlxBridge().Available(), "mlx bridge should be available on mlx probe");
     ok &= Expect(context.metalQueue().Dispatch(us4::MetalKernelKind::kSoftmax, 2, 64, shared),
                  "metal queue should record dispatch contract");
@@ -134,11 +149,19 @@ int main() {
                  "metal queue should surface dispatch entry point");
     ok &= Expect(context.metalQueue().Dispatches().front().relativePath == "runtime/metal/kernels/softmax.metal",
                  "metal queue should surface dispatch kernel path");
+    const us4::DenseMetalDispatchPlan densePlan = us4::BuildDenseMetalDispatchPlan(8, 8, 16);
+    ok &= Expect(densePlan.steps.size() == 3U, "dense metal dispatch plan should keep 3 stages");
+    const us4::MlxDensePlan mlxPlan = us4::BuildMlxDensePlan(8, 8, 16);
+    ok &= Expect(mlxPlan.operations.size() == 3U, "mlx dense plan should keep 3 operations");
     ok &= Expect(context.mlxBridge().BuildDensePlan("llama", 32, shared), "mlx bridge should build dense plan");
     ok &= Expect(context.mlxBridge().EvaluateLastPlan(), "mlx bridge should evaluate last plan");
+    ok &= Expect(context.mlxBridge().LastPlan().has_value() && context.mlxBridge().LastPlan()->operations.size() == 3U,
+                 "mlx bridge should surface 3 recorded operations");
     ok &= Expect(us4::GetMetalKernelCatalog().size() == 3U, "metal kernel catalog should keep 3 kernels");
     ok &= Expect(us4::FindMetalKernel(us4::MetalKernelKind::kRmsNorm) != nullptr,
                  "metal kernel catalog should resolve rmsnorm");
+    const us4::ScopedAutoreleasePool pool;
+    ok &= Expect(!pool.Active(), "cross-platform autorelease scope should stay callable");
   }
 
   {
@@ -201,21 +224,32 @@ int main() {
     ok &= Expect(result.fellBack, "generation should mark backend fallback");
     ok &= Expect(result.sharedAllocations == 0U, "scalar fallback should not record shared allocations");
     ok &= Expect(result.metalDispatches == 0U, "scalar fallback should not record metal dispatches");
+    ok &= Expect(result.mlxOperationCount == 0U, "scalar fallback should not record mlx operations");
+
+    const us4::GenerationResult autoResult =
+        qwen->Generate({.prompt = "Hi, US4!", .maxTokens = 4, .asset = &asset}, context);
+    ok &= Expect(autoResult.backendReason == "auto-neon" || autoResult.backendReason == "auto-scalar",
+                 "auto generation should expose explicit backend reason");
 
     us4::HardwareProbeResult appleProbe = MakeProbe();
     appleProbe.hasMetal = true;
     appleProbe.hasMlx = true;
+    appleProbe.unifiedMemoryGiB = 96;
+    appleProbe.recommendedMode = us4::RuntimeMode::kBalancedPlus;
     us4::RuntimeContext acceleratedContext(appleProbe);
     const us4::GenerationResult llamaResult =
         llama->Generate({.prompt = "metal path", .maxTokens = 4, .requestedBackend = us4::BackendType::kMetal},
                         acceleratedContext);
     ok &= Expect(llamaResult.backend == "metal", "llama should keep metal backend when available");
-    ok &= Expect(acceleratedContext.metalQueue().DispatchCount() == 1U,
+    ok &= Expect(acceleratedContext.metalQueue().DispatchCount() == 3U,
                  "llama generation should touch the metal scaffold");
     ok &= Expect(acceleratedContext.allocator().SharedAllocationCount() == 1U,
                  "metal scaffold should allocate unified-shared memory");
     ok &= Expect(llamaResult.sharedAllocations == 1U, "result should surface shared allocation count");
-    ok &= Expect(llamaResult.metalDispatches == 1U, "result should surface metal dispatch count");
+    ok &= Expect(llamaResult.metalDispatches == 3U, "result should surface metal dispatch count");
+    ok &= Expect(llamaResult.mlxOperationCount == 0U, "metal path should not report mlx operations");
+    ok &= Expect(llamaResult.metalQueueLabel == "us4.metal.default", "result should surface metal queue label");
+    ok &= Expect(qwen->SupportsMetalBackend(), "qwen should declare metal support");
   }
 
   return ok ? EXIT_SUCCESS : EXIT_FAILURE;

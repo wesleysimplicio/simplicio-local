@@ -1,5 +1,6 @@
 #include "metal/command_queue.h"
 
+#include "metal/autorelease_scope.h"
 #include "metal/kernel_library.h"
 
 namespace us4 {
@@ -18,11 +19,14 @@ std::string_view ToString(const MetalKernelKind kernel) {
 
 MetalCommandQueue::MetalCommandQueue(const HardwareProbeResult& hardware)
     : available_(hardware.hasMetal),
+      device_(ProbeMetalDevice(hardware)),
       reason_(hardware.hasMetal ? "metal-queue-ready" : "metal-unavailable") {}
 
 bool MetalCommandQueue::Available() const { return available_; }
 
 std::string_view MetalCommandQueue::Reason() const { return reason_; }
+
+const MetalDeviceInfo& MetalCommandQueue::Device() const { return device_; }
 
 bool MetalCommandQueue::Dispatch(const MetalKernelKind kernel,
                                  const std::size_t threadgroups,
@@ -37,6 +41,9 @@ bool MetalCommandQueue::Dispatch(const MetalKernelKind kernel,
     reason_ = "metal-kernel-missing";
     return false;
   }
+
+  ScopedAutoreleasePool pool;
+  (void)pool;
 
   dispatches_.push_back(MetalDispatchRecord{
       .kernel = kernel,

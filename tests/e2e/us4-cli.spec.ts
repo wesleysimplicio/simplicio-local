@@ -164,8 +164,11 @@ test.describe('Native CLI sprint 02 contract', () => {
       fallback: true,
       shared_allocations: 0,
       metal_dispatches: 0,
+      mlx_operation_count: 0,
       mlx_plan_built: false,
       mlx_evaluated: false,
+      metal_device: expect.any(String),
+      metal_queue_label: expect.any(String),
       asset_path: expect.any(String),
       prompt_tokens: ['hi'],
       generated_tokens: expect.any(Array),
@@ -206,7 +209,11 @@ test.describe('Native CLI sprint 02 contract', () => {
       minimum_mode: 'NANO',
       supports_moe: false,
       supports_mlx: false,
+      supports_metal: true,
       supports_prompt_run: true,
+      preferred_backend: expect.any(String),
+      preferred_backend_reason: expect.any(String),
+      preferred_mode: expect.any(String),
     });
     expect(llama).toMatchObject({
       family: 'llama',
@@ -214,6 +221,7 @@ test.describe('Native CLI sprint 02 contract', () => {
       architecture: 'dense',
       supports_mlx: true,
       supports_metal: true,
+      preferred_backend: expect.any(String),
     });
     expect(deepseek).toMatchObject({
       family: 'deepseek',
@@ -222,6 +230,7 @@ test.describe('Native CLI sprint 02 contract', () => {
       supports_moe: true,
       supports_mlx: true,
       supports_metal: true,
+      preferred_backend: expect.any(String),
     });
   });
 
@@ -252,6 +261,7 @@ test.describe('Native CLI sprint 02 contract', () => {
       fallback: false,
       shared_allocations: 0,
       metal_dispatches: 0,
+      mlx_operation_count: 0,
     });
   });
 
@@ -277,10 +287,11 @@ test.describe('Native CLI sprint 02 contract', () => {
     expect(stderr.trim()).toBe('');
     expect(JSON.parse(stdout)).toMatchObject({
       model: 'qwen-0.5b-fixture',
-      backend_reason: 'auto',
+      backend_reason: expect.stringMatching(/^auto-/),
       fallback: false,
       shared_allocations: 0,
       metal_dispatches: 0,
+      mlx_operation_count: 0,
     });
   });
 
@@ -365,6 +376,7 @@ test.describe('Native CLI sprint 02 contract', () => {
       backend: 'scalar',
       shared_allocations: 0,
       metal_dispatches: 0,
+      mlx_operation_count: 0,
       generated_tokens: expect.any(Array),
     });
   });

@@ -4,6 +4,8 @@ namespace us4 {
 
 QwenAdapter::QwenAdapter() : DenseAdapterBase("qwen", "qwen-0.5b") {}
 
+bool QwenAdapter::SupportsMetalBackend() const { return true; }
+
 std::uint32_t QwenAdapter::Seed() const { return 41051U; }
 
 std::vector<std::string> QwenAdapter::Vocabulary() const {

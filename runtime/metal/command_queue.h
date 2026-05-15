@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "core/hardware_probe.h"
+#include "metal/device_info.h"
 #include "memory/unified_allocator.h"
 
 namespace us4 {
@@ -35,6 +36,7 @@ class MetalCommandQueue {
 
   bool Available() const;
   std::string_view Reason() const;
+  const MetalDeviceInfo& Device() const;
   bool Dispatch(MetalKernelKind kernel,
                 std::size_t threadgroups,
                 std::size_t threadsPerGroup,
@@ -46,6 +48,7 @@ class MetalCommandQueue {
  private:
   bool available_ = false;
   std::string reason_ = "metal-unavailable";
+  MetalDeviceInfo device_;
   std::vector<MetalDispatchRecord> dispatches_;
 };
 

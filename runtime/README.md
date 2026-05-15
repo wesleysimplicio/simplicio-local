@@ -40,6 +40,12 @@ ahead of us.
 - backend selection and fallback are explicit in CLI output
 - the backend contract already accepts `scalar`, `neon`, `mlx`, `metal`, and
   `ane`, with automatic fallback when a requested path is unavailable
+- auto selection now emits explicit reasons such as `auto-metal`, `auto-mlx`,
+  `auto-neon`, and `auto-scalar`, which makes mode-driven routing easier to
+  inspect in CLI and tests
+- `run --json` now also surfaces scaffold observability such as
+  `shared_allocations`, `metal_dispatches`, `mlx_operation_count`,
+  `metal_device`, and `metal_queue_label`
 - `RuntimeContext` now exposes acceleration services for Metal and MLX even
   before the real Apple-only backend code lands
 - the native registry already exposes dense, ternary, llama, and MoE-family

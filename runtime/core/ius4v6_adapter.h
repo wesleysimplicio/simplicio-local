@@ -39,8 +39,11 @@ struct GenerationResult {
   std::string text;
   std::size_t sharedAllocations = 0;
   std::size_t metalDispatches = 0;
+  std::size_t mlxOperationCount = 0;
   bool mlxPlanBuilt = false;
   bool mlxEvaluated = false;
+  std::string metalDevice;
+  std::string metalQueueLabel;
   RuntimeMode mode = RuntimeMode::kNano;
   bool fellBack = false;
 };
