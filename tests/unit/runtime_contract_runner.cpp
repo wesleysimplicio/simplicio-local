@@ -1,3 +1,4 @@
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
@@ -14,7 +15,9 @@
 #include "adapters/qwen/qwen_adapter.h"
 #include "core/backend_selector.h"
 #include "core/model_asset.h"
+#include "core/rope.h"
 #include "core/runtime_context.h"
+#include "core/tensor.h"
 #include "cpu/scalar_attention.h"
 #include "cpu/scalar_matmul.h"
 #include "kv/kv_pager.h"
@@ -101,6 +104,17 @@ bool FillHalfReferenceTensor(us4::Tensor &tensor,
     data[index] = QuantizeHalfValue(values[index], bfloat16);
   }
   return true;
+}
+
+void FillFloatTensor(us4::Tensor &tensor, const std::vector<float> &values) {
+  float *data = tensor.MutableDataAsFloat32();
+  if (data == nullptr || values.size() != tensor.ElementCount()) {
+    return;
+  }
+
+  for (std::size_t index = 0; index < values.size(); ++index) {
+    data[index] = values[index];
+  }
 }
 
 } // namespace
@@ -310,6 +324,63 @@ int main() {
           !pool.Active(),
           "noop autorelease scope should remain inactive off apple hosts");
     }
+  }
+
+  {
+    us4::Tensor linear({1, 4}, us4::DType::kFloat32);
+    us4::Tensor dynamic({1, 4}, us4::DType::kFloat32);
+    us4::Tensor yarn({1, 4}, us4::DType::kFloat32);
+    float *linearData = linear.MutableDataAsFloat32();
+    float *dynamicData = dynamic.MutableDataAsFloat32();
+    float *yarnData = yarn.MutableDataAsFloat32();
+    linearData[0] = dynamicData[0] = yarnData[0] = 1.0F;
+    linearData[1] = dynamicData[1] = yarnData[1] = 0.0F;
+    linearData[2] = dynamicData[2] = yarnData[2] = 0.5F;
+    linearData[3] = dynamicData[3] = yarnData[3] = 0.25F;
+
+    us4::ApplyRopeInPlace(linear, 256U, 10000.0F, us4::RopeScalingType::kLinear,
+                          4.0F);
+    us4::ApplyRopeInPlace(dynamic, 256U, 10000.0F,
+                          us4::RopeScalingType::kDynamic, 4.0F);
+    us4::ApplyRopeInPlace(yarn, 256U, 10000.0F, us4::RopeScalingType::kYaRN,
+                          4.0F);
+
+    const float linearNorm0 = std::sqrt(linearData[0] * linearData[0] +
+                                        linearData[1] * linearData[1]);
+    const float dynamicNorm0 = std::sqrt(dynamicData[0] * dynamicData[0] +
+                                         dynamicData[1] * dynamicData[1]);
+    const float yarnNorm2 =
+        std::sqrt(yarnData[2] * yarnData[2] + yarnData[3] * yarnData[3]);
+    ok &= Expect(std::abs(linearNorm0 - 1.0F) <= 1e-5F,
+                 "rope linear scaling should preserve first pair norm");
+    ok &= Expect(std::abs(dynamicNorm0 - 1.0F) <= 1e-5F,
+                 "rope dynamic scaling should preserve first pair norm");
+    ok &= Expect(std::abs(yarnNorm2 - std::sqrt(0.3125F)) <= 1e-5F,
+                 "rope yarn scaling should preserve second pair norm");
+    ok &= Expect(std::abs(linearData[0] - dynamicData[0]) > 1e-5F,
+                 "rope dynamic scaling should differ from linear output");
+    ok &= Expect(std::abs(dynamicData[0] - yarnData[0]) > 1e-5F,
+                 "rope yarn scaling should differ from dynamic output");
+
+    us4::Tensor clamped({1, 4}, us4::DType::kFloat32);
+    float *clampedData = clamped.MutableDataAsFloat32();
+    clampedData[0] = 1.0F;
+    clampedData[1] = 0.0F;
+    clampedData[2] = 0.5F;
+    clampedData[3] = 0.25F;
+    us4::ApplyRopeInPlace(clamped, 8U, 0.25F, us4::RopeScalingType::kLinear,
+                          -2.0F);
+    us4::Tensor defaults({1, 4}, us4::DType::kFloat32);
+    float *defaultData = defaults.MutableDataAsFloat32();
+    defaultData[0] = 1.0F;
+    defaultData[1] = 0.0F;
+    defaultData[2] = 0.5F;
+    defaultData[3] = 0.25F;
+    us4::ApplyRopeInPlace(defaults, 8U, 10000.0F, us4::RopeScalingType::kLinear,
+                          1.0F);
+    ok &= Expect(std::abs(clampedData[0] - defaultData[0]) <= 1e-5F &&
+                     std::abs(clampedData[2] - defaultData[2]) <= 1e-5F,
+                 "rope should clamp invalid theta and scale to safe defaults");
   }
 
   {
