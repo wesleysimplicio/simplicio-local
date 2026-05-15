@@ -13,6 +13,7 @@
 #include "core/model_asset.h"
 #include "core/runtime_context.h"
 #include "core/runtime_mode.h"
+#include "metal/device_info.h"
 #include "us4/version.h"
 
 namespace {
@@ -71,6 +72,7 @@ void PrintHelp() {
 }
 
 void PrintProbeText(const us4::HardwareProbeResult& probe) {
+  const us4::MetalDeviceInfo metalDevice = us4::ProbeMetalDevice(probe);
   std::cout
       << "US4 V6 Apple Edition\n"
       << "version: " << us4::kUs4Version << "\n"
@@ -83,10 +85,15 @@ void PrintProbeText(const us4::HardwareProbeResult& probe) {
       << "has_metal: " << (probe.hasMetal ? "true" : "false") << "\n"
       << "has_neon: " << (probe.hasNeon ? "true" : "false") << "\n"
       << "has_ane: " << (probe.hasAne ? "true" : "false") << "\n"
+      << "metal_device: " << metalDevice.deviceName << "\n"
+      << "metal_queue_label: " << metalDevice.queueLabel << "\n"
+      << "metal_threads_per_group: " << metalDevice.maxThreadsPerThreadgroup << "\n"
+      << "supports_unified_memory: " << (metalDevice.supportsUnifiedMemory ? "true" : "false") << "\n"
       << "recommended_mode: " << us4::ToString(probe.recommendedMode) << "\n";
 }
 
 void PrintProbeJson(const us4::HardwareProbeResult& probe) {
+  const us4::MetalDeviceInfo metalDevice = us4::ProbeMetalDevice(probe);
   std::cout
       << "{"
       << "\"version\":\"" << EscapeJson(us4::kUs4Version) << "\","
@@ -99,6 +106,10 @@ void PrintProbeJson(const us4::HardwareProbeResult& probe) {
       << "\"has_metal\":" << (probe.hasMetal ? "true" : "false") << ","
       << "\"has_neon\":" << (probe.hasNeon ? "true" : "false") << ","
       << "\"has_ane\":" << (probe.hasAne ? "true" : "false") << ","
+      << "\"metal_device\":\"" << EscapeJson(metalDevice.deviceName) << "\","
+      << "\"metal_queue_label\":\"" << EscapeJson(metalDevice.queueLabel) << "\","
+      << "\"metal_threads_per_group\":" << metalDevice.maxThreadsPerThreadgroup << ","
+      << "\"supports_unified_memory\":" << (metalDevice.supportsUnifiedMemory ? "true" : "false") << ","
       << "\"recommended_mode\":\"" << us4::ToString(probe.recommendedMode) << "\""
       << "}\n";
 }

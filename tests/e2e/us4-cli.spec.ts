@@ -136,6 +136,40 @@ test.describe('Native CLI sprint 02 contract', () => {
 
   test.skip(!nativeCliPath, 'native us4-cli is not available in this host');
 
+  test('probe command exposes native acceleration profile', async ({}, testInfo) => {
+    const { stdout, stderr } = await execFileAsync(nativeCliPath!, ['--probe', '--json'], {
+      cwd: repoRoot,
+      env: {
+        ...process.env,
+        NO_COLOR: '1',
+      },
+    });
+
+    await testInfo.attach('stdout-native-probe', {
+      body: stdout.trim() || '(empty)',
+      contentType: 'text/plain',
+    });
+    await testInfo.attach('stderr-native-probe', {
+      body: stderr.trim() || '(empty)',
+      contentType: 'text/plain',
+    });
+
+    expect(stderr.trim()).toBe('');
+    expect(JSON.parse(stdout)).toMatchObject({
+      version: expect.any(String),
+      platform: expect.any(String),
+      architecture: expect.any(String),
+      chip: expect.any(String),
+      has_mlx: expect.any(Boolean),
+      has_metal: expect.any(Boolean),
+      metal_device: expect.any(String),
+      metal_queue_label: expect.any(String),
+      metal_threads_per_group: expect.any(Number),
+      supports_unified_memory: expect.any(Boolean),
+      recommended_mode: expect.any(String),
+    });
+  });
+
   test('run command emits generated scalar tokens', async ({}, testInfo) => {
     const fixturePath = path.join(repoRoot, 'tests', 'fixtures', 'models', 'qwen-0.5b', 'model.us4manifest');
     const { stdout, stderr } = await execFileAsync(nativeCliPath!, ['run', '--model', 'qwen-0.5b', '--model-path', fixturePath, '--backend', 'metal', '--prompt', 'hi', '--max-tokens', '5', '--json'], {
