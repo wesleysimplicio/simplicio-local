@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 
+#include "cpu/scalar_attention.h"
 #include "cpu/scalar_matmul.h"
 #include "neon/kernel_profile.h"
+#include "neon/neon_attention.h"
 #include "neon/neon_matmul.h"
 
 namespace {
@@ -13,6 +15,13 @@ us4::HardwareProbeResult MakeArmProbe() {
   probe.chip = "apple-m";
   probe.hasNeon = true;
   return probe;
+}
+
+void FillSequence(float *data, const std::size_t count, const float scale,
+                  const float bias) {
+  for (std::size_t index = 0; index < count; ++index) {
+    data[index] = (static_cast<float>((index % 7U) + 1U) * scale) + bias;
+  }
 }
 
 } // namespace
@@ -144,4 +153,121 @@ TEST(NeonContractTest, NeonMatmulMatchesScalarResultForTailColumns) {
   for (std::size_t index = 0; index < 18U; ++index) {
     EXPECT_FLOAT_EQ(neonValues[index], scalarValues[index]) << index;
   }
+}
+
+TEST(NeonContractTest, NeonAttentionMatchesScalarForFp32) {
+  us4::Tensor query({2, 4}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+  us4::Tensor key({3, 4}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+  us4::Tensor value({3, 3}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+  us4::Tensor neonOutput({2, 3}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+  us4::Tensor scalarOutput({2, 3}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+
+  FillSequence(query.MutableDataAsFloat32(), 8U, 0.25F, -0.5F);
+  FillSequence(key.MutableDataAsFloat32(), 12U, 0.20F, -0.25F);
+  FillSequence(value.MutableDataAsFloat32(), 9U, 0.15F, 0.10F);
+
+  std::string error;
+  ASSERT_TRUE(
+      us4::NeonAttention(query, key, value, neonOutput, false, {}, &error))
+      << error;
+  ASSERT_TRUE(
+      us4::ScalarAttention(query, key, value, scalarOutput, false, {}, &error))
+      << error;
+
+  const float *neonValues = neonOutput.DataAsFloat32();
+  const float *scalarValues = scalarOutput.DataAsFloat32();
+  ASSERT_NE(neonValues, nullptr);
+  ASSERT_NE(scalarValues, nullptr);
+  for (std::size_t index = 0; index < 6U; ++index) {
+    EXPECT_NEAR(neonValues[index], scalarValues[index], 1e-5F) << index;
+  }
+}
+
+TEST(NeonContractTest, NeonAttentionMatchesScalarWithCausalMask) {
+  us4::Tensor query({3, 4}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+  us4::Tensor key({3, 4}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+  us4::Tensor value({3, 2}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+  us4::Tensor neonOutput({3, 2}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+  us4::Tensor scalarOutput({3, 2}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+
+  FillSequence(query.MutableDataAsFloat32(), 12U, 0.10F, -0.20F);
+  FillSequence(key.MutableDataAsFloat32(), 12U, 0.05F, 0.30F);
+  FillSequence(value.MutableDataAsFloat32(), 6U, 0.40F, -0.10F);
+
+  std::string error;
+  ASSERT_TRUE(
+      us4::NeonAttention(query, key, value, neonOutput, true, {}, &error))
+      << error;
+  ASSERT_TRUE(
+      us4::ScalarAttention(query, key, value, scalarOutput, true, {}, &error))
+      << error;
+
+  const float *neonValues = neonOutput.DataAsFloat32();
+  const float *scalarValues = scalarOutput.DataAsFloat32();
+  ASSERT_NE(neonValues, nullptr);
+  ASSERT_NE(scalarValues, nullptr);
+  for (std::size_t index = 0; index < 6U; ++index) {
+    EXPECT_NEAR(neonValues[index], scalarValues[index], 1e-5F) << index;
+  }
+}
+
+TEST(NeonContractTest, NeonAttentionMatchesScalarWithCache) {
+  us4::Tensor query({2, 4}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+  us4::Tensor key({2, 4}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+  us4::Tensor value({2, 3}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+  us4::Tensor cacheKeys({1, 4}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+  us4::Tensor cacheValues({1, 3}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+  us4::Tensor neonOutput({2, 3}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+  us4::Tensor scalarOutput({2, 3}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+
+  FillSequence(query.MutableDataAsFloat32(), 8U, 0.30F, -0.20F);
+  FillSequence(key.MutableDataAsFloat32(), 8U, 0.12F, 0.15F);
+  FillSequence(value.MutableDataAsFloat32(), 6U, 0.22F, -0.05F);
+  FillSequence(cacheKeys.MutableDataAsFloat32(), 4U, 0.07F, 0.11F);
+  FillSequence(cacheValues.MutableDataAsFloat32(), 3U, 0.18F, 0.02F);
+
+  const us4::AttentionCacheView cache{&cacheKeys, &cacheValues};
+  std::string error;
+  ASSERT_TRUE(
+      us4::NeonAttention(query, key, value, neonOutput, false, cache, &error))
+      << error;
+  ASSERT_TRUE(us4::ScalarAttention(query, key, value, scalarOutput, false,
+                                   cache, &error))
+      << error;
+
+  const float *neonValues = neonOutput.DataAsFloat32();
+  const float *scalarValues = scalarOutput.DataAsFloat32();
+  ASSERT_NE(neonValues, nullptr);
+  ASSERT_NE(scalarValues, nullptr);
+  for (std::size_t index = 0; index < 6U; ++index) {
+    EXPECT_NEAR(neonValues[index], scalarValues[index], 1e-5F) << index;
+  }
+}
+
+TEST(NeonContractTest, NeonAttentionFallsBackOnNonArmHosts) {
+#if defined(__ARM_NEON) || defined(__ARM_NEON__)
+  GTEST_SKIP() << "This host builds the NEON path directly.";
+#else
+  us4::Tensor query({1, 4}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+  us4::Tensor key({2, 4}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+  us4::Tensor value({2, 2}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+  us4::Tensor neonOutput({1, 2}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+  us4::Tensor scalarOutput({1, 2}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+
+  FillSequence(query.MutableDataAsFloat32(), 4U, 0.50F, -0.25F);
+  FillSequence(key.MutableDataAsFloat32(), 8U, 0.10F, 0.20F);
+  FillSequence(value.MutableDataAsFloat32(), 4U, 0.35F, -0.10F);
+
+  std::string error;
+  ASSERT_TRUE(
+      us4::NeonAttention(query, key, value, neonOutput, false, {}, &error))
+      << error;
+  ASSERT_TRUE(
+      us4::ScalarAttention(query, key, value, scalarOutput, false, {}, &error))
+      << error;
+  EXPECT_NEAR(neonOutput.DataAsFloat32()[0], scalarOutput.DataAsFloat32()[0],
+              1e-5F);
+  EXPECT_NEAR(neonOutput.DataAsFloat32()[1], scalarOutput.DataAsFloat32()[1],
+              1e-5F);
+#endif
 }

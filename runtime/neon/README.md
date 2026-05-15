@@ -17,6 +17,9 @@ What already exists:
 - `neon_matmul.cpp` now has a dedicated fp32 `1x4` microkernel path and uses
   `arm_neon.h` lane-4 vector math on ARM hosts while keeping the same
   contractual fallback elsewhere
+- `neon_attention.cpp` now has its first real fp32 NEON dot-product path for
+  rank-2 attention, still preserving scalar fallback off ARM plus causal/cache
+  contract compatibility
 
 What is still missing:
 

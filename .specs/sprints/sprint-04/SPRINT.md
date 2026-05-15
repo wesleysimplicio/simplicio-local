@@ -25,8 +25,9 @@ Caminhos quentes em NEON (ARM SIMD): matmul, attention, dequantizacao INT8/INT4.
 - `runtime/neon/dequant_int8.{h,cpp}` e `runtime/neon/dequant_int4.{h,cpp}` agora cobrem o contrato base de dequantizacao group-wise para pesos low-bit.
 - O selector de backend agora considera `neon_vector_bits` e elegibilidade de cluster CPU antes de escolher NEON automaticamente.
 - `runtime/neon/neon_matmul.cpp` agora executa um microkernel dedicado `fp32 1x4`, usando `arm_neon.h` com lanes de 4 floats em hosts ARM e mantendo fallback contratual para os demais casos.
-- O contract runner e a suite GTest ja verificam tile shape, lane width, fused softmax-rescale e fallback para hosts nao-ARM.
-- Ainda faltam intrinsics reais, kernels fused, bench consistente e `neon_attention` menos dependente do bridge atual.
+- `runtime/neon/neon_attention.cpp` agora saiu do bridge puro e executa o primeiro caminho fp32 NEON para attention rank-2, preservando `causalMask`, `AttentionCacheView` e fallback escalar fora de ARM.
+- O contract runner e a suite GTest ja verificam tile shape, lane width, fused softmax-rescale, parity com scalar em attention/matmul e fallback para hosts nao-ARM.
+- Ainda faltam ampliar os hot paths para FP16/BF16/INT8, kernels fused, bench consistente e um caminho `neon_attention` mais agressivo em vectorizacao.
 
 ## Tasks
 

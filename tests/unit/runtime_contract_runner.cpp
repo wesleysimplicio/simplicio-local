@@ -1,3 +1,4 @@
+#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
@@ -12,6 +13,7 @@
 #include "core/backend_selector.h"
 #include "core/model_asset.h"
 #include "core/runtime_context.h"
+#include "cpu/scalar_attention.h"
 #include "cpu/scalar_matmul.h"
 #include "kv/kv_pager.h"
 #include "kv/prefix_cache.h"
@@ -29,6 +31,7 @@
 #include "neon/dequant_int4.h"
 #include "neon/dequant_int8.h"
 #include "neon/kernel_profile.h"
+#include "neon/neon_attention.h"
 #include "neon/neon_matmul.h"
 #include "sprint_01_contract_placeholders.h"
 
@@ -433,6 +436,88 @@ int main() {
     ok &=
         Expect(attentionProfile.headDimBlock == 32U,
                "neon attention should keep 32-wide head blocks when possible");
+
+    us4::Tensor attentionQuery({2, 4}, us4::DType::kFloat32,
+                               us4::DeviceType::kCpu);
+    us4::Tensor attentionKey({3, 4}, us4::DType::kFloat32,
+                             us4::DeviceType::kCpu);
+    us4::Tensor attentionValue({3, 3}, us4::DType::kFloat32,
+                               us4::DeviceType::kCpu);
+    us4::Tensor neonAttentionOut({2, 3}, us4::DType::kFloat32,
+                                 us4::DeviceType::kCpu);
+    us4::Tensor scalarAttentionOut({2, 3}, us4::DType::kFloat32,
+                                   us4::DeviceType::kCpu);
+    float *attentionQueryData = attentionQuery.MutableDataAsFloat32();
+    float *attentionKeyData = attentionKey.MutableDataAsFloat32();
+    float *attentionValueData = attentionValue.MutableDataAsFloat32();
+    for (std::size_t index = 0; index < 8U; ++index) {
+      attentionQueryData[index] =
+          (static_cast<float>((index % 7U) + 1U) * 0.25F) - 0.5F;
+    }
+    for (std::size_t index = 0; index < 12U; ++index) {
+      attentionKeyData[index] =
+          (static_cast<float>((index % 7U) + 1U) * 0.20F) - 0.25F;
+    }
+    for (std::size_t index = 0; index < 9U; ++index) {
+      attentionValueData[index] =
+          (static_cast<float>((index % 7U) + 1U) * 0.15F) + 0.10F;
+    }
+    ok &=
+        Expect(us4::NeonAttention(attentionQuery, attentionKey, attentionValue,
+                                  neonAttentionOut, false, {}, nullptr),
+               "neon attention should execute fp32 path");
+    ok &= Expect(us4::ScalarAttention(attentionQuery, attentionKey,
+                                      attentionValue, scalarAttentionOut, false,
+                                      {}, nullptr),
+                 "scalar attention should provide reference path");
+    const float *neonAttentionValues = neonAttentionOut.DataAsFloat32();
+    const float *scalarAttentionValues = scalarAttentionOut.DataAsFloat32();
+    bool attentionMatches =
+        neonAttentionValues != nullptr && scalarAttentionValues != nullptr;
+    for (std::size_t index = 0; attentionMatches && index < 6U; ++index) {
+      const float diff =
+          neonAttentionValues[index] - scalarAttentionValues[index];
+      attentionMatches = std::abs(diff) <= 1e-5F;
+    }
+    ok &= Expect(attentionMatches,
+                 "neon attention should match scalar fp32 outputs");
+
+    us4::Tensor cacheKeys({1, 4}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+    us4::Tensor cacheValues({1, 3}, us4::DType::kFloat32,
+                            us4::DeviceType::kCpu);
+    us4::Tensor causalNeonOut({2, 3}, us4::DType::kFloat32,
+                              us4::DeviceType::kCpu);
+    us4::Tensor causalScalarOut({2, 3}, us4::DType::kFloat32,
+                                us4::DeviceType::kCpu);
+    float *cacheKeyData = cacheKeys.MutableDataAsFloat32();
+    float *cacheValueData = cacheValues.MutableDataAsFloat32();
+    for (std::size_t index = 0; index < 4U; ++index) {
+      cacheKeyData[index] =
+          (static_cast<float>((index % 7U) + 1U) * 0.07F) + 0.11F;
+    }
+    for (std::size_t index = 0; index < 3U; ++index) {
+      cacheValueData[index] =
+          (static_cast<float>((index % 7U) + 1U) * 0.18F) + 0.02F;
+    }
+    const us4::AttentionCacheView cache{&cacheKeys, &cacheValues};
+    ok &=
+        Expect(us4::NeonAttention(attentionQuery, attentionKey, attentionValue,
+                                  causalNeonOut, true, cache, nullptr),
+               "neon attention should support causal cache path");
+    ok &= Expect(us4::ScalarAttention(attentionQuery, attentionKey,
+                                      attentionValue, causalScalarOut, true,
+                                      cache, nullptr),
+                 "scalar attention should support causal cache reference");
+    const float *causalNeonValues = causalNeonOut.DataAsFloat32();
+    const float *causalScalarValues = causalScalarOut.DataAsFloat32();
+    bool causalMatches =
+        causalNeonValues != nullptr && causalScalarValues != nullptr;
+    for (std::size_t index = 0; causalMatches && index < 6U; ++index) {
+      const float diff = causalNeonValues[index] - causalScalarValues[index];
+      causalMatches = std::abs(diff) <= 1e-5F;
+    }
+    ok &= Expect(causalMatches,
+                 "neon attention should match scalar outputs with cache");
 
     us4::HardwareProbeResult narrowNeonProbe = neonProbe;
     narrowNeonProbe.neonVectorBits = 64;

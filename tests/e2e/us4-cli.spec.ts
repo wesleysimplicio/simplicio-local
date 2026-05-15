@@ -380,6 +380,87 @@ test.describe("Native CLI sprint 02 contract", () => {
     });
   });
 
+  test("run honors explicit neon backend semantics", async ({}, testInfo) => {
+    const fixturePath = path.join(
+      repoRoot,
+      "tests",
+      "fixtures",
+      "models",
+      "qwen-0.5b",
+      "model.us4manifest",
+    );
+
+    const probeResult = await execFileAsync(
+      nativeCliPath!,
+      ["--probe", "--json"],
+      {
+        cwd: repoRoot,
+        env: {
+          ...process.env,
+          NO_COLOR: "1",
+        },
+      },
+    );
+    const probe = JSON.parse(probeResult.stdout) as {
+      has_neon: boolean;
+    };
+
+    const { stdout, stderr } = await execFileAsync(
+      nativeCliPath!,
+      [
+        "run",
+        "--model-path",
+        fixturePath,
+        "--backend",
+        "neon",
+        "--prompt",
+        "hi",
+        "--max-tokens",
+        "4",
+        "--json",
+      ],
+      {
+        cwd: repoRoot,
+        env: {
+          ...process.env,
+          NO_COLOR: "1",
+        },
+      },
+    );
+
+    await testInfo.attach("stdout-native-neon", {
+      body: stdout.trim() || "(empty)",
+      contentType: "text/plain",
+    });
+    await testInfo.attach("stderr-native-neon", {
+      body: stderr.trim() || "(empty)",
+      contentType: "text/plain",
+    });
+
+    expect(stderr.trim()).toBe("");
+    const payload = JSON.parse(stdout) as Record<string, unknown>;
+    expect(Array.isArray(payload.generated_tokens)).toBeTruthy();
+    expect(
+      (payload.generated_tokens as unknown[]).length,
+    ).toBeGreaterThanOrEqual(4);
+
+    if (probe.has_neon) {
+      expect(payload).toMatchObject({
+        model: "qwen-0.5b-fixture",
+        backend: "neon",
+        backend_reason: "requested",
+        fallback: false,
+      });
+    } else {
+      expect(payload).toMatchObject({
+        model: "qwen-0.5b-fixture",
+        backend: "scalar",
+        backend_reason: "requested-backend-unavailable",
+        fallback: true,
+      });
+    }
+  });
+
   test("run can resolve model from manifest without explicit --model", async ({}, testInfo) => {
     const fixturePath = path.join(
       repoRoot,
