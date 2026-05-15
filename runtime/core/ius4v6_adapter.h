@@ -41,10 +41,12 @@ struct GenerationResult {
   std::size_t metalDispatches = 0;
   std::size_t mlxOperationCount = 0;
   bool kvCacheHit = false;
+  bool kvRestoredFromColdStore = false;
   std::size_t kvPageCount = 0;
   std::size_t kvHotPages = 0;
   std::size_t kvWarmPages = 0;
   std::size_t kvColdPages = 0;
+  std::size_t kvSummaryRows = 0;
   std::size_t prefixCacheEntries = 0;
   bool mlxPlanBuilt = false;
   bool mlxEvaluated = false;

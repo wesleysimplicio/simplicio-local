@@ -18,7 +18,8 @@ Pager hot-cold de KV cache (unified memory hot, RAM warm, SSD cold). Prefix cach
 - A fundacao atual e leve: nao ha `SsdColdStore`, summarizer nem orquestracao completa por mode/tier.
 - A geracao dos adapters ainda nao depende de um KV pager completo; este sprint segue como a entrega alvo para esse subsistema.
 - O dense path compartilhado agora ja evita recompute completo do prompt em geracoes repetidas no mesmo `RuntimeContext`: `DenseAdapterBase::Generate` reutiliza prefixos via `KvPager`/`PrefixCache` e expõe telemetria de hit/page-count no resultado nativo.
-- O gap restante de S06 segue sendo tiering mais profundo, cold-store real, resumacao por mode e hooks dedicados em Llama/MoE.
+- Em `MICRO` e abaixo, esse mesmo path agora faz um primeiro flush para `SsdColdStore`, resume prefixo antigo via `Summarizer`, e mantém so o resumo + janela recente na working set.
+- O gap restante de S06 segue sendo tiering mais profundo, restore/evict mais inteligente e hooks dedicados em Llama/MoE.
 
 ## Tasks
 

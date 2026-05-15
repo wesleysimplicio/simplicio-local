@@ -35,6 +35,17 @@ TEST(KvContractTest, SummarizerProducesMeanAndHandlesEmptyInput) {
   EXPECT_FLOAT_EQ(summary[0], 5.0F);
 }
 
+TEST(KvContractTest, SummarizerCanCompressRowsPerColumn) {
+  us4::Summarizer summarizer;
+  const auto summary =
+      summarizer.SummarizeRows({1.0F, 3.0F, 5.0F, 7.0F, 9.0F, 11.0F}, 3U);
+
+  ASSERT_EQ(summary.size(), 3U);
+  EXPECT_FLOAT_EQ(summary[0], 4.0F);
+  EXPECT_FLOAT_EQ(summary[1], 6.0F);
+  EXPECT_FLOAT_EQ(summary[2], 8.0F);
+}
+
 TEST(KvContractTest, PagerLookupTouchesPagesAndPreservesStoredValues) {
   us4::KvPager pager(1);
   pager.Append("prompt-a", {1.0F, 2.0F});

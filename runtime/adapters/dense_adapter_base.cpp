@@ -60,6 +60,66 @@ std::string BuildPromptCacheKey(const std::string_view family,
                    std::to_string(std::hash<std::string>{}(stream.str()));
 }
 
+std::size_t MaybeCompactPromptKv(RuntimeContext &context,
+                                 const std::string &prefixKey,
+                                 std::vector<float> &keyBuffer,
+                                 std::vector<float> &valueBuffer) {
+  constexpr std::size_t kKeepRecentRows = 3U;
+  if (RuntimeModeRank(context.mode()) > RuntimeModeRank(RuntimeMode::kMicro)) {
+    return 0U;
+  }
+  if (keyBuffer.size() != valueBuffer.size() ||
+      (keyBuffer.size() % kHiddenSize) != 0U) {
+    return 0U;
+  }
+
+  const std::size_t rowCount = keyBuffer.size() / kHiddenSize;
+  if (rowCount <= (kKeepRecentRows + 1U)) {
+    return 0U;
+  }
+
+  const std::size_t summaryInputRows = rowCount - kKeepRecentRows;
+  const std::size_t summaryInputValues = summaryInputRows * kHiddenSize;
+  const std::vector<float> summaryKeys = context.summarizer().SummarizeRows(
+      {keyBuffer.begin(),
+       keyBuffer.begin() + static_cast<std::ptrdiff_t>(summaryInputValues)},
+      kHiddenSize);
+  const std::vector<float> summaryValues = context.summarizer().SummarizeRows(
+      {valueBuffer.begin(),
+       valueBuffer.begin() + static_cast<std::ptrdiff_t>(summaryInputValues)},
+      kHiddenSize);
+  if (summaryKeys.size() != kHiddenSize ||
+      summaryValues.size() != kHiddenSize) {
+    return 0U;
+  }
+
+  (void)context.coldStore().Flush(prefixKey + "-keys", keyBuffer);
+  (void)context.coldStore().Flush(prefixKey + "-values", valueBuffer);
+
+  std::vector<float> compactedKeys;
+  std::vector<float> compactedValues;
+  compactedKeys.reserve((kKeepRecentRows + 1U) * kHiddenSize);
+  compactedValues.reserve((kKeepRecentRows + 1U) * kHiddenSize);
+  compactedKeys.insert(compactedKeys.end(), summaryKeys.begin(),
+                       summaryKeys.end());
+  compactedValues.insert(compactedValues.end(), summaryValues.begin(),
+                         summaryValues.end());
+
+  const std::size_t recentOffset = (rowCount - kKeepRecentRows) * kHiddenSize;
+  compactedKeys.insert(compactedKeys.end(),
+                       keyBuffer.begin() +
+                           static_cast<std::ptrdiff_t>(recentOffset),
+                       keyBuffer.end());
+  compactedValues.insert(compactedValues.end(),
+                         valueBuffer.begin() +
+                             static_cast<std::ptrdiff_t>(recentOffset),
+                         valueBuffer.end());
+
+  keyBuffer = std::move(compactedKeys);
+  valueBuffer = std::move(compactedValues);
+  return summaryInputRows - 1U;
+}
+
 float DeterministicValue(const std::uint32_t seed, const std::uint32_t a,
                          const std::uint32_t b) {
   std::uint32_t value = seed;
@@ -349,27 +409,46 @@ DenseAdapterBase::Generate(const GenerationRequest &request,
   std::vector<float> keyBuffer;
   std::vector<float> valueBuffer;
   bool kvCacheHit = false;
+  bool kvRestoredFromColdStore = false;
+  std::size_t kvSummaryRows = 0U;
   const std::optional<KvPage> cachedPrefix =
       mutableContext.kvPager().Lookup(prefixKey);
   if (cachedPrefix.has_value() && cachedPrefix->rowWidth == kHiddenSize &&
-      cachedPrefix->rowCount == tokenIds.size() &&
-      cachedPrefix->keys.size() == tokenIds.size() * kHiddenSize &&
-      cachedPrefix->values.size() == tokenIds.size() * kHiddenSize) {
+      cachedPrefix->rowCount > 0U &&
+      cachedPrefix->rowCount <= tokenIds.size() &&
+      cachedPrefix->keys.size() == cachedPrefix->rowCount * kHiddenSize &&
+      cachedPrefix->values.size() == cachedPrefix->rowCount * kHiddenSize) {
     keyBuffer = cachedPrefix->keys;
     valueBuffer = cachedPrefix->values;
     kvCacheHit = true;
   } else {
-    keyBuffer.reserve(tokenIds.size() * kHiddenSize);
-    valueBuffer.reserve(tokenIds.size() * kHiddenSize);
-    for (std::size_t index = 0; index < tokenIds.size(); ++index) {
-      const std::vector<float> embedding =
-          BuildTokenEmbedding(tokenIds[index], kHiddenSize, activeSeed);
-      for (std::size_t hidden = 0; hidden < kHiddenSize; ++hidden) {
-        keyBuffer.push_back(embedding[hidden]);
-        valueBuffer.push_back(embedding[hidden] +
-                              static_cast<float>(index % 3U) * 0.01F);
+    const std::optional<std::vector<float>> restoredKeys =
+        mutableContext.coldStore().Restore(prefixKey + "-keys");
+    const std::optional<std::vector<float>> restoredValues =
+        mutableContext.coldStore().Restore(prefixKey + "-values");
+    if (restoredKeys.has_value() && restoredValues.has_value() &&
+        restoredKeys->size() == tokenIds.size() * kHiddenSize &&
+        restoredValues->size() == tokenIds.size() * kHiddenSize) {
+      keyBuffer = *restoredKeys;
+      valueBuffer = *restoredValues;
+      kvCacheHit = true;
+      kvRestoredFromColdStore = true;
+    } else {
+      keyBuffer.reserve(tokenIds.size() * kHiddenSize);
+      valueBuffer.reserve(tokenIds.size() * kHiddenSize);
+      for (std::size_t index = 0; index < tokenIds.size(); ++index) {
+        const std::vector<float> embedding =
+            BuildTokenEmbedding(tokenIds[index], kHiddenSize, activeSeed);
+        for (std::size_t hidden = 0; hidden < kHiddenSize; ++hidden) {
+          keyBuffer.push_back(embedding[hidden]);
+          valueBuffer.push_back(embedding[hidden] +
+                                static_cast<float>(index % 3U) * 0.01F);
+        }
       }
     }
+
+    kvSummaryRows =
+        MaybeCompactPromptKv(mutableContext, prefixKey, keyBuffer, valueBuffer);
     mutableContext.kvPager().Append(prefixKey, keyBuffer, valueBuffer,
                                     kHiddenSize);
   }
@@ -474,10 +553,12 @@ DenseAdapterBase::Generate(const GenerationRequest &request,
           ? context.mlxBridge().LastPlan()->operations.size()
           : 0U;
   result.kvCacheHit = kvCacheHit;
+  result.kvRestoredFromColdStore = kvRestoredFromColdStore;
   result.kvPageCount = mutableContext.kvPager().PageCount();
   result.kvHotPages = mutableContext.kvPager().HotPageCount();
   result.kvWarmPages = mutableContext.kvPager().WarmPageCount();
   result.kvColdPages = mutableContext.kvPager().ColdPageCount();
+  result.kvSummaryRows = kvSummaryRows;
   result.prefixCacheEntries = mutableContext.prefixCache().EntryCount();
   result.mlxPlanBuilt = context.mlxBridge().LastPlan().has_value();
   result.mlxEvaluated = context.mlxBridge().LastEvaluationSucceeded();

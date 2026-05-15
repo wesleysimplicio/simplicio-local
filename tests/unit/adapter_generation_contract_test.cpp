@@ -196,3 +196,39 @@ TEST(AdapterGenerationContractTest,
   EXPECT_EQ(second.kvHotPages, 1U);
   EXPECT_EQ(second.prefixCacheEntries, 1U);
 }
+
+TEST(AdapterGenerationContractTest,
+     MicroModeCanRestorePromptKvFromColdStoreWithSummaryTelemetry) {
+  const us4::IUS4V6Adapter *adapter = us4::FindAdapterByModel("qwen-0.5b");
+  ASSERT_NE(adapter, nullptr);
+
+  us4::ModelAsset asset;
+  std::string error;
+  const std::filesystem::path manifest = RepoRoot() / "tests" / "fixtures" /
+                                         "models" / "qwen-0.5b" /
+                                         "model.us4manifest";
+  ASSERT_TRUE(us4::LoadModelAsset(manifest, asset, &error)) << error;
+
+  std::filesystem::remove_all(RepoRoot() / "build" / "kv-cold-store");
+
+  us4::RuntimeContext firstContext(MakeProbe());
+  firstContext.SetMode(us4::RuntimeMode::kMicro);
+  const us4::GenerationResult first =
+      adapter->Generate({.prompt = "one two three four five six seven",
+                         .maxTokens = 2,
+                         .asset = &asset},
+                        firstContext);
+
+  EXPECT_GT(first.kvSummaryRows, 0U);
+
+  us4::RuntimeContext secondContext(MakeProbe());
+  secondContext.SetMode(us4::RuntimeMode::kMicro);
+  const us4::GenerationResult second =
+      adapter->Generate({.prompt = "one two three four five six seven",
+                         .maxTokens = 2,
+                         .asset = &asset},
+                        secondContext);
+
+  EXPECT_TRUE(second.kvCacheHit);
+  EXPECT_TRUE(second.kvRestoredFromColdStore);
+}

@@ -299,6 +299,11 @@ int main() {
     const auto summary = summarizer.Summarize({2.0F, 4.0F, 6.0F});
     ok &= Expect(summary.size() == 1U && summary[0] == 4.0F,
                  "summarizer should produce arithmetic mean");
+    const auto rowSummary =
+        summarizer.SummarizeRows({1.0F, 3.0F, 5.0F, 7.0F, 9.0F, 11.0F}, 3U);
+    ok &= Expect(rowSummary.size() == 3U && rowSummary[0] == 4.0F &&
+                     rowSummary[1] == 6.0F && rowSummary[2] == 8.0F,
+                 "summarizer should compress rows per hidden column");
   }
 
   {
@@ -381,12 +386,37 @@ int main() {
                  "auto generation should expose explicit backend reason");
     ok &= Expect(autoResult.kvCacheHit,
                  "repeated generation should reuse prompt kv cache");
+    ok &= Expect(!autoResult.kvRestoredFromColdStore,
+                 "shared runtime context should hit hot kv before cold store");
     ok &= Expect(result.weightDType == "fp16",
                  "generation should surface asset weight dtype");
     ok &= Expect(result.neonKernelFlavor == "fp16-lane8",
                  "generation should surface neon flavor for fp16 assets");
     ok &= Expect(result.dequantPath == "none",
                  "fp16 assets should not request dequant path");
+
+    std::filesystem::remove_all(RepoRoot() / "build" / "kv-cold-store");
+    us4::RuntimeContext lowMemoryContext(MakeProbe());
+    lowMemoryContext.SetMode(us4::RuntimeMode::kMicro);
+    const us4::GenerationResult summarizedResult =
+        qwen->Generate({.prompt = "one two three four five six seven",
+                        .maxTokens = 2,
+                        .asset = &asset},
+                       lowMemoryContext);
+    ok &= Expect(summarizedResult.kvSummaryRows > 0U,
+                 "micro mode should summarize old kv rows");
+
+    us4::RuntimeContext restoredContext(MakeProbe());
+    restoredContext.SetMode(us4::RuntimeMode::kMicro);
+    const us4::GenerationResult restoredResult =
+        qwen->Generate({.prompt = "one two three four five six seven",
+                        .maxTokens = 2,
+                        .asset = &asset},
+                       restoredContext);
+    ok &= Expect(restoredResult.kvCacheHit,
+                 "second low-memory pass should reuse kv state");
+    ok &= Expect(restoredResult.kvRestoredFromColdStore,
+                 "fresh low-memory context should restore kv from cold store");
 
     us4::HardwareProbeResult appleProbe = MakeProbe();
     appleProbe.hasMetal = true;
