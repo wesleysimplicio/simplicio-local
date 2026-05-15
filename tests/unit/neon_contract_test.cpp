@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "neon/kernel_profile.h"
+#include "neon/neon_matmul.h"
 
 namespace {
 
@@ -72,4 +73,46 @@ TEST(NeonContractTest, NonArmHostsStayOnScalarBridgePlan) {
 
   EXPECT_EQ(profile.flavor, us4::NeonKernelFlavor::kScalarBridge);
   EXPECT_FALSE(profile.usesDotProduct);
+}
+
+TEST(NeonContractTest, NeonMatmulMatchesScalarResultForFp32) {
+  us4::Tensor lhs({2, 3}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+  us4::Tensor rhs({3, 4}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+  us4::Tensor output({2, 4}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+
+  float *lhsData = lhs.MutableDataAsFloat32();
+  float *rhsData = rhs.MutableDataAsFloat32();
+  lhsData[0] = 1.0F;
+  lhsData[1] = 2.0F;
+  lhsData[2] = 3.0F;
+  lhsData[3] = 4.0F;
+  lhsData[4] = 5.0F;
+  lhsData[5] = 6.0F;
+
+  rhsData[0] = 1.0F;
+  rhsData[1] = 0.0F;
+  rhsData[2] = 2.0F;
+  rhsData[3] = 1.0F;
+  rhsData[4] = 0.0F;
+  rhsData[5] = 1.0F;
+  rhsData[6] = 3.0F;
+  rhsData[7] = 0.0F;
+  rhsData[8] = 1.0F;
+  rhsData[9] = 1.0F;
+  rhsData[10] = 0.0F;
+  rhsData[11] = 2.0F;
+
+  std::string error;
+  ASSERT_TRUE(us4::NeonMatmul(lhs, rhs, output, &error)) << error;
+
+  const float *values = output.DataAsFloat32();
+  ASSERT_NE(values, nullptr);
+  EXPECT_FLOAT_EQ(values[0], 4.0F);
+  EXPECT_FLOAT_EQ(values[1], 5.0F);
+  EXPECT_FLOAT_EQ(values[2], 8.0F);
+  EXPECT_FLOAT_EQ(values[3], 7.0F);
+  EXPECT_FLOAT_EQ(values[4], 10.0F);
+  EXPECT_FLOAT_EQ(values[5], 11.0F);
+  EXPECT_FLOAT_EQ(values[6], 23.0F);
+  EXPECT_FLOAT_EQ(values[7], 16.0F);
 }

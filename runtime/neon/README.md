@@ -14,6 +14,8 @@ What already exists:
   `4x16`, dot-product usage, and fused softmax-rescale intent
 - the backend selector now also checks `neon_vector_bits` and CPU cluster
   eligibility before it chooses NEON automatically
+- `neon_matmul.cpp` now has a dedicated fp32 `1x4` microkernel path instead of
+  delegating every case straight to `ScalarMatmul`
 
 What is still missing:
 

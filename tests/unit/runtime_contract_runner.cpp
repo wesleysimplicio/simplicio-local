@@ -28,6 +28,7 @@
 #include "neon/dequant_int4.h"
 #include "neon/dequant_int8.h"
 #include "neon/kernel_profile.h"
+#include "neon/neon_matmul.h"
 #include "sprint_01_contract_placeholders.h"
 
 namespace {
@@ -439,6 +440,35 @@ int main() {
         narrowNeonProbe, us4::RuntimeMode::kMicroPlus, qwenAdapter);
     ok &= Expect(narrowSelection.selected == us4::BackendType::kScalarCpu,
                  "narrow neon vectors should fall back to scalar");
+
+    us4::Tensor matmulLhs({2, 3}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+    us4::Tensor matmulRhs({3, 4}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+    us4::Tensor matmulOut({2, 4}, us4::DType::kFloat32, us4::DeviceType::kCpu);
+    float *lhsData = matmulLhs.MutableDataAsFloat32();
+    float *rhsData = matmulRhs.MutableDataAsFloat32();
+    lhsData[0] = 1.0F;
+    lhsData[1] = 2.0F;
+    lhsData[2] = 3.0F;
+    lhsData[3] = 4.0F;
+    lhsData[4] = 5.0F;
+    lhsData[5] = 6.0F;
+    rhsData[0] = 1.0F;
+    rhsData[1] = 0.0F;
+    rhsData[2] = 2.0F;
+    rhsData[3] = 1.0F;
+    rhsData[4] = 0.0F;
+    rhsData[5] = 1.0F;
+    rhsData[6] = 3.0F;
+    rhsData[7] = 0.0F;
+    rhsData[8] = 1.0F;
+    rhsData[9] = 1.0F;
+    rhsData[10] = 0.0F;
+    rhsData[11] = 2.0F;
+    ok &= Expect(us4::NeonMatmul(matmulLhs, matmulRhs, matmulOut, nullptr),
+                 "neon matmul should execute fp32 fast path");
+    const float *matmulValues = matmulOut.DataAsFloat32();
+    ok &= Expect(matmulValues != nullptr && matmulValues[6] == 23.0F,
+                 "neon matmul should preserve expected fp32 result");
 
     us4::Tensor int8Weights({4}, us4::DType::kInt8, us4::DeviceType::kCpu);
     us4::Tensor int8Output({4}, us4::DType::kFloat32, us4::DeviceType::kCpu);
