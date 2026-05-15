@@ -23,29 +23,6 @@ namespace us4 {
 
 namespace {
 
-std::string NormalizeToken(const std::string_view token) {
-  std::string normalized;
-  normalized.reserve(token.size());
-  for (const char ch : token) {
-    if (std::isalnum(static_cast<unsigned char>(ch)) != 0 || ch == '-' ||
-        ch == '_' || ch == '.') {
-      normalized.push_back(
-          static_cast<char>(std::tolower(static_cast<unsigned char>(ch))));
-    }
-  }
-  return normalized;
-}
-
-std::string BuildPromptCacheKey(const std::uint32_t seed,
-                                const std::vector<std::string> &promptTokens) {
-  std::ostringstream stream;
-  stream << "llama:" << seed << ":";
-  for (const std::string &token : promptTokens) {
-    stream << NormalizeToken(token) << '|';
-  }
-  return "kv:llama:" + std::to_string(std::hash<std::string>{}(stream.str()));
-}
-
 void CopyVectorToTensor(const std::vector<float> &source, Tensor &tensor) {
   float *target = tensor.MutableDataAsFloat32();
   for (std::size_t index = 0; index < source.size(); ++index) {
@@ -185,12 +162,15 @@ GenerationResult LlamaAdapter::Generate(const GenerationRequest &request,
     tokenIds.push_back(TokenIdFor(token, vocabulary));
   }
 
-  const std::string prefixKey = BuildPromptCacheKey(activeSeed, promptTokens);
+  const std::string prefixKey =
+      BuildPromptCacheKeyForFamily(activeSeed, promptTokens);
   mutableContext.prefixCache().Retain(prefixKey);
 
   std::vector<float> keyBuffer;
   std::vector<float> valueBuffer;
   bool kvCacheHit = false;
+  bool kvRestoredFromColdStore = false;
+  std::size_t kvSummaryRows = 0U;
   if (const std::optional<KvPage> cachedPage =
           mutableContext.kvPager().Lookup(prefixKey);
       cachedPage.has_value() && cachedPage->rowWidth == kvWidth &&
@@ -200,34 +180,26 @@ GenerationResult LlamaAdapter::Generate(const GenerationRequest &request,
     valueBuffer = cachedPage->values;
     kvCacheHit = true;
   } else {
-    const std::vector<float> firstKeyRow =
-        BuildKeyRow(tokenIds.front(), activeSeed, 0U, config);
-    const std::vector<float> firstValueRow =
-        BuildValueRow(tokenIds.front(), activeSeed, 0U, config);
-    mutableContext.kvPager().Append(prefixKey, firstKeyRow, firstValueRow,
-                                    kvWidth);
-    keyBuffer = firstKeyRow;
-    valueBuffer = firstValueRow;
-
-    for (std::size_t index = 1; index < tokenIds.size(); ++index) {
-      const std::vector<float> keyRow =
-          BuildKeyRow(tokenIds[index], activeSeed, index, config);
-      const std::vector<float> valueRow =
-          BuildValueRow(tokenIds[index], activeSeed, index, config);
-      const bool appended =
-          mutableContext.kvPager().AppendRow(prefixKey, keyRow, valueRow);
-      if (!appended) {
-        std::vector<float> mergedKeys = keyBuffer;
-        std::vector<float> mergedValues = valueBuffer;
-        mergedKeys.insert(mergedKeys.end(), keyRow.begin(), keyRow.end());
-        mergedValues.insert(mergedValues.end(), valueRow.begin(),
-                            valueRow.end());
-        mutableContext.kvPager().Append(prefixKey, std::move(mergedKeys),
-                                        std::move(mergedValues), kvWidth);
+    if (TryRestorePromptKvFromColdStore(mutableContext, prefixKey, kvWidth,
+                                        tokenIds.size(), keyBuffer,
+                                        valueBuffer)) {
+      kvCacheHit = true;
+      kvRestoredFromColdStore = true;
+    } else {
+      keyBuffer.reserve(tokenIds.size() * kvWidth);
+      valueBuffer.reserve(tokenIds.size() * kvWidth);
+      for (std::size_t index = 0; index < tokenIds.size(); ++index) {
+        const std::vector<float> keyRow =
+            BuildKeyRow(tokenIds[index], activeSeed, index, config);
+        const std::vector<float> valueRow =
+            BuildValueRow(tokenIds[index], activeSeed, index, config);
+        keyBuffer.insert(keyBuffer.end(), keyRow.begin(), keyRow.end());
+        valueBuffer.insert(valueBuffer.end(), valueRow.begin(), valueRow.end());
       }
-      keyBuffer.insert(keyBuffer.end(), keyRow.begin(), keyRow.end());
-      valueBuffer.insert(valueBuffer.end(), valueRow.begin(), valueRow.end());
     }
+    kvSummaryRows = MaybeCompactPromptKv(mutableContext, prefixKey, keyBuffer,
+                                         valueBuffer, kvWidth);
+    mutableContext.kvPager().Append(prefixKey, keyBuffer, valueBuffer, kvWidth);
   }
 
   std::vector<std::string> generatedTokens;
@@ -318,12 +290,12 @@ GenerationResult LlamaAdapter::Generate(const GenerationRequest &request,
           ? context.mlxBridge().LastPlan()->operations.size()
           : 0U;
   result.kvCacheHit = kvCacheHit;
-  result.kvRestoredFromColdStore = false;
+  result.kvRestoredFromColdStore = kvRestoredFromColdStore;
   result.kvPageCount = mutableContext.kvPager().PageCount();
   result.kvHotPages = mutableContext.kvPager().HotPageCount();
   result.kvWarmPages = mutableContext.kvPager().WarmPageCount();
   result.kvColdPages = mutableContext.kvPager().ColdPageCount();
-  result.kvSummaryRows = 0U;
+  result.kvSummaryRows = kvSummaryRows;
   result.prefixCacheEntries = mutableContext.prefixCache().EntryCount();
   result.mlxPlanBuilt = context.mlxBridge().LastPlan().has_value();
   result.mlxEvaluated = context.mlxBridge().LastEvaluationSucceeded();

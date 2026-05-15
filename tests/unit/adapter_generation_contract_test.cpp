@@ -342,6 +342,41 @@ TEST(AdapterGenerationContractTest,
   EXPECT_EQ(second.kvHotPages, 1U);
 }
 
+TEST(AdapterGenerationContractTest,
+     LlamaMicroModeCanRestorePromptKvFromColdStoreWithSummaryTelemetry) {
+  const us4::IUS4V6Adapter *adapter = us4::FindAdapterByModel("llama-3.1-8b");
+  ASSERT_NE(adapter, nullptr);
+
+  us4::ModelAsset asset;
+  std::string error;
+  const std::filesystem::path manifestDirectory =
+      RepoRoot() / "tests" / "fixtures" / "models" / "llama-3.1-8b";
+  ASSERT_TRUE(us4::LoadModelAsset(manifestDirectory, asset, &error)) << error;
+
+  std::filesystem::remove_all(RepoRoot() / "build" / "kv-cold-store");
+
+  us4::RuntimeContext firstContext(MakeProbe());
+  firstContext.SetMode(us4::RuntimeMode::kMicro);
+  const us4::GenerationResult first =
+      adapter->Generate({.prompt = "one two three four five six seven",
+                         .maxTokens = 2,
+                         .asset = &asset},
+                        firstContext);
+
+  EXPECT_GT(first.kvSummaryRows, 0U);
+
+  us4::RuntimeContext secondContext(MakeProbe());
+  secondContext.SetMode(us4::RuntimeMode::kMicro);
+  const us4::GenerationResult second =
+      adapter->Generate({.prompt = "one two three four five six seven",
+                         .maxTokens = 2,
+                         .asset = &asset},
+                        secondContext);
+
+  EXPECT_TRUE(second.kvCacheHit);
+  EXPECT_TRUE(second.kvRestoredFromColdStore);
+}
+
 TEST(AdapterGenerationContractTest, LowBitAssetsSurfaceNeonDequantIntent) {
   const us4::IUS4V6Adapter *bitnet = us4::FindAdapterByModel("bitnet-b1.58-2b");
   const us4::IUS4V6Adapter *ternary =

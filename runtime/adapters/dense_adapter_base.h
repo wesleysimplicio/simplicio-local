@@ -44,6 +44,19 @@ protected:
   BuildOutputProjection(const std::vector<std::string> &vocabulary,
                         std::size_t hiddenSize, std::uint32_t seed) const;
   std::string JoinTokens(const std::vector<std::string> &tokens) const;
+  std::string BuildPromptCacheKeyForFamily(
+      std::uint32_t seed, const std::vector<std::string> &promptTokens) const;
+  bool TryRestorePromptKvFromColdStore(RuntimeContext &context,
+                                       const std::string &prefixKey,
+                                       std::size_t rowWidth,
+                                       std::size_t rowCount,
+                                       std::vector<float> &keyBuffer,
+                                       std::vector<float> &valueBuffer) const;
+  std::size_t MaybeCompactPromptKv(RuntimeContext &context,
+                                   const std::string &prefixKey,
+                                   std::vector<float> &keyBuffer,
+                                   std::vector<float> &valueBuffer,
+                                   std::size_t rowWidth) const;
 
 private:
   std::string family_;

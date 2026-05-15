@@ -60,66 +60,6 @@ std::string BuildPromptCacheKey(const std::string_view family,
                    std::to_string(std::hash<std::string>{}(stream.str()));
 }
 
-std::size_t MaybeCompactPromptKv(RuntimeContext &context,
-                                 const std::string &prefixKey,
-                                 std::vector<float> &keyBuffer,
-                                 std::vector<float> &valueBuffer) {
-  constexpr std::size_t kKeepRecentRows = 3U;
-  if (RuntimeModeRank(context.mode()) > RuntimeModeRank(RuntimeMode::kMicro)) {
-    return 0U;
-  }
-  if (keyBuffer.size() != valueBuffer.size() ||
-      (keyBuffer.size() % kHiddenSize) != 0U) {
-    return 0U;
-  }
-
-  const std::size_t rowCount = keyBuffer.size() / kHiddenSize;
-  if (rowCount <= (kKeepRecentRows + 1U)) {
-    return 0U;
-  }
-
-  const std::size_t summaryInputRows = rowCount - kKeepRecentRows;
-  const std::size_t summaryInputValues = summaryInputRows * kHiddenSize;
-  const std::vector<float> summaryKeys = context.summarizer().SummarizeRows(
-      {keyBuffer.begin(),
-       keyBuffer.begin() + static_cast<std::ptrdiff_t>(summaryInputValues)},
-      kHiddenSize);
-  const std::vector<float> summaryValues = context.summarizer().SummarizeRows(
-      {valueBuffer.begin(),
-       valueBuffer.begin() + static_cast<std::ptrdiff_t>(summaryInputValues)},
-      kHiddenSize);
-  if (summaryKeys.size() != kHiddenSize ||
-      summaryValues.size() != kHiddenSize) {
-    return 0U;
-  }
-
-  (void)context.coldStore().Flush(prefixKey + "-keys", keyBuffer);
-  (void)context.coldStore().Flush(prefixKey + "-values", valueBuffer);
-
-  std::vector<float> compactedKeys;
-  std::vector<float> compactedValues;
-  compactedKeys.reserve((kKeepRecentRows + 1U) * kHiddenSize);
-  compactedValues.reserve((kKeepRecentRows + 1U) * kHiddenSize);
-  compactedKeys.insert(compactedKeys.end(), summaryKeys.begin(),
-                       summaryKeys.end());
-  compactedValues.insert(compactedValues.end(), summaryValues.begin(),
-                         summaryValues.end());
-
-  const std::size_t recentOffset = (rowCount - kKeepRecentRows) * kHiddenSize;
-  compactedKeys.insert(compactedKeys.end(),
-                       keyBuffer.begin() +
-                           static_cast<std::ptrdiff_t>(recentOffset),
-                       keyBuffer.end());
-  compactedValues.insert(compactedValues.end(),
-                         valueBuffer.begin() +
-                             static_cast<std::ptrdiff_t>(recentOffset),
-                         valueBuffer.end());
-
-  keyBuffer = std::move(compactedKeys);
-  valueBuffer = std::move(compactedValues);
-  return summaryInputRows - 1U;
-}
-
 float DeterministicValue(const std::uint32_t seed, const std::uint32_t a,
                          const std::uint32_t b) {
   std::uint32_t value = seed;
@@ -403,7 +343,7 @@ DenseAdapterBase::Generate(const GenerationRequest &request,
   }
 
   const std::string prefixKey =
-      BuildPromptCacheKey(family_, activeSeed, promptTokens);
+      BuildPromptCacheKeyForFamily(activeSeed, promptTokens);
   mutableContext.prefixCache().Retain(prefixKey);
 
   std::vector<float> keyBuffer;
@@ -422,15 +362,9 @@ DenseAdapterBase::Generate(const GenerationRequest &request,
     valueBuffer = cachedPrefix->values;
     kvCacheHit = true;
   } else {
-    const std::optional<std::vector<float>> restoredKeys =
-        mutableContext.coldStore().Restore(prefixKey + "-keys");
-    const std::optional<std::vector<float>> restoredValues =
-        mutableContext.coldStore().Restore(prefixKey + "-values");
-    if (restoredKeys.has_value() && restoredValues.has_value() &&
-        restoredKeys->size() == tokenIds.size() * kHiddenSize &&
-        restoredValues->size() == tokenIds.size() * kHiddenSize) {
-      keyBuffer = *restoredKeys;
-      valueBuffer = *restoredValues;
+    if (TryRestorePromptKvFromColdStore(mutableContext, prefixKey, kHiddenSize,
+                                        tokenIds.size(), keyBuffer,
+                                        valueBuffer)) {
       kvCacheHit = true;
       kvRestoredFromColdStore = true;
     } else {
@@ -447,8 +381,8 @@ DenseAdapterBase::Generate(const GenerationRequest &request,
       }
     }
 
-    kvSummaryRows =
-        MaybeCompactPromptKv(mutableContext, prefixKey, keyBuffer, valueBuffer);
+    kvSummaryRows = MaybeCompactPromptKv(mutableContext, prefixKey, keyBuffer,
+                                         valueBuffer, kHiddenSize);
     mutableContext.kvPager().Append(prefixKey, keyBuffer, valueBuffer,
                                     kHiddenSize);
   }
@@ -642,6 +576,91 @@ DenseAdapterBase::JoinTokens(const std::vector<std::string> &tokens) const {
     first = false;
   }
   return stream.str();
+}
+
+std::string DenseAdapterBase::BuildPromptCacheKeyForFamily(
+    const std::uint32_t seed,
+    const std::vector<std::string> &promptTokens) const {
+  return BuildPromptCacheKey(family_, seed, promptTokens);
+}
+
+bool DenseAdapterBase::TryRestorePromptKvFromColdStore(
+    RuntimeContext &context, const std::string &prefixKey,
+    const std::size_t rowWidth, const std::size_t rowCount,
+    std::vector<float> &keyBuffer, std::vector<float> &valueBuffer) const {
+  const std::optional<std::vector<float>> restoredKeys =
+      context.coldStore().Restore(prefixKey + "-keys");
+  const std::optional<std::vector<float>> restoredValues =
+      context.coldStore().Restore(prefixKey + "-values");
+  if (!restoredKeys.has_value() || !restoredValues.has_value()) {
+    return false;
+  }
+  if (restoredKeys->size() != rowCount * rowWidth ||
+      restoredValues->size() != rowCount * rowWidth) {
+    return false;
+  }
+  keyBuffer = *restoredKeys;
+  valueBuffer = *restoredValues;
+  return true;
+}
+
+std::size_t DenseAdapterBase::MaybeCompactPromptKv(
+    RuntimeContext &context, const std::string &prefixKey,
+    std::vector<float> &keyBuffer, std::vector<float> &valueBuffer,
+    const std::size_t rowWidth) const {
+  constexpr std::size_t kKeepRecentRows = 3U;
+  if (RuntimeModeRank(context.mode()) > RuntimeModeRank(RuntimeMode::kMicro)) {
+    return 0U;
+  }
+  if (rowWidth == 0U || keyBuffer.size() != valueBuffer.size() ||
+      (keyBuffer.size() % rowWidth) != 0U) {
+    return 0U;
+  }
+
+  const std::size_t rowCount = keyBuffer.size() / rowWidth;
+  if (rowCount <= (kKeepRecentRows + 1U)) {
+    return 0U;
+  }
+
+  const std::size_t summaryInputRows = rowCount - kKeepRecentRows;
+  const std::size_t summaryInputValues = summaryInputRows * rowWidth;
+  const std::vector<float> summaryKeys = context.summarizer().SummarizeRows(
+      {keyBuffer.begin(),
+       keyBuffer.begin() + static_cast<std::ptrdiff_t>(summaryInputValues)},
+      rowWidth);
+  const std::vector<float> summaryValues = context.summarizer().SummarizeRows(
+      {valueBuffer.begin(),
+       valueBuffer.begin() + static_cast<std::ptrdiff_t>(summaryInputValues)},
+      rowWidth);
+  if (summaryKeys.size() != rowWidth || summaryValues.size() != rowWidth) {
+    return 0U;
+  }
+
+  (void)context.coldStore().Flush(prefixKey + "-keys", keyBuffer);
+  (void)context.coldStore().Flush(prefixKey + "-values", valueBuffer);
+
+  std::vector<float> compactedKeys;
+  std::vector<float> compactedValues;
+  compactedKeys.reserve((kKeepRecentRows + 1U) * rowWidth);
+  compactedValues.reserve((kKeepRecentRows + 1U) * rowWidth);
+  compactedKeys.insert(compactedKeys.end(), summaryKeys.begin(),
+                       summaryKeys.end());
+  compactedValues.insert(compactedValues.end(), summaryValues.begin(),
+                         summaryValues.end());
+
+  const std::size_t recentOffset = (rowCount - kKeepRecentRows) * rowWidth;
+  compactedKeys.insert(compactedKeys.end(),
+                       keyBuffer.begin() +
+                           static_cast<std::ptrdiff_t>(recentOffset),
+                       keyBuffer.end());
+  compactedValues.insert(compactedValues.end(),
+                         valueBuffer.begin() +
+                             static_cast<std::ptrdiff_t>(recentOffset),
+                         valueBuffer.end());
+
+  keyBuffer = std::move(compactedKeys);
+  valueBuffer = std::move(compactedValues);
+  return summaryInputRows - 1U;
 }
 
 } // namespace us4
