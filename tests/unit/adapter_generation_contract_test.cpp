@@ -236,6 +236,45 @@ TEST(AdapterGenerationContractTest,
 }
 
 TEST(AdapterGenerationContractTest,
+     LlamaDedicatedKvCacheStaysPartitionedByAssetSeedWithinSharedContext) {
+  const us4::IUS4V6Adapter *adapter = us4::FindAdapterByModel("llama-3.1-8b");
+  ASSERT_NE(adapter, nullptr);
+
+  us4::ModelAsset baselineAsset;
+  std::string error;
+  const std::filesystem::path manifestDirectory =
+      RepoRoot() / "tests" / "fixtures" / "models" / "llama-3.1-8b";
+  ASSERT_TRUE(us4::LoadModelAsset(manifestDirectory, baselineAsset, &error))
+      << error;
+
+  us4::ModelAsset alternateSeedAsset = baselineAsset;
+  alternateSeedAsset.seed += 7U;
+
+  us4::RuntimeContext context(MakeProbe());
+  adapter->ConfigureRuntime(context);
+
+  const us4::GenerationResult baselineFirst = adapter->Generate(
+      {.prompt = "hello llama", .maxTokens = 3, .asset = &baselineAsset},
+      context);
+  const us4::GenerationResult alternateSeed = adapter->Generate(
+      {.prompt = "hello llama", .maxTokens = 3, .asset = &alternateSeedAsset},
+      context);
+  const us4::GenerationResult alternateSeedRepeat = adapter->Generate(
+      {.prompt = "hello llama", .maxTokens = 3, .asset = &alternateSeedAsset},
+      context);
+
+  EXPECT_FALSE(baselineFirst.kvCacheHit);
+  EXPECT_FALSE(alternateSeed.kvCacheHit);
+  EXPECT_TRUE(alternateSeedRepeat.kvCacheHit);
+  EXPECT_EQ(alternateSeed.backend, "neon");
+  EXPECT_EQ(alternateSeed.kvPageCount, 2U);
+  EXPECT_EQ(alternateSeedRepeat.kvPageCount, 2U);
+  EXPECT_EQ(alternateSeedRepeat.kvHotPages, 1U);
+  EXPECT_EQ(alternateSeedRepeat.kvWarmPages, 1U);
+  EXPECT_EQ(alternateSeedRepeat.prefixCacheEntries, 2U);
+}
+
+TEST(AdapterGenerationContractTest,
      LlamaScalarBackendKeepsFp16AssetsRunnableWithoutMatmulError) {
   const us4::IUS4V6Adapter *adapter = us4::FindAdapterByModel("llama-3.1-8b");
   ASSERT_NE(adapter, nullptr);

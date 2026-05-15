@@ -126,7 +126,13 @@ fixtures:
 
 - `tests/unit/adapter_generation_contract_test.cpp` covers directory-manifest
   loading, default prompt fallback, GGUF routing, requested-backend fallback
-  telemetry, and the dedicated Llama KV reuse boundary for the fixture assets;
+  telemetry, and the dedicated Llama KV reuse boundary for the fixture assets,
+  including seed-scoped cache partitioning inside a shared `RuntimeContext`;
+- `tests/unit/model_asset_contract_test.cpp` and
+  `tests/unit/runtime_contract_runner.cpp` also keep the future
+  `ResolveLlamaConfig` seam visible by checking fixture metadata hydration plus
+  safe normalization for invalid GQA and RoPE fields before the real Sprint 07
+  loader lands;
 - `tests/e2e/us4-cli.spec.ts` covers native CLI execution against both the
   `llama-3.1-8b/` manifest directory and `toy-llama.gguf`, including host-aware
   assertions for `metal` request behavior;

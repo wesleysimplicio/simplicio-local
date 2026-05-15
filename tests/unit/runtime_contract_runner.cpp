@@ -10,6 +10,7 @@
 
 #include "adapters/adapter_registry.h"
 #include "adapters/llama/llama_adapter.h"
+#include "adapters/llama/llama_config.h"
 #include "adapters/qwen/qwen_adapter.h"
 #include "core/backend_selector.h"
 #include "core/model_asset.h"
@@ -191,6 +192,46 @@ int main() {
         Expect(asset.family == "qwen", "qwen manifest should preserve family");
     ok &= Expect(asset.modelName == "qwen-0.5b-fixture",
                  "qwen manifest should preserve model name");
+  }
+
+  {
+    us4::ModelAsset asset;
+    std::string error;
+    const auto manifest = RepoRoot() / "tests" / "fixtures" / "models" /
+                          "llama-3.1-8b" / "model.us4manifest";
+    ok &= Expect(us4::LoadModelAsset(manifest, asset, &error),
+                 "llama manifest should load");
+    const us4::LlamaConfig config = us4::ResolveLlamaConfig(&asset);
+    ok &= Expect(asset.metadata.contains("rope_theta"),
+                 "llama manifest should expose rope theta metadata");
+    ok &= Expect(asset.metadata.contains("rope_scale"),
+                 "llama manifest should expose rope scale metadata");
+    ok &= Expect(config.hiddenSize == 8U && config.queryHeads == 2U &&
+                     config.kvHeads == 1U && config.headDim == 4U,
+                 "llama config should resolve head topology from manifest");
+    ok &= Expect(std::abs(config.ropeTheta - 10000.0F) <= 1e-6F,
+                 "llama config should preserve rope theta");
+    ok &= Expect(config.ropeScaling == us4::RopeScalingType::kDynamic,
+                 "llama config should preserve rope scaling mode");
+    ok &= Expect(std::abs(config.ropeScale - 1.0F) <= 1e-6F,
+                 "llama config should preserve rope scale");
+
+    us4::ModelAsset invalidConfigAsset;
+    invalidConfigAsset.metadata = {
+        {"hidden_size", "10"}, {"query_heads", "0"},   {"kv_heads", "7"},
+        {"head_dim", "0"},     {"rope_theta", "0.25"}, {"rope_scaling", "YaRn"},
+        {"rope_scale", "-4"},
+    };
+    const us4::LlamaConfig normalized =
+        us4::ResolveLlamaConfig(&invalidConfigAsset);
+    ok &= Expect(normalized.hiddenSize == 10U && normalized.queryHeads == 2U &&
+                     normalized.kvHeads == 1U && normalized.headDim == 5U,
+                 "llama config should normalize invalid head metadata");
+    ok &= Expect(normalized.ropeScaling == us4::RopeScalingType::kYaRN,
+                 "llama config should parse rope scaling case-insensitively");
+    ok &= Expect(std::abs(normalized.ropeTheta - 10000.0F) <= 1e-6F &&
+                     std::abs(normalized.ropeScale - 1.0F) <= 1e-6F,
+                 "llama config should clamp invalid rope values to defaults");
   }
 
   {

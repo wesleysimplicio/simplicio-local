@@ -1,6 +1,7 @@
 #pragma once
 
 #include "adapters/dense_adapter_base.h"
+#include "adapters/llama/llama_config.h"
 
 namespace us4 {
 
@@ -20,9 +21,11 @@ protected:
 
 private:
   std::vector<float> BuildRopeRow(std::size_t tokenId, std::uint32_t seed,
-                                  std::size_t position) const;
+                                  std::size_t position,
+                                  const LlamaConfig &config) const;
   std::vector<float> BuildValueRow(std::size_t tokenId, std::uint32_t seed,
-                                   std::size_t position) const;
+                                   std::size_t position,
+                                   const LlamaConfig &config) const;
 };
 
 } // namespace us4
