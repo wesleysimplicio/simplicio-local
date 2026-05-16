@@ -17,13 +17,17 @@ Sempre que houver tensao entre "estado atual do repositorio" e "estado planejado
 4. `architecture/DESIGN.md`
 5. `architecture/PATTERNS.md`
 6. `architecture/ADR-*.md`
-7. `workflow/WORKFLOW.md`
-8. `workflow/CONTRIBUTING.md`
-9. `workflow/RELEASE.md`
-10. `sprints/BACKLOG.md`
-11. `sprints/TIMELINE.md`
-12. `sprints/sprint-XX/SPRINT.md`
-13. `sprints/sprint-XX/*.task.md`
+7. `runtime/CLI-CONTRACT.md`
+8. `runtime/HARDWARE-PROBE.md`
+9. `runtime/TELEMETRY.md`
+10. `runtime/PLAYWRIGHT-SMOKE.md`
+11. `workflow/WORKFLOW.md`
+12. `workflow/CONTRIBUTING.md`
+13. `workflow/RELEASE.md`
+14. `sprints/BACKLOG.md`
+15. `sprints/TIMELINE.md`
+16. `sprints/sprint-XX/SPRINT.md`
+17. `sprints/sprint-XX/*.task.md`
 
 ## Regras desta pasta
 
@@ -38,5 +42,6 @@ Sempre que houver tensao entre "estado atual do repositorio" e "estado planejado
 |---|---|
 | `product/` | posicionamento, usuarios, capacidades e limites do runtime Apple |
 | `architecture/` | boundaries, contratos e padroes do runtime C++/MLX/Metal |
+| `runtime/` | contratos operacionais normativos (CLI, probe, telemetria, smoke) |
 | `workflow/` | processo real do repo hoje + transicao para o repo de runtime |
 | `sprints/` | roadmap, dependencias e corte executavel do sprint atual |

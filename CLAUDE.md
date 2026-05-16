@@ -152,6 +152,10 @@ Padrões completos em `.specs/architecture/PATTERNS.md` (preenchido incrementalm
 | Como o sistema é desenhado? | `.specs/architecture/DESIGN.md` |
 | Como escrever código aqui? | `.specs/architecture/PATTERNS.md` |
 | Por que decidimos X? | `.specs/architecture/ADR-*.md` |
+| Qual é o contrato do `us4-cli`? | `.specs/runtime/CLI-CONTRACT.md` |
+| O que o probe faz vs o selector? | `.specs/runtime/HARDWARE-PROBE.md` |
+| O que e como telemetrizar? | `.specs/runtime/TELEMETRY.md` |
+| O que o Playwright smoke garante? | `.specs/runtime/PLAYWRIGHT-SMOKE.md` |
 | Como faço PR/branch/release? | `.specs/workflow/{WORKFLOW,RELEASE,CONTRIBUTING}.md` |
 | O que tá no backlog? | `.specs/sprints/BACKLOG.md` |
 | Sprint atual? | `.specs/sprints/sprint-XX/SPRINT.md` |

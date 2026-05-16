@@ -1,6 +1,6 @@
 ---
 sprint: sprint-01
-status: todo
+status: done
 start: 2026-05-14
 end: 2026-05-27
 owner: us4-core
@@ -33,14 +33,15 @@ Transition this repository from planning/bootstrap into a real runtime skeleton 
 
 ## Tasks
 
-- [ ] T01.1 - Create root runtime scaffold and build contract
-- [ ] T01.2 - Define `us4-cli` contract for `--version` and `--probe`
-- [ ] T01.3 - Define `IUS4V6Adapter` and runtime boundaries
-- [ ] T01.4 - Define `HardwareProbe` and runtime mode selection contract
-- [ ] T01.5 - Define telemetry skeleton and validation maturity gates
-- [ ] T01.6 - Plan CI/DoD transition from starter to runtime
-- [ ] T01.7 - Define first Playwright CLI smoke coverage
-- [ ] T01.8 - Land ADR-001 and ADR-002
+- [x] T01.0 - Completar Agentic Starter do repositorio
+- [x] T01.1 - Create root runtime scaffold and build contract
+- [x] T01.2 - Define `us4-cli` contract for `--version` and `--probe`
+- [x] T01.3 - Define `IUS4V6Adapter` and runtime boundaries
+- [x] T01.4 - Define `HardwareProbe` and runtime mode selection contract
+- [x] T01.5 - Define telemetry skeleton and validation maturity gates
+- [x] T01.6 - Plan CI/DoD transition from starter to runtime
+- [x] T01.7 - Define first Playwright CLI smoke coverage
+- [x] T01.8 - Land ADR-001 and ADR-002
 
 ## Test plan
 
