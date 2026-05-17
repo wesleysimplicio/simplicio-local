@@ -40,6 +40,30 @@ LoadOptionalAsset(const std::optional<std::filesystem::path> &manifest) {
   return loaded;
 }
 
+std::string DisplayPath(const std::string_view rawPath) {
+  if (rawPath.empty()) {
+    return "";
+  }
+
+  std::error_code error;
+  const std::filesystem::path rawFilesystemPath =
+      std::filesystem::path(std::string(rawPath)).make_preferred();
+  const std::filesystem::path canonicalRoot =
+      std::filesystem::weakly_canonical(RepoRoot(), error);
+  error.clear();
+  const std::filesystem::path canonicalAsset =
+      std::filesystem::weakly_canonical(rawFilesystemPath, error);
+  if (!error) {
+    const std::filesystem::path relativePath =
+        canonicalAsset.lexically_relative(canonicalRoot);
+    if (!relativePath.empty() && relativePath.native()[0] != '.') {
+      return relativePath.generic_string();
+    }
+  }
+
+  return rawFilesystemPath.generic_string();
+}
+
 std::optional<us4::benchmarks::CaseObservation>
 RunCase(const us4::HardwareProbeResult &probe, const std::string_view label,
         const std::string_view model,
@@ -72,6 +96,9 @@ RunCase(const us4::HardwareProbeResult &probe, const std::string_view label,
   std::cout << "requested_backend=" << observation.requestedBackend << "\n";
   std::cout << "observed_backend=" << observation.observedBackend << "\n";
   std::cout << "backend_reason=" << observation.backendReason << "\n";
+  std::cout << "asset_format=" << observation.assetFormat << "\n";
+  std::cout << "asset_path=" << DisplayPath(observation.assetPath) << "\n";
+  std::cout << "mode=" << observation.mode << "\n";
   std::cout << "weight_dtype=" << observation.weightDType << "\n";
   std::cout << "neon_kernel_flavor=" << observation.neonKernelFlavor << "\n";
   std::cout << "dequant_path=" << observation.dequantPath << "\n";
@@ -98,8 +125,8 @@ void PrintRegression(const std::string_view caseLabel,
             << (regression.dequantPathMatch ? "true" : "false") << "\n";
   std::cout << "neon_kernel_visible="
             << (regression.neonKernelVisible ? "true" : "false") << "\n";
-  std::cout << "neon_executed="
-            << (regression.neonExecuted ? "true" : "false") << "\n";
+  std::cout << "neon_executed=" << (regression.neonExecuted ? "true" : "false")
+            << "\n";
   std::cout << "fallback_observed="
             << (regression.fallbackObserved ? "true" : "false") << "\n";
   std::cout << "speedup_vs_scalar=" << regression.speedupVsScalar << "\n";
@@ -108,11 +135,23 @@ void PrintRegression(const std::string_view caseLabel,
   std::cout << "--\n";
 }
 
+void PrintCorrectnessPlaceholder(const std::string_view caseLabel) {
+  std::cout << "compare_case=" << caseLabel << "\n";
+  std::cout << "correctness_window_tokens=64\n";
+  std::cout << "correctness_delta=pending_external_reference\n";
+  std::cout << "correctness_status=placeholder\n";
+  std::cout << "correctness_reason=hf-reference-path-not-wired\n";
+  std::cout << "--\n";
+}
+
 } // namespace
 
 int main() {
   const us4::HardwareProbeResult probe = us4::HardwareProbe::Detect();
   std::cout << "benchmark=dense_baseline\n";
+  std::cout << "platform=" << probe.platform << "\n";
+  std::cout << "architecture=" << probe.architecture << "\n";
+  std::cout << "chip=" << probe.chip << "\n";
   std::cout << "recommended_mode=" << us4::ToString(probe.recommendedMode)
             << "\n";
   std::cout << "neon_vector_bits=" << probe.neonVectorBits << "\n";
@@ -129,44 +168,70 @@ int main() {
     return 1;
   }
 
-  const std::optional<us4::ModelAsset> int8Asset = LoadOptionalAsset(
-      repoRoot / "tests" / "fixtures" / "models" / "bitnet-b1.58-2b" /
-      "model.us4manifest");
+  const std::optional<us4::ModelAsset> llamaFixtureAsset =
+      LoadOptionalAsset(repoRoot / "tests" / "fixtures" / "models" /
+                        "llama-3.1-8b" / "model.us4manifest");
+  if (!llamaFixtureAsset.has_value()) {
+    return 1;
+  }
+
+  if (!RunCase(probe, "llama-fixture/metal-requested", "llama-3.1-8b",
+               llamaFixtureAsset, us4::BackendType::kMetal)
+           .has_value()) {
+    return 1;
+  }
+  PrintCorrectnessPlaceholder("llama-fixture/metal-requested");
+
+  const std::optional<us4::ModelAsset> llamaGgufAsset =
+      LoadOptionalAsset(repoRoot / "tests" / "fixtures" / "models" /
+                        "llama-3.1-8b" / "toy-llama.gguf");
+  if (!llamaGgufAsset.has_value()) {
+    return 1;
+  }
+
+  if (!RunCase(probe, "llama-gguf/neon-requested", "llama-3.1-8b",
+               llamaGgufAsset, us4::BackendType::kNeon)
+           .has_value()) {
+    return 1;
+  }
+  PrintCorrectnessPlaceholder("llama-gguf/neon-requested");
+
+  const std::optional<us4::ModelAsset> int8Asset =
+      LoadOptionalAsset(repoRoot / "tests" / "fixtures" / "models" /
+                        "bitnet-b1.58-2b" / "model.us4manifest");
   if (!int8Asset.has_value()) {
     return 1;
   }
 
-  const auto int8Scalar = RunCase(probe, "lowbit-int8/scalar",
-                                  "bitnet-b1.58-2b", int8Asset,
-                                  us4::BackendType::kScalarCpu);
+  const auto int8Scalar =
+      RunCase(probe, "lowbit-int8/scalar", "bitnet-b1.58-2b", int8Asset,
+              us4::BackendType::kScalarCpu);
   const auto int8Neon = RunCase(probe, "lowbit-int8/neon", "bitnet-b1.58-2b",
                                 int8Asset, us4::BackendType::kNeon);
   if (!int8Scalar.has_value() || !int8Neon.has_value()) {
     return 1;
   }
-  PrintRegression("lowbit-int8",
-                  us4::benchmarks::CompareLowBitObservations(*int8Scalar,
-                                                             *int8Neon));
+  PrintRegression("lowbit-int8", us4::benchmarks::CompareLowBitObservations(
+                                     *int8Scalar, *int8Neon));
 
-  const std::optional<us4::ModelAsset> int4Asset = LoadOptionalAsset(
-      repoRoot / "tests" / "fixtures" / "models" / "pt-bitnet-ternary-2b" /
-      "model.us4manifest");
+  const std::optional<us4::ModelAsset> int4Asset =
+      LoadOptionalAsset(repoRoot / "tests" / "fixtures" / "models" /
+                        "pt-bitnet-ternary-2b" / "model.us4manifest");
   if (!int4Asset.has_value()) {
     return 1;
   }
 
-  const auto int4Scalar = RunCase(probe, "lowbit-int4/scalar",
-                                  "pt-bitnet-ternary-2b", int4Asset,
-                                  us4::BackendType::kScalarCpu);
+  const auto int4Scalar =
+      RunCase(probe, "lowbit-int4/scalar", "pt-bitnet-ternary-2b", int4Asset,
+              us4::BackendType::kScalarCpu);
   const auto int4Neon =
       RunCase(probe, "lowbit-int4/neon", "pt-bitnet-ternary-2b", int4Asset,
               us4::BackendType::kNeon);
   if (!int4Scalar.has_value() || !int4Neon.has_value()) {
     return 1;
   }
-  PrintRegression("lowbit-int4",
-                  us4::benchmarks::CompareLowBitObservations(*int4Scalar,
-                                                             *int4Neon));
+  PrintRegression("lowbit-int4", us4::benchmarks::CompareLowBitObservations(
+                                     *int4Scalar, *int4Neon));
 
   return 0;
 }

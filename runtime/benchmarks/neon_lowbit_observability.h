@@ -16,6 +16,9 @@ struct CaseObservation {
   std::string requestedBackend;
   std::string observedBackend;
   std::string backendReason;
+  std::string assetFormat;
+  std::string assetPath;
+  std::string mode;
   std::string weightDType;
   std::string neonKernelFlavor;
   std::string dequantPath;
@@ -39,8 +42,8 @@ struct LowBitRegression {
   std::string reason = "uninitialized";
 };
 
-inline std::string RequestedBackendLabel(
-    const std::optional<BackendType> requestedBackend) {
+inline std::string
+RequestedBackendLabel(const std::optional<BackendType> requestedBackend) {
   return requestedBackend.has_value() ? std::string(ToString(*requestedBackend))
                                       : "auto";
 }
@@ -80,16 +83,18 @@ inline bool HasVisibleLowBitKernel(const CaseObservation &observation) {
          observation.neonKernelFlavor != "none";
 }
 
-inline CaseObservation ObserveCase(const std::string_view label,
-                                   const GenerationResult &result,
-                                   const long long elapsedMs,
-                                   const std::optional<BackendType>
-                                       requestedBackend = std::nullopt) {
+inline CaseObservation
+ObserveCase(const std::string_view label, const GenerationResult &result,
+            const long long elapsedMs,
+            const std::optional<BackendType> requestedBackend = std::nullopt) {
   CaseObservation observation;
   observation.label = std::string(label);
   observation.requestedBackend = RequestedBackendLabel(requestedBackend);
   observation.observedBackend = result.backend;
   observation.backendReason = result.backendReason;
+  observation.assetFormat = result.assetFormat;
+  observation.assetPath = result.assetPath;
+  observation.mode = std::string(ToString(result.mode));
   observation.weightDType = result.weightDType;
   observation.neonKernelFlavor = result.neonKernelFlavor;
   observation.dequantPath = result.dequantPath;
@@ -101,20 +106,19 @@ inline CaseObservation ObserveCase(const std::string_view label,
   return observation;
 }
 
-inline LowBitRegression CompareLowBitObservations(
-    const CaseObservation &scalarObservation,
-    const CaseObservation &neonObservation) {
+inline LowBitRegression
+CompareLowBitObservations(const CaseObservation &scalarObservation,
+                          const CaseObservation &neonObservation) {
   LowBitRegression regression;
-  regression.comparable = scalarObservation.weightDType ==
-                              neonObservation.weightDType &&
-                          scalarObservation.generatedTokenCount > 0 &&
-                          neonObservation.generatedTokenCount > 0;
+  regression.comparable =
+      scalarObservation.weightDType == neonObservation.weightDType &&
+      scalarObservation.generatedTokenCount > 0 &&
+      neonObservation.generatedTokenCount > 0;
   regression.textMatch =
       scalarObservation.textFingerprint == neonObservation.textFingerprint &&
       scalarObservation.text == neonObservation.text;
-  regression.tokenCountMatch =
-      scalarObservation.generatedTokenCount ==
-      neonObservation.generatedTokenCount;
+  regression.tokenCountMatch = scalarObservation.generatedTokenCount ==
+                               neonObservation.generatedTokenCount;
 
   const std::string expectedDequantPath =
       ExpectedLowBitDequantPath(neonObservation.weightDType);
