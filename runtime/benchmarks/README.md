@@ -6,7 +6,8 @@ que sustentam comparacoes honestas entre backends.
 ## Estado atual
 
 - `dense_baseline.cpp` mede o scaffold denso atual e imprime metadados de
-  backend, fallback, token count, tempo e fingerprint do texto gerado.
+  backend, fallback, token count, tempo, `asset_format`, `asset_path`,
+  `mode` e fingerprint do texto gerado.
 - Os numeros atuais ainda sao evidencia de contrato, nao prova de throughput
   real de Llama 3/4.
 
@@ -27,8 +28,10 @@ registrar pelo menos:
 - `recommended_mode` ou `mode`
 - perfil de hardware relevante para comparar runs
 
-Se a trilha de corretude contra referencia HF ja existir, adicionar tambem o
-delta dos primeiros 64 tokens no mesmo output ou em um artefato vizinho.
+Enquanto a trilha de corretude contra referencia HF nao existir, o benchmark
+deve emitir um placeholder explicito (`correctness_delta=pending_external_reference`).
+Quando a referencia existir, adicionar o delta dos primeiros 64 tokens no
+mesmo output ou em um artefato vizinho.
 
 ## Regras
 

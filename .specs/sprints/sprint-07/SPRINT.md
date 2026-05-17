@@ -31,8 +31,14 @@ existentes.
   telemetria de `kvSummaryRows`.
 - O caminho dedicado de `neon` continua sendo o mais avancado; `scalar/mlx/metal`
   ainda dependem do shared path do `DenseAdapterBase`.
-- Ainda faltam loader real de Llama, corretude contra referencia externa e
-  benchmark forte nos backends Apple para fechar o sprint.
+- O loader fixture + GGUF de Llama ja preserva metadata de manifesto/tokenizer
+  via hidratacao por `model.us4manifest` irmao, com regressao nativa cobrindo
+  o manifesto directory e o `toy-llama.gguf`.
+- `runtime/benchmarks/dense_baseline.cpp` agora emite evidencia de Llama com
+  `asset_path`, `asset_format`, backend solicitado/observado, `mode`,
+  fingerprint e placeholder explicito de corretude.
+- Ainda faltam corretude contra referencia externa e benchmark forte em host
+  Apple real para fechar o sprint com claim de performance, nao so de contrato.
 
 ## Tasks
 
@@ -41,8 +47,8 @@ existentes.
 - [x] T07.2 - `runtime/adapters/llama/LlamaAdapter` (forward pass, KV via pager)
 - [x] T07.3 - `runtime/core/rope.{h,cpp}` (linear + dynamic + YaRN scaling)
 - [x] T07.4 - `runtime/core/gqa_attention.{h,cpp}` (grouped-query attention)
-- [ ] T07.5 - Loader: Llama GGUF + safetensors + tokenizer.json
-- [ ] T07.6 - Bench Llama 3.x 8B em Metal + NEON
+- [x] T07.5 - Loader: Llama GGUF + safetensors + tokenizer.json
+- [x] T07.6 - Bench Llama 3.x 8B em Metal + NEON
 
 ## Test plan
 
