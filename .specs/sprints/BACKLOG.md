@@ -9,11 +9,10 @@
 ## Current planning inventory
 
 - 12 sprint directories exist under `.specs/sprints/`
-- 22 authored task files currently exist on disk
-- `sprint-01`, `sprint-04`, `sprint-06`, and `sprint-07` now have explicit
-  task-file decomposition
-- Sprints 02-03, 05, and 08-12 still have scope/theme/timeline, but still need
-  finer task decomposition as implementation continues
+- 75 authored task files currently exist on disk
+- All 12 sprint directories now have explicit task-file decomposition
+- Remaining planning work is now about status upkeep and refinement, not missing
+  task-file scaffolding
 
 ## Quality gates by maturity
 
