@@ -43,6 +43,7 @@
 #include "neon/neon_attention.h"
 #include "neon/neon_matmul.h"
 #include "scheduler/continuous_batcher.h"
+#include "scheduler/session_pool.h"
 #include "sprint_01_contract_placeholders.h"
 
 namespace {
@@ -1238,6 +1239,36 @@ int main() {
         Expect(weightedDecision.slices[0].roundsVisited == 2U &&
                    weightedDecision.slices[1].roundsVisited == 2U,
                "continuous batcher should surface rounds visited per session");
+  }
+
+  {
+    us4::SessionPool pool;
+    const std::string alphaKv = pool.NamespacedKvKey("alpha", "prompt");
+    const std::string betaKv = pool.NamespacedKvKey("beta", "prompt");
+    const std::string alphaPrefix =
+        pool.NamespacedPrefixKey("alpha", "hello world");
+    const std::string betaPrefix =
+        pool.NamespacedPrefixKey("beta", "hello world");
+    pool.RecordPromptPrefix("alpha", "hello world");
+    pool.RecordPromptPrefix("beta", "hello world");
+    const auto alpha = pool.Lookup("alpha");
+    const auto beta = pool.Lookup("beta");
+
+    ok &= Expect(alpha.has_value() && beta.has_value(),
+                 "session pool should retain acquired sessions");
+    ok &= Expect(alphaKv == "session::alpha::kv::prompt" &&
+                     betaKv == "session::beta::kv::prompt",
+                 "session pool should namespace kv keys per session");
+    ok &= Expect(alphaPrefix != betaPrefix,
+                 "session pool should isolate prompt prefixes across sessions");
+    ok &= Expect(alpha->lastPromptPrefix == "hello world" &&
+                     beta->lastPromptPrefix == "hello world",
+                 "session pool should retain prompt ownership per session");
+    ok &= Expect(pool.ActiveSessionCount() == 2U,
+                 "session pool should report active session count");
+    ok &= Expect(pool.Release("alpha") && !pool.Lookup("alpha").has_value() &&
+                     pool.Lookup("beta").has_value(),
+                 "session pool release should not leak other sessions");
   }
 
   {

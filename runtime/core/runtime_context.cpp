@@ -44,6 +44,8 @@ SparsityAwareCache &RuntimeContext::sparsityCache() { return sparsityCache_; }
 
 MultimodalCache &RuntimeContext::multimodalCache() { return multimodalCache_; }
 
+SessionPool &RuntimeContext::sessionPool() { return sessionPool_; }
+
 void RuntimeContext::SetMode(RuntimeMode mode) { mode_ = mode; }
 
 void RuntimeContext::SetBackend(BackendType backend) { backend_ = backend; }

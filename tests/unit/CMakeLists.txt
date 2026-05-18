@@ -11,6 +11,7 @@ set(us4_runtime_contract_test_sources
   hardware_probe_contract_smoke_test.cpp
   telemetry_contract_smoke_test.cpp
   scheduler_contract_test.cpp
+  session_pool_contract_test.cpp
   backend_selector_contract_test.cpp
   benchmark_observability_contract_test.cpp
   model_asset_contract_test.cpp

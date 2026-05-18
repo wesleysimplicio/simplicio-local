@@ -13,6 +13,7 @@
 #include "mlx/mlx_bridge.h"
 #include "moe/expert_pager.h"
 #include "moe/router.h"
+#include "scheduler/session_pool.h"
 
 namespace us4 {
 
@@ -38,6 +39,7 @@ public:
   ExpertPager &expertPager();
   SparsityAwareCache &sparsityCache();
   MultimodalCache &multimodalCache();
+  SessionPool &sessionPool();
   void SetMode(RuntimeMode mode);
   void SetBackend(BackendType backend);
 
@@ -56,6 +58,7 @@ private:
   ExpertPager expertPager_;
   SparsityAwareCache sparsityCache_;
   MultimodalCache multimodalCache_;
+  SessionPool sessionPool_;
 };
 
 } // namespace us4
