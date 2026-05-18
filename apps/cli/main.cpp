@@ -196,6 +196,10 @@ void PrintRunText(const us4::GenerationResult &result) {
             << "moe_pager_evictions: " << result.moePagerEvictions << "\n"
             << "moe_pager_reuses: " << result.moePagerReuses << "\n"
             << "moe_resident_experts: " << result.moeResidentExperts << "\n"
+            << "moe_shard_count: " << result.moeShardCount << "\n"
+            << "moe_active_experts: " << result.moeActiveExperts << "\n"
+            << "moe_lazy_load: " << (result.moeLazyLoad ? "true" : "false")
+            << "\n"
             << "weight_dtype: " << result.weightDType << "\n"
             << "neon_kernel_flavor: " << result.neonKernelFlavor << "\n"
             << "dequant_path: " << result.dequantPath << "\n"
@@ -260,6 +264,10 @@ void PrintRunJson(const us4::GenerationResult &result) {
             << "\"moe_pager_evictions\":" << result.moePagerEvictions << ","
             << "\"moe_pager_reuses\":" << result.moePagerReuses << ","
             << "\"moe_resident_experts\":" << result.moeResidentExperts << ","
+            << "\"moe_shard_count\":" << result.moeShardCount << ","
+            << "\"moe_active_experts\":" << result.moeActiveExperts << ","
+            << "\"moe_lazy_load\":" << (result.moeLazyLoad ? "true" : "false")
+            << ","
             << "\"weight_dtype\":\"" << EscapeJson(result.weightDType) << "\","
             << "\"neon_kernel_flavor\":\""
             << EscapeJson(result.neonKernelFlavor) << "\","

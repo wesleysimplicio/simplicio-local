@@ -18,6 +18,12 @@ Home de routing, paging e telemetria agregada para adapters sparse.
   experts foram escolhidos para aquele prompt.
 - `KimiMoEAdapter` segue a mesma ideia com a assinatura `kimi-route eX eY`,
   mantendo o pager observavel para prompts repetidos e para mudancas de rota.
+- O contrato de loader agora preserva tambem:
+  - `moe_shard_count`
+  - `moe_active_experts`
+  - `moe_lazy_load`
+- Esses campos sao derivados de `ModelAsset` e ficam visiveis no output do CLI
+  para manifests/binarios MoE com shards declarados.
 - `ExpertPager` agora projeta tambem:
   - `moe_pager_loads`
   - `moe_pager_evictions`

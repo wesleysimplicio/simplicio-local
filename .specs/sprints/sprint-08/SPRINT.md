@@ -29,6 +29,9 @@ routing. Offload de experts cold pra RAM.
 - `KimiMoEAdapter` agora espelha esse nivel de concretude com heuristica
   propria de roteamento e assinatura `kimi-route eX eY`, tambem deixando reuse
   e eviction do pager visiveis no fluxo nativo.
+- `ModelAsset` e o CLI nativo agora preservam metadados shard-aware para MoE:
+  `moe_lazy_load`, `moe_active_experts` e `moe_shard_count` ficam visiveis
+  tanto em fixtures quanto em binarios com manifesto irmao.
 - `runtime/moe/ExpertPager` agora expõe `load`, `eviction`, `reuse` e
   `residentCount` de forma visível, com `ExpertPagerSnapshot` preservando os
   experts residentes desta chamada.
@@ -41,7 +44,7 @@ routing. Offload de experts cold pra RAM.
 - [x] T08.2 - `runtime/moe/ExpertPager` (page experts em unified memory, evict LRU)
 - [x] T08.3 - `runtime/adapters/deepseek/DeepSeekMoEAdapter` (config, shared experts, routed experts)
 - [x] T08.4 - `runtime/adapters/kimi/KimiMoEAdapter`
-- [ ] T08.5 - Loader MoE: lazy load por expert (sharded weights)
+- [x] T08.5 - Loader MoE: lazy load por expert (sharded weights)
 - [ ] T08.6 - Telemetry: expert hit-rate, eviction count, router entropy
 
 ## Test plan

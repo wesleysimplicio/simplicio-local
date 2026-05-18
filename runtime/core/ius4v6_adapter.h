@@ -58,6 +58,9 @@ struct GenerationResult {
   std::size_t moePagerEvictions = 0;
   std::size_t moePagerReuses = 0;
   std::size_t moeResidentExperts = 0;
+  std::size_t moeShardCount = 0;
+  std::size_t moeActiveExperts = 0;
+  bool moeLazyLoad = false;
   std::string weightDType;
   std::string neonKernelFlavor;
   std::string dequantPath;

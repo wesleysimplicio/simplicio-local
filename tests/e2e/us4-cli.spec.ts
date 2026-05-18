@@ -845,6 +845,59 @@ test.describe("Native CLI sprint 02 contract", () => {
     expect(JSON.parse(stdout).text).toContain("kimi-route");
   });
 
+  test("moe manifest path keeps shard-aware loader telemetry visible",
+       async ({}, testInfo) => {
+         const fixturePath = path.join(
+             repoRoot,
+             "tests",
+             "fixtures",
+             "models",
+             "deepseek-v2-lite",
+             "model.us4manifest",
+         );
+         const {stdout, stderr} = await execFileAsync(
+             nativeCliPath!,
+             [
+               "run",
+               "--model-path",
+               fixturePath,
+               "--prompt",
+               "code logic runtime",
+               "--max-tokens",
+               "4",
+               "--json",
+             ],
+             {
+               cwd : repoRoot,
+               env : {
+                 ...process.env,
+                 NO_COLOR : "1",
+               },
+             },
+         );
+
+         await testInfo.attach("stdout-native-moe-loader", {
+           body : stdout.trim() || "(empty)",
+           contentType : "text/plain",
+         });
+         await testInfo.attach("stderr-native-moe-loader", {
+           body : stderr.trim() || "(empty)",
+           contentType : "text/plain",
+         });
+
+         expect(stderr.trim()).toBe("");
+         expect(JSON.parse(stdout)).toMatchObject({
+           family : "deepseek",
+           model : "deepseek-v2-lite-fixture",
+           asset_format : "fixture-manifest",
+           asset_path : expect.stringContaining("deepseek-v2-lite"),
+           moe_shard_count : 2,
+           moe_active_experts : 2,
+           moe_lazy_load : true,
+           generated_tokens : expect.any(Array),
+         });
+       });
+
   test(
       "bitnet gguf loader keeps low-bit telemetry visible without explicit model",
       async ({}, testInfo) => {

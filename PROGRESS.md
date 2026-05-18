@@ -48,6 +48,27 @@ Validation:
 Next:
 Fechar PR/merge de T08.4 e seguir para T08.5 (loader MoE shard-aware).
 
+### Checkpoint 3
+
+Status: in_progress
+
+Task:
+T08.5 - Add moe shard-aware loader contract
+
+Result:
+`ModelAsset` agora preserva shard metadata (`moe_lazy_load`,
+`moe_active_experts`, `expertShardPaths`) e o CLI nativo projeta isso como
+`moe_shard_count`, `moe_active_experts` e `moe_lazy_load`.
+
+Validation:
+`npm run lint`; `npm test -- --coverage`; `cmake --build build --config Release`;
+`ctest --test-dir build --output-on-failure -C Release`;
+`npx playwright test --reporter=list,html`; `npm run pack:dry`;
+`build\\runtime\\benchmarks\\dense_baseline.exe`
+
+Next:
+Fechar PR/merge de T08.5 e seguir para T08.6 (telemetria MoE expandida).
+
 ## Blockers
 
 Nenhum bloqueio funcional. O ambiente local continua sem GTest instalado, entao
@@ -63,5 +84,6 @@ os gates nativos seguem por `us4_runtime_smoke_test` e
 | `cmake --build build --config Release` | pass | rebuild nativo ok |
 | `ctest --test-dir build --output-on-failure -C Release` | pass | smoke + contract runner |
 | `npx playwright test --reporter=list,html` | pass | 16 testes verdes na rodada atual |
+| `npx playwright test --reporter=list,html` | pass | 17 testes verdes com loader MoE shard-aware |
 | `npm run pack:dry` | pass | tarball `0.1.27` ok |
 | `build\\runtime\\benchmarks\\dense_baseline.exe` | pass | observabilidade MoE/low-bit ok |

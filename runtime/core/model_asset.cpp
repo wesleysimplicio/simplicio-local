@@ -68,6 +68,25 @@ std::vector<std::string> SplitCsv(const std::string &value) {
   return parts;
 }
 
+bool ParseBool(const std::string &value) {
+  const std::string normalized = ToLower(Trim(value));
+  return normalized == "true" || normalized == "1" || normalized == "yes";
+}
+
+std::vector<std::filesystem::path>
+ResolveShardPaths(const std::filesystem::path &baseDirectory,
+                  const std::string &value) {
+  std::vector<std::filesystem::path> shards;
+  for (const std::string &entry : SplitCsv(value)) {
+    std::filesystem::path shardPath(entry);
+    if (shardPath.is_relative()) {
+      shardPath = baseDirectory / shardPath;
+    }
+    shards.push_back(shardPath.lexically_normal());
+  }
+  return shards;
+}
+
 bool LoadFixtureManifest(const std::filesystem::path &path, ModelAsset &asset,
                          std::string *error) {
   std::ifstream stream(path);
@@ -102,6 +121,16 @@ bool LoadFixtureManifest(const std::filesystem::path &path, ModelAsset &asset,
   asset.vocabulary = SplitCsv(values["vocabulary"]);
   asset.defaultPromptToken = values["default_prompt_token"];
   asset.sourcePath = path;
+  asset.moeLazyLoad =
+      values.contains("moe_lazy_load") && ParseBool(values["moe_lazy_load"]);
+  asset.moeActiveExperts =
+      values.contains("moe_active_experts")
+          ? static_cast<std::size_t>(std::stoul(values["moe_active_experts"]))
+          : 0U;
+  asset.expertShardPaths =
+      values.contains("moe_expert_shards")
+          ? ResolveShardPaths(path.parent_path(), values["moe_expert_shards"])
+          : std::vector<std::filesystem::path>{};
   asset.metadata = values;
 
   if (asset.family.empty() || asset.modelName.empty()) {
@@ -137,6 +166,9 @@ void HydrateFromSiblingManifest(const std::filesystem::path &assetPath,
   asset.seed = manifestAsset.seed;
   asset.vocabulary = manifestAsset.vocabulary;
   asset.defaultPromptToken = manifestAsset.defaultPromptToken;
+  asset.moeLazyLoad = manifestAsset.moeLazyLoad;
+  asset.moeActiveExperts = manifestAsset.moeActiveExperts;
+  asset.expertShardPaths = manifestAsset.expertShardPaths;
   asset.metadata = manifestAsset.metadata;
 
   const std::filesystem::path tokenizerPath =

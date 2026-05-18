@@ -672,6 +672,12 @@ GenerationResult DenseAdapterBase::FinalizeGenerationResult(
   result.prefixCacheEntries = mutableContext.prefixCache().EntryCount();
   result.mlxPlanBuilt = context.mlxBridge().LastPlan().has_value();
   result.mlxEvaluated = context.mlxBridge().LastEvaluationSucceeded();
+  result.moeShardCount =
+      request.asset != nullptr ? request.asset->expertShardPaths.size() : 0U;
+  result.moeActiveExperts =
+      request.asset != nullptr ? request.asset->moeActiveExperts : 0U;
+  result.moeLazyLoad =
+      request.asset != nullptr ? request.asset->moeLazyLoad : false;
   result.weightDType = request.asset != nullptr
                            ? std::string(ToString(request.asset->weightDType))
                            : "fp32";

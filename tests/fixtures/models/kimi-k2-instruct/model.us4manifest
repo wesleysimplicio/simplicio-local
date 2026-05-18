@@ -4,3 +4,6 @@ weight_dtype=bf16
 seed=62002
 default_prompt_token=hi
 vocabulary=kimi,moe,routing,experts,local,context,apple,runtime,token,selection,responds,now,.,smart,fast,hi
+moe_lazy_load=true
+moe_active_experts=2
+moe_expert_shards=experts-00.safetensors,experts-01.safetensors

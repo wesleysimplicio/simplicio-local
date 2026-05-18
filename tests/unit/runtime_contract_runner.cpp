@@ -250,6 +250,28 @@ int main() {
   }
 
   {
+    const std::array<std::filesystem::path, 2> kMoeAssets = {
+        RepoRoot() / "tests" / "fixtures" / "models" / "deepseek-v2-lite" /
+            "toy-deepseek.safetensors",
+        RepoRoot() / "tests" / "fixtures" / "models" / "kimi-k2-instruct" /
+            "toy-kimi.safetensors",
+    };
+    for (const std::filesystem::path &inputPath : kMoeAssets) {
+      us4::ModelAsset asset;
+      std::string error;
+      ok &=
+          Expect(us4::LoadModelAsset(inputPath, asset, &error),
+                 "moe binary assets should inherit sibling manifest metadata");
+      ok &= Expect(asset.moeLazyLoad,
+                   "moe loader contract should preserve lazy-load flag");
+      ok &= Expect(asset.moeActiveExperts == 2U,
+                   "moe loader contract should preserve active expert count");
+      ok &= Expect(asset.expertShardPaths.size() == 2U,
+                   "moe loader contract should preserve expert shard list");
+    }
+  }
+
+  {
     us4::Tensor scalarQuery({1, 2}, us4::DType::kFloat32);
     us4::Tensor scalarKey({2, 2}, us4::DType::kFloat32);
     us4::Tensor scalarValue({2, 2}, us4::DType::kFloat32);

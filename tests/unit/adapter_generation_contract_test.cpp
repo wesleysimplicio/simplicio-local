@@ -134,6 +134,38 @@ TEST(AdapterGenerationContractTest,
 }
 
 TEST(AdapterGenerationContractTest,
+     MoeAdaptersSurfaceShardAwareLoaderTelemetryWhenAssetIsProvided) {
+  const std::array<std::pair<const char *, std::filesystem::path>, 2> kCases = {
+      {
+          {"deepseek-v2-lite", RepoRoot() / "tests" / "fixtures" / "models" /
+                                   "deepseek-v2-lite" / "model.us4manifest"},
+          {"kimi-k2-instruct", RepoRoot() / "tests" / "fixtures" / "models" /
+                                   "kimi-k2-instruct" / "model.us4manifest"},
+      }};
+
+  for (const auto &[modelName, manifestPath] : kCases) {
+    SCOPED_TRACE(modelName);
+
+    const us4::IUS4V6Adapter *adapter = us4::FindAdapterByModel(modelName);
+    ASSERT_NE(adapter, nullptr);
+
+    us4::ModelAsset asset;
+    std::string error;
+    ASSERT_TRUE(us4::LoadModelAsset(manifestPath, asset, &error)) << error;
+
+    us4::RuntimeContext context(MakeProbe());
+    adapter->ConfigureRuntime(context);
+    const us4::GenerationResult result = adapter->Generate(
+        {.prompt = "smart context", .maxTokens = 3, .asset = &asset}, context);
+
+    EXPECT_EQ(result.moeShardCount, 2U);
+    EXPECT_EQ(result.moeActiveExperts, 2U);
+    EXPECT_TRUE(result.moeLazyLoad);
+    EXPECT_EQ(result.assetFormat, "fixture-manifest");
+  }
+}
+
+TEST(AdapterGenerationContractTest,
      DenseAdapterUsesFixtureManifestAndRequestedBackendFallback) {
   const us4::IUS4V6Adapter *adapter = us4::FindAdapterByModel("qwen-0.5b");
   ASSERT_NE(adapter, nullptr);

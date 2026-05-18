@@ -186,3 +186,31 @@ TEST(ModelAssetContractTest,
     EXPECT_TRUE(asset.metadata.contains("tokenizer_json"));
   }
 }
+
+TEST(ModelAssetContractTest,
+     MoeAssetsSurfaceShardAwareLoaderMetadataAcrossManifestAndBinaryInputs) {
+  const std::array<std::filesystem::path, 4> kInputs = {
+      FixtureRoot() / "deepseek-v2-lite" / "model.us4manifest",
+      FixtureRoot() / "deepseek-v2-lite" / "toy-deepseek.safetensors",
+      FixtureRoot() / "kimi-k2-instruct" / "model.us4manifest",
+      FixtureRoot() / "kimi-k2-instruct" / "toy-kimi.safetensors",
+  };
+
+  for (const std::filesystem::path &inputPath : kInputs) {
+    SCOPED_TRACE(inputPath.string());
+
+    us4::ModelAsset asset;
+    std::string error;
+    ASSERT_TRUE(us4::LoadModelAsset(inputPath, asset, &error)) << error;
+
+    EXPECT_TRUE(asset.moeLazyLoad);
+    EXPECT_EQ(asset.moeActiveExperts, 2U);
+    ASSERT_EQ(asset.expertShardPaths.size(), 2U);
+    EXPECT_EQ(asset.expertShardPaths[0].filename(), "experts-00.safetensors");
+    EXPECT_EQ(asset.expertShardPaths[1].filename(), "experts-01.safetensors");
+    EXPECT_EQ(asset.metadata.at("moe_lazy_load"), "true");
+    EXPECT_EQ(asset.metadata.at("moe_active_experts"), "2");
+    EXPECT_EQ(asset.metadata.at("moe_expert_shards"),
+              "experts-00.safetensors,experts-01.safetensors");
+  }
+}
