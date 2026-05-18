@@ -17,8 +17,10 @@ add_library(us4_runtime_core
   adapters/qwen/qwen_adapter.cpp
   adapters/gemma/gemma_adapter.cpp
   adapters/kimi/kimi_moe_adapter.cpp
+  adapters/glm/glm_adapter.cpp
   adapters/llama/llama_config.cpp
   adapters/llama/llama_adapter.cpp
+  adapters/minimax/minimax_adapter.cpp
   adapters/ternary/ternary_adapter.cpp
   kv/eviction_policy.cpp
   kv/kv_pager.cpp
@@ -33,11 +35,14 @@ add_library(us4_runtime_core
   metal/kernel_library.cpp
   mlx/dense_plan.cpp
   mlx/mlx_bridge.cpp
+  cache/multimodal_cache.cpp
+  cache/sparsity_aware_cache.cpp
   moe/expert_pager.cpp
   moe/moe_telemetry.cpp
   moe/router.cpp
   moe/router_metrics.cpp
   moe/shard_loader.cpp
+  moe/speculative_prefetch.cpp
   neon/bitnet_matmul.cpp
   neon/block_gemm.cpp
   neon/dequant_int4.cpp
