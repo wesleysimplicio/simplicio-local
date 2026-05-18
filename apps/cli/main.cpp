@@ -188,6 +188,10 @@ void PrintRunText(const us4::GenerationResult &result) {
             << "\n"
             << "mlx_evaluated: " << (result.mlxEvaluated ? "true" : "false")
             << "\n"
+            << "moe_selected_experts: " << result.moeSelectedExperts << "\n"
+            << "moe_router_entropy: " << result.moeRouterEntropy << "\n"
+            << "moe_load_balance: " << result.moeLoadBalance << "\n"
+            << "moe_selected_mass: " << result.moeSelectedMass << "\n"
             << "weight_dtype: " << result.weightDType << "\n"
             << "neon_kernel_flavor: " << result.neonKernelFlavor << "\n"
             << "dequant_path: " << result.dequantPath << "\n"
@@ -244,6 +248,10 @@ void PrintRunJson(const us4::GenerationResult &result) {
             << ","
             << "\"mlx_evaluated\":" << (result.mlxEvaluated ? "true" : "false")
             << ","
+            << "\"moe_selected_experts\":" << result.moeSelectedExperts << ","
+            << "\"moe_router_entropy\":" << result.moeRouterEntropy << ","
+            << "\"moe_load_balance\":" << result.moeLoadBalance << ","
+            << "\"moe_selected_mass\":" << result.moeSelectedMass << ","
             << "\"weight_dtype\":\"" << EscapeJson(result.weightDType) << "\","
             << "\"neon_kernel_flavor\":\""
             << EscapeJson(result.neonKernelFlavor) << "\","

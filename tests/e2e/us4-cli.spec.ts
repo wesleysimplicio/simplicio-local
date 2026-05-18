@@ -770,6 +770,10 @@ test.describe("Native CLI sprint 02 contract", () => {
       kv_restored_from_cold_store : false,
       kv_page_count : 1,
       kv_summary_rows : 0,
+      moe_selected_experts : 2,
+      moe_router_entropy : expect.any(Number),
+      moe_load_balance : expect.any(Number),
+      moe_selected_mass : expect.any(Number),
       generated_tokens : expect.any(Array),
     });
   });

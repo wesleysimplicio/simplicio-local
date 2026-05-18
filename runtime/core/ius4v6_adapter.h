@@ -50,6 +50,10 @@ struct GenerationResult {
   std::size_t prefixCacheEntries = 0;
   bool mlxPlanBuilt = false;
   bool mlxEvaluated = false;
+  std::size_t moeSelectedExperts = 0;
+  float moeRouterEntropy = 0.0F;
+  float moeLoadBalance = 0.0F;
+  float moeSelectedMass = 0.0F;
   std::string weightDType;
   std::string neonKernelFlavor;
   std::string dequantPath;

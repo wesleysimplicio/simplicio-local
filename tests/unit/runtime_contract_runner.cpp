@@ -466,11 +466,23 @@ int main() {
 
   {
     us4::Router router;
-    const auto topk = router.TopK({0.1F, 0.8F, 0.4F, 0.7F}, 2);
-    ok &= Expect(topk.size() == 2U,
+    const us4::RouterDecision decision =
+        router.RouteTopK({0.1F, 0.8F, 0.4F, 0.7F}, 2);
+    ok &= Expect(decision.selected.size() == 2U,
                  "router should clamp top-k to requested size");
-    ok &=
-        Expect(topk[0].expert == 1U, "router should sort highest score first");
+    ok &= Expect(decision.selected[0].expert == 1U,
+                 "router should sort highest score first");
+    ok &= Expect(decision.selected[0].logit == 0.8F,
+                 "router should preserve raw logit in telemetry");
+    ok &= Expect(decision.entropy > 0.0F,
+                 "router should expose positive routing entropy");
+    ok &= Expect(decision.loadBalance > 0.0F && decision.loadBalance <= 1.0F,
+                 "router should expose normalized load balance");
+    ok &= Expect(decision.selectedMass > 0.0F && decision.selectedMass <= 1.0F,
+                 "router should expose selected probability mass");
+    ok &= Expect(router.LastDecision().has_value() &&
+                     router.LastDecision()->totalExperts == 4U,
+                 "router should retain the last routing decision");
 
     us4::ExpertPager pager(2);
     pager.Touch("expert-a");
@@ -636,6 +648,29 @@ int main() {
                  "ternary generation should surface int4 dequant path");
     ok &= Expect(ternaryResult.neonKernelFlavor == "scalar-bridge",
                  "ternary generation should surface scalar-bridge neon flavor");
+  }
+
+  {
+    const us4::IUS4V6Adapter *deepseek =
+        us4::FindAdapterByModel("deepseek-v2-lite");
+    ok &= Expect(deepseek != nullptr,
+                 "registry should find deepseek moe adapter by model");
+    us4::RuntimeContext moeContext(MakeProbe());
+    deepseek->ConfigureRuntime(moeContext);
+    const us4::GenerationResult deepseekResult =
+        deepseek->Generate({.prompt = "hi", .maxTokens = 2}, moeContext);
+    ok &= Expect(deepseekResult.family == "deepseek",
+                 "deepseek generation should preserve moe family");
+    ok &= Expect(deepseekResult.moeSelectedExperts == 2U,
+                 "deepseek generation should expose selected expert count");
+    ok &= Expect(deepseekResult.moeRouterEntropy > 0.0F,
+                 "deepseek generation should expose router entropy");
+    ok &= Expect(deepseekResult.moeLoadBalance > 0.0F &&
+                     deepseekResult.moeLoadBalance <= 1.0F,
+                 "deepseek generation should expose load balance score");
+    ok &= Expect(deepseekResult.moeSelectedMass > 0.0F &&
+                     deepseekResult.moeSelectedMass <= 1.0F,
+                 "deepseek generation should expose selected expert mass");
   }
 
   {
