@@ -20,6 +20,7 @@ set(us4_runtime_contract_test_sources
   moe_advanced_contract_test.cpp
   scheduler_contract_test.cpp
   ane_contract_test.cpp
+  tuning_contract_test.cpp
   neon_dequant_contract_test.cpp
   neon_contract_test.cpp
   block_gemm_contract_test.cpp
