@@ -11,7 +11,7 @@ Este repositorio e a base de planejamento e bootstrap do **US4 V6 Apple Edition*
 
 Hoje ele contem duas camadas:
 
-1. a **camada agentic-starter/bootstrap**, usada para estruturar trabalho com agentes;
+1. a **camada llm-project-mapper/bootstrap**, usada para estruturar trabalho com agentes;
 2. o **planejamento do projeto** do runtime C++ que sera construido ao longo de 12 sprints.
 
 O runtime C++ em si **ainda nao foi scaffoldado**. Esse trabalho comeca no Sprint 01.
@@ -106,7 +106,7 @@ Detalhes:
 .claude/       hooks/settings do Claude
 .codex/        hooks/settings do Codex
 .github/       CI/DoD do starter e templates
-bin/           CLI do agentic-starter
+bin/           CLI do llm-project-mapper
 test/          self-tests do starter
 tests/e2e/     placeholder Playwright do starter
 ```

@@ -409,7 +409,7 @@ cat > .starter-meta.json <<EOF
   "project_mode": "$PROJECT_MODE",
   "projects": $PROJECTS_JSON,
   "bootstrapped_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "starter_version": "0.1.31",
+  "starter_version": "0.1.32",
   "existing_instruction_files": $existing_files_json,
   "init_must_ask": [],
   "init_must_infer": ["team", "domain", "vision_oneliner", "personas_beyond_dev"],
@@ -620,7 +620,7 @@ Recommended next steps:
   3) Review .specs/product/VISION.md, DOMAIN.md, architecture/DESIGN.md.
   4) git add -A && git commit -m "chore: bootstrap agentic starter"
 
-Docs: https://github.com/wesleysimplicio/agentic-starter
+Docs: https://github.com/wesleysimplicio/llm-project-mapper
 EOF
     ;;
 esac

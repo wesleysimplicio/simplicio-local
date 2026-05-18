@@ -11,7 +11,7 @@ This repository is the planning and bootstrap base for **US4 V6 Apple Edition**,
 
 Today the repo contains two things:
 
-1. the **agentic-starter/bootstrap layer** used to scaffold disciplined AI-assisted work;
+1. the **llm-project-mapper/bootstrap layer** used to scaffold disciplined AI-assisted work;
 2. the **project plan** for the C++ runtime that will be built across 12 sprints.
 
 The C++ runtime itself has **not** been scaffolded yet. That work starts in Sprint 01.
@@ -106,7 +106,7 @@ Details:
 .claude/       Claude hooks/settings
 .codex/        Codex hooks/settings
 .github/       starter CI/DoD and templates
-bin/           agentic-starter CLI
+bin/           llm-project-mapper CLI
 test/          starter self-tests
 tests/e2e/     starter Playwright placeholder
 ```

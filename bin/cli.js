@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * Agentic Starter - CLI scaffolder.
+ * LLM Project Mapper - CLI scaffolder.
  *
  * Run inside any project to install the starter pack:
- *   npx @wesleysimplicio/agentic-starter
+ *   npx @wesleysimplicio/llm-project-mapper
  *
  * Behavior (mirror of bootstrap.sh / bootstrap.ps1):
  *   1. Auto-detects PRODUCT_NAME from manifests, STACK, and whether the repo
@@ -403,12 +403,12 @@ function handleRuntimeFlags() {
 }
 
 function printHelp() {
-  console.log(`agentic-starter v${PKG.version}
+  console.log(`llm-project-mapper v${PKG.version}
 
 Scaffold the Agentic Starter pack into the current directory.
 
 USAGE
-  npx @wesleysimplicio/agentic-starter [options]
+  npx @wesleysimplicio/llm-project-mapper [options]
 
 OPTIONS
   --probe                     Print Sprint 01 hardware probe summary
@@ -432,12 +432,12 @@ EXAMPLES
   node bin/cli.js --version --json
   node bin/cli.js --probe
   node bin/cli.js --probe --mode auto --json
-  npx @wesleysimplicio/agentic-starter
-  npx @wesleysimplicio/agentic-starter --yes
-  npx @wesleysimplicio/agentic-starter --yes --cli claude --append-gitignore yes
+  npx @wesleysimplicio/llm-project-mapper
+  npx @wesleysimplicio/llm-project-mapper --yes
+  npx @wesleysimplicio/llm-project-mapper --yes --cli claude --append-gitignore yes
 
 DOCS
-  https://github.com/wesleysimplicio/agentic-starter
+  https://github.com/wesleysimplicio/llm-project-mapper
 `);
 }
 
@@ -783,7 +783,7 @@ function writeMeta(productName, stack, projectMode, projects, existingInstructio
     projects,
     bootstrapped_at: new Date().toISOString(),
     starter_version: PKG.version,
-    cli: '@wesleysimplicio/agentic-starter',
+    cli: '@wesleysimplicio/llm-project-mapper',
     existing_instruction_files: existingInstructionFiles,
     init_must_ask: [],
     init_must_infer: ['team', 'domain', 'vision_oneliner', 'personas_beyond_dev'],
@@ -959,7 +959,7 @@ function handoff(cliChoice) {
       log('  2) Paste the prompt above.');
       log('  3) Review .specs/product/VISION.md, DOMAIN.md, architecture/DESIGN.md.');
       log('  4) git add -A && git commit -m "chore: bootstrap agentic starter"\n');
-      log('Docs: https://github.com/wesleysimplicio/agentic-starter');
+      log('Docs: https://github.com/wesleysimplicio/llm-project-mapper');
       return;
   }
 }
