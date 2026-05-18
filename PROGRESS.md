@@ -11,21 +11,20 @@ single-session enquanto abrimos a frente multi-sessao.
 Status: done
 
 Task:
-T10.1 - Build continuous batcher surface
+T10.2 - Build session pool surface
 
 Result:
-`ContinuousBatcher` entrou em `runtime/scheduler` com orcamento por batch,
-fairness por rodadas, `fairnessWeight`, `arrivalOrder` e sinal explicito de
-`singleSessionPassthrough`. Os contratos ficaram cobertos em GTest e tambem no
-`runtime_contract_runner`, para o gate nativo continuar funcionando mesmo sem
-GTest local.
+`SessionPool` entrou em `runtime/scheduler` com namespace explicito de KV e
+prefix por sessao, ownership de prompt isolado e release sem vazamento entre
+sessoes. O `RuntimeContext` agora expoe esse pool e o contrato ficou coberto em
+GTest e tambem no `runtime_contract_runner`.
 
 Validation:
-`npm run lint`; `npm run pack:dry`; `cmake --build build --config Release`;
-`ctest --test-dir build --output-on-failure -C Release`
+`npm run lint`; `npm test -- --coverage`; `npm run pack:dry`;
+`cmake --build build --config Release`; `ctest --test-dir build --output-on-failure -C Release`
 
 Next:
-T10.2 - abrir `SessionPool` com namespace de sessao e isolamento de KV.
+T10.3 - abrir `PEagleDecoder` em `runtime/speculative` com draft/verify.
 
 ## Checkpoints
 
