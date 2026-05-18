@@ -58,6 +58,13 @@ struct GenerationResult {
   std::size_t moePagerEvictions = 0;
   std::size_t moePagerReuses = 0;
   std::size_t moeResidentExperts = 0;
+  bool moeSparsityCacheHit = false;
+  std::size_t moeSparsityCacheHits = 0;
+  std::size_t moeSparsityCacheMisses = 0;
+  std::size_t moeSparsityCacheEntries = 0;
+  double moeSparsityCacheHitRatio = 0.0;
+  std::size_t moeSparsityPatternHash = 0;
+  std::string moeSparsityPatternKey;
   std::size_t moeShardCount = 0;
   std::size_t moeActiveExperts = 0;
   bool moeLazyLoad = false;

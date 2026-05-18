@@ -13,6 +13,7 @@
 #include "adapters/llama/llama_adapter.h"
 #include "adapters/llama/llama_config.h"
 #include "adapters/qwen/qwen_adapter.h"
+#include "cache/sparsity_aware_cache.h"
 #include "core/backend_selector.h"
 #include "core/gqa_attention.h"
 #include "core/model_asset.h"
@@ -1213,6 +1214,34 @@ int main() {
             telemetry.executableExperts[0] == actual.selected[0].expert &&
             telemetry.executableExperts[1] == actual.selected[1].expert,
         "speculative prefetch should execute only actual route experts");
+  }
+
+  {
+    us4::Router router;
+    us4::SparsityAwareCache cache;
+    const us4::RouterDecision routing =
+        router.RouteTopK({1.4F, 1.1F, 0.3F, 0.2F}, 2);
+    const us4::SparsityCacheSnapshot first = cache.Touch("glm", routing);
+    const us4::SparsityCacheSnapshot second = cache.Touch("glm", routing);
+    const us4::SparsityCacheSnapshot third = cache.Touch("minimax", routing);
+
+    ok &= Expect(!first.lastLookupHit,
+                 "first sparsity cache lookup should miss for a fresh route");
+    ok &= Expect(
+        second.lastLookupHit,
+        "second sparsity cache lookup should hit for the same family pattern");
+    ok &= Expect(second.hitCount == 1U,
+                 "sparsity cache should count one hit after a repeated route");
+    ok &= Expect(second.missCount == 1U,
+                 "sparsity cache should preserve the first miss");
+    ok &= Expect(
+        std::abs(second.hitRatio - 0.5) <= 1e-9,
+        "sparsity cache hit ratio should reflect hit over total lookups");
+    ok &= Expect(third.entryCount == 2U,
+                 "family-scoped sparsity cache entries should not collide");
+    ok &= Expect(
+        second.lastKey != third.lastKey,
+        "different families should produce different sparsity cache keys");
   }
 
   return ok ? EXIT_SUCCESS : EXIT_FAILURE;

@@ -86,17 +86,28 @@ TEST(AdapterGenerationContractTest,
   EXPECT_EQ(first.moePagerReuses, 0U);
   EXPECT_EQ(first.moePagerEvictions, 0U);
   EXPECT_EQ(first.moeResidentExperts, 2U);
+  EXPECT_FALSE(first.moeSparsityCacheHit);
+  EXPECT_EQ(first.moeSparsityCacheHits, 0U);
+  EXPECT_EQ(first.moeSparsityCacheMisses, 1U);
+  EXPECT_EQ(first.moeSparsityCacheEntries, 1U);
+  EXPECT_GT(first.moeSparsityPatternHash, 0U);
+  EXPECT_FALSE(first.moeSparsityPatternKey.empty());
 
   EXPECT_EQ(second.moePagerLoads, 2U);
   EXPECT_GE(second.moePagerReuses, 2U);
   EXPECT_EQ(second.moePagerEvictions, 0U);
   EXPECT_NE(second.text.find("moe-route"), std::string::npos);
+  EXPECT_TRUE(second.moeSparsityCacheHit);
+  EXPECT_GE(second.moeSparsityCacheHits, 1U);
+  EXPECT_EQ(second.moeSparsityCacheEntries, 1U);
+  EXPECT_GT(second.moeSparsityCacheHitRatio, 0.0);
 
   EXPECT_EQ(third.moeSelectedExperts, 2U);
   EXPECT_GE(third.moePagerLoads, 3U);
   EXPECT_GE(third.moePagerEvictions, 1U);
   EXPECT_EQ(third.moeResidentExperts, 2U);
   EXPECT_NE(third.text.find("moe-route"), std::string::npos);
+  EXPECT_GE(third.moeSparsityCacheEntries, 2U);
 }
 
 TEST(AdapterGenerationContractTest,
@@ -126,17 +137,24 @@ TEST(AdapterGenerationContractTest,
   EXPECT_EQ(first.moePagerReuses, 0U);
   EXPECT_EQ(first.moePagerEvictions, 0U);
   EXPECT_EQ(first.moeResidentExperts, 2U);
+  EXPECT_FALSE(first.moeSparsityCacheHit);
+  EXPECT_EQ(first.moeSparsityCacheMisses, 1U);
+  EXPECT_EQ(first.moeSparsityCacheEntries, 1U);
 
   EXPECT_EQ(second.moePagerLoads, 2U);
   EXPECT_GE(second.moePagerReuses, 2U);
   EXPECT_EQ(second.moePagerEvictions, 0U);
   EXPECT_NE(second.text.find("kimi-route"), std::string::npos);
+  EXPECT_TRUE(second.moeSparsityCacheHit);
+  EXPECT_GE(second.moeSparsityCacheHits, 1U);
+  EXPECT_EQ(second.moeSparsityCacheEntries, 1U);
 
   EXPECT_EQ(third.moeSelectedExperts, 2U);
   EXPECT_GE(third.moePagerLoads, 3U);
   EXPECT_GE(third.moePagerEvictions, 1U);
   EXPECT_EQ(third.moeResidentExperts, 2U);
   EXPECT_NE(third.text.find("kimi-route"), std::string::npos);
+  EXPECT_GE(third.moeSparsityCacheEntries, 2U);
 }
 
 TEST(AdapterGenerationContractTest,
@@ -163,17 +181,24 @@ TEST(AdapterGenerationContractTest,
   EXPECT_EQ(first.moePagerReuses, 0U);
   EXPECT_EQ(first.moePagerEvictions, 0U);
   EXPECT_EQ(first.moeResidentExperts, 2U);
+  EXPECT_FALSE(first.moeSparsityCacheHit);
+  EXPECT_EQ(first.moeSparsityCacheMisses, 1U);
+  EXPECT_EQ(first.moeSparsityCacheEntries, 1U);
 
   EXPECT_EQ(second.moePagerLoads, 2U);
   EXPECT_GE(second.moePagerReuses, 2U);
   EXPECT_EQ(second.moePagerEvictions, 0U);
   EXPECT_NE(second.text.find("minimax-route"), std::string::npos);
+  EXPECT_TRUE(second.moeSparsityCacheHit);
+  EXPECT_GE(second.moeSparsityCacheHits, 1U);
+  EXPECT_EQ(second.moeSparsityCacheEntries, 1U);
 
   EXPECT_EQ(third.moeSelectedExperts, 2U);
   EXPECT_GE(third.moePagerLoads, 3U);
   EXPECT_GE(third.moePagerEvictions, 1U);
   EXPECT_EQ(third.moeResidentExperts, 2U);
   EXPECT_NE(third.text.find("minimax-route"), std::string::npos);
+  EXPECT_GE(third.moeSparsityCacheEntries, 2U);
 }
 
 TEST(AdapterGenerationContractTest,
@@ -200,17 +225,24 @@ TEST(AdapterGenerationContractTest,
   EXPECT_EQ(first.moePagerReuses, 0U);
   EXPECT_EQ(first.moePagerEvictions, 0U);
   EXPECT_EQ(first.moeResidentExperts, 2U);
+  EXPECT_FALSE(first.moeSparsityCacheHit);
+  EXPECT_EQ(first.moeSparsityCacheMisses, 1U);
+  EXPECT_EQ(first.moeSparsityCacheEntries, 1U);
 
   EXPECT_EQ(second.moePagerLoads, 2U);
   EXPECT_GE(second.moePagerReuses, 2U);
   EXPECT_EQ(second.moePagerEvictions, 0U);
   EXPECT_NE(second.text.find("glm-route"), std::string::npos);
+  EXPECT_TRUE(second.moeSparsityCacheHit);
+  EXPECT_GE(second.moeSparsityCacheHits, 1U);
+  EXPECT_EQ(second.moeSparsityCacheEntries, 1U);
 
   EXPECT_EQ(third.moeSelectedExperts, 2U);
   EXPECT_GE(third.moePagerLoads, 3U);
   EXPECT_GE(third.moePagerEvictions, 1U);
   EXPECT_EQ(third.moeResidentExperts, 2U);
   EXPECT_NE(third.text.find("glm-route"), std::string::npos);
+  EXPECT_GE(third.moeSparsityCacheEntries, 2U);
 }
 
 TEST(AdapterGenerationContractTest,

@@ -120,6 +120,60 @@ Task:
 T09.2 - Add glm adapter surface
 
 Result:
+`GlmMoEAdapter` entrou com fixture shard-aware, assinatura `glm-route eX eY`,
+telemetria MoE no CLI e coverage nativa/E2E para manter a familia visivel.
+
+Validation:
+`npm run lint`; `npm test -- --coverage`; `cmake --build build --config Release`;
+`ctest --test-dir build --output-on-failure -C Release`;
+`npx playwright test --reporter=list,html`; `npm run pack:dry`;
+`build\\runtime\\benchmarks\\dense_baseline.exe`
+
+Next:
+Fechar PR/merge de T09.2 e seguir para T09.3 (speculative prefetch).
+
+### Checkpoint 7
+
+Status: in_progress
+
+Task:
+T09.3 - Build speculative expert prefetch
+
+Result:
+`SpeculativePrefetch` entrou como contrato family-scoped com `hitRatio`,
+`hitCount`, `missCount` e protecao explicita contra wrong-expert leakage.
+
+Validation:
+`npm run lint`; `npm test -- --coverage`; `cmake --build build --config Release`;
+`ctest --test-dir build --output-on-failure -C Release`;
+`npx playwright test --reporter=list,html`; `npm run pack:dry`;
+`build\\runtime\\benchmarks\\dense_baseline.exe`
+
+Next:
+Fechar PR/merge de T09.3 e seguir para T09.4 (sparsity-aware cache).
+
+### Checkpoint 8
+
+Status: in_progress
+
+Task:
+T09.4 - Build sparsity-aware cache surface
+
+Result:
+`SparsityAwareCache` entrou em `runtime/cache`, foi ligado ao
+`RuntimeContext`, e os adapters MoE agora projetam hit/miss, `patternHash` e
+`patternKey` no resultado nativo e no CLI.
+
+Validation:
+`npm run lint`; `npm test -- --coverage`; `cmake --build build --config Release`;
+`ctest --test-dir build --output-on-failure -C Release`;
+`npx playwright test --reporter=list,html`; `npm run pack:dry`;
+`build\\runtime\\benchmarks\\dense_baseline.exe`
+
+Next:
+Fechar PR/merge de T09.4 e seguir para T09.5 (multimodal cache).
+
+Result:
 `GlmMoEAdapter` entrou no runtime nativo, registrado no adapter registry,
 com assinatura `glm-route eX eY`, fixture `glm-5.1` shard-aware, inferencia de
 familia no loader e contratos unit/native/E2E para manter o adapter visivel.

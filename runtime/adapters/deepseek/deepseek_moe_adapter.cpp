@@ -39,6 +39,8 @@ DeepSeekMoEAdapter::Generate(const GenerationRequest &request,
   RuntimeContext &mutableContext = const_cast<RuntimeContext &>(context);
   const RouterDecision routing = mutableContext.router().RouteTopK(
       BuildRouteLogits(request, request.asset), 2);
+  const SparsityCacheSnapshot cacheSnapshot =
+      mutableContext.sparsityCache().Touch("deepseek", routing);
   for (const ExpertScore &expert : routing.selected) {
     mutableContext.expertPager().Touch("deepseek-expert-" +
                                        std::to_string(expert.expert));
@@ -61,6 +63,13 @@ DeepSeekMoEAdapter::Generate(const GenerationRequest &request,
   result.moePagerEvictions = pagerSnapshot.evictionCount;
   result.moePagerReuses = pagerSnapshot.reuseCount;
   result.moeResidentExperts = pagerSnapshot.residentCount;
+  result.moeSparsityCacheHit = cacheSnapshot.lastLookupHit;
+  result.moeSparsityCacheHits = cacheSnapshot.hitCount;
+  result.moeSparsityCacheMisses = cacheSnapshot.missCount;
+  result.moeSparsityCacheEntries = cacheSnapshot.entryCount;
+  result.moeSparsityCacheHitRatio = cacheSnapshot.hitRatio;
+  result.moeSparsityPatternHash = cacheSnapshot.lastPatternHash;
+  result.moeSparsityPatternKey = cacheSnapshot.lastKey;
   return result;
 }
 

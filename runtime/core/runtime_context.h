@@ -1,5 +1,6 @@
 #pragma once
 
+#include "cache/sparsity_aware_cache.h"
 #include "core/backend_selector.h"
 #include "core/hardware_probe.h"
 #include "kv/kv_pager.h"
@@ -15,29 +16,30 @@
 namespace us4 {
 
 class RuntimeContext {
- public:
+public:
   RuntimeContext() = default;
   explicit RuntimeContext(HardwareProbeResult probe_result);
 
-  const HardwareProbeResult& hardware() const;
+  const HardwareProbeResult &hardware() const;
   RuntimeMode mode() const;
   BackendType backend() const;
-  UnifiedAllocator& allocator();
-  const UnifiedAllocator& allocator() const;
-  MetalCommandQueue& metalQueue();
-  const MetalCommandQueue& metalQueue() const;
-  MlxBridge& mlxBridge();
-  const MlxBridge& mlxBridge() const;
-  KvPager& kvPager();
-  PrefixCache& prefixCache();
-  SsdColdStore& coldStore();
-  Summarizer& summarizer();
-  Router& router();
-  ExpertPager& expertPager();
+  UnifiedAllocator &allocator();
+  const UnifiedAllocator &allocator() const;
+  MetalCommandQueue &metalQueue();
+  const MetalCommandQueue &metalQueue() const;
+  MlxBridge &mlxBridge();
+  const MlxBridge &mlxBridge() const;
+  KvPager &kvPager();
+  PrefixCache &prefixCache();
+  SsdColdStore &coldStore();
+  Summarizer &summarizer();
+  Router &router();
+  ExpertPager &expertPager();
+  SparsityAwareCache &sparsityCache();
   void SetMode(RuntimeMode mode);
   void SetBackend(BackendType backend);
 
- private:
+private:
   HardwareProbeResult hardware_;
   RuntimeMode mode_ = RuntimeMode::kNano;
   BackendType backend_ = BackendType::kScalarCpu;
@@ -50,6 +52,7 @@ class RuntimeContext {
   Summarizer summarizer_;
   Router router_;
   ExpertPager expertPager_;
+  SparsityAwareCache sparsityCache_;
 };
 
-}  // namespace us4
+} // namespace us4

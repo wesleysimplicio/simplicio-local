@@ -21,6 +21,7 @@ add_library(us4_runtime_core
   adapters/llama/llama_adapter.cpp
   adapters/minimax/minimax_moe_adapter.cpp
   adapters/ternary/ternary_adapter.cpp
+  cache/sparsity_aware_cache.cpp
   kv/kv_pager.cpp
   kv/prefix_cache.cpp
   kv/ssd_cold_store.cpp

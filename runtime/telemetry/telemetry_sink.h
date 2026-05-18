@@ -19,10 +19,13 @@ struct TelemetrySnapshot {
   std::size_t moePagerLoads = 0;
   std::size_t moePagerEvictions = 0;
   std::size_t moePagerReuses = 0;
+  std::size_t moeSparsityCacheHits = 0;
+  std::size_t moeSparsityCacheMisses = 0;
 
   bool HasMoeTelemetry() const {
     return moeSelectedExperts > 0 || moeRouterEntropy > 0.0 ||
-           moePagerLoads > 0 || moePagerEvictions > 0 || moePagerReuses > 0;
+           moePagerLoads > 0 || moePagerEvictions > 0 || moePagerReuses > 0 ||
+           moeSparsityCacheHits > 0 || moeSparsityCacheMisses > 0;
   }
 
   double MoeHitRate() const {
@@ -40,6 +43,16 @@ struct TelemetrySnapshot {
       return 0.0;
     }
     return static_cast<double>(moePagerEvictions) /
+           static_cast<double>(denominator);
+  }
+
+  double MoeSparsityCacheHitRatio() const {
+    const std::size_t denominator =
+        moeSparsityCacheHits + moeSparsityCacheMisses;
+    if (denominator == 0U) {
+      return 0.0;
+    }
+    return static_cast<double>(moeSparsityCacheHits) /
            static_cast<double>(denominator);
   }
 };

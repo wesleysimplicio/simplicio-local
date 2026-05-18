@@ -80,6 +80,16 @@ double ComputeMoeEvictionRate(const us4::GenerationResult &result) {
          static_cast<double>(denominator);
 }
 
+double ComputeMoeSparsityCacheHitRate(const us4::GenerationResult &result) {
+  const std::size_t denominator =
+      result.moeSparsityCacheHits + result.moeSparsityCacheMisses;
+  if (denominator == 0U) {
+    return 0.0;
+  }
+  return static_cast<double>(result.moeSparsityCacheHits) /
+         static_cast<double>(denominator);
+}
+
 void PrintHelp() {
   std::cout << "US4 V6 Apple Edition CLI\n"
             << "Usage:\n"
@@ -179,55 +189,61 @@ void PrintProbeJson(const us4::HardwareProbeResult &probe) {
 }
 
 void PrintRunText(const us4::GenerationResult &result) {
-  std::cout << "family: " << result.family << "\n"
-            << "model: " << result.modelName << "\n"
-            << "asset_format: " << result.assetFormat << "\n"
-            << "asset_path: "
-            << (result.assetPath.empty() ? "<builtin>" : result.assetPath)
-            << "\n"
-            << "mode: " << us4::ToString(result.mode) << "\n"
-            << "backend: " << result.backend << "\n"
-            << "backend_reason: " << result.backendReason << "\n"
-            << "fallback: " << (result.fellBack ? "true" : "false") << "\n"
-            << "shared_allocations: " << result.sharedAllocations << "\n"
-            << "metal_dispatches: " << result.metalDispatches << "\n"
-            << "mlx_operation_count: " << result.mlxOperationCount << "\n"
-            << "kv_cache_hit: " << (result.kvCacheHit ? "true" : "false")
-            << "\n"
-            << "kv_restored_from_cold_store: "
-            << (result.kvRestoredFromColdStore ? "true" : "false") << "\n"
-            << "kv_page_count: " << result.kvPageCount << "\n"
-            << "kv_hot_pages: " << result.kvHotPages << "\n"
-            << "kv_warm_pages: " << result.kvWarmPages << "\n"
-            << "kv_cold_pages: " << result.kvColdPages << "\n"
-            << "kv_summary_rows: " << result.kvSummaryRows << "\n"
-            << "prefix_cache_entries: " << result.prefixCacheEntries << "\n"
-            << "mlx_plan_built: " << (result.mlxPlanBuilt ? "true" : "false")
-            << "\n"
-            << "mlx_evaluated: " << (result.mlxEvaluated ? "true" : "false")
-            << "\n"
-            << "moe_selected_experts: " << result.moeSelectedExperts << "\n"
-            << "moe_router_entropy: " << result.moeRouterEntropy << "\n"
-            << "moe_load_balance: " << result.moeLoadBalance << "\n"
-            << "moe_selected_mass: " << result.moeSelectedMass << "\n"
-            << "moe_pager_loads: " << result.moePagerLoads << "\n"
-            << "moe_pager_evictions: " << result.moePagerEvictions << "\n"
-            << "moe_pager_reuses: " << result.moePagerReuses << "\n"
-            << "moe_resident_experts: " << result.moeResidentExperts << "\n"
-            << "moe_shard_count: " << result.moeShardCount << "\n"
-            << "moe_active_experts: " << result.moeActiveExperts << "\n"
-            << "moe_lazy_load: " << (result.moeLazyLoad ? "true" : "false")
-            << "\n"
-            << "moe_hit_rate: " << ComputeMoeHitRate(result) << "\n"
-            << "moe_eviction_rate: " << ComputeMoeEvictionRate(result) << "\n"
-            << "weight_dtype: " << result.weightDType << "\n"
-            << "neon_kernel_flavor: " << result.neonKernelFlavor << "\n"
-            << "dequant_path: " << result.dequantPath << "\n"
-            << "metal_device: " << result.metalDevice << "\n"
-            << "metal_queue_label: " << result.metalQueueLabel << "\n"
-            << "prompt_tokens: " << result.promptTokens.size() << "\n"
-            << "generated_tokens: " << result.generatedTokens.size() << "\n"
-            << "text: " << result.text << "\n";
+  std::cout
+      << "family: " << result.family << "\n"
+      << "model: " << result.modelName << "\n"
+      << "asset_format: " << result.assetFormat << "\n"
+      << "asset_path: "
+      << (result.assetPath.empty() ? "<builtin>" : result.assetPath) << "\n"
+      << "mode: " << us4::ToString(result.mode) << "\n"
+      << "backend: " << result.backend << "\n"
+      << "backend_reason: " << result.backendReason << "\n"
+      << "fallback: " << (result.fellBack ? "true" : "false") << "\n"
+      << "shared_allocations: " << result.sharedAllocations << "\n"
+      << "metal_dispatches: " << result.metalDispatches << "\n"
+      << "mlx_operation_count: " << result.mlxOperationCount << "\n"
+      << "kv_cache_hit: " << (result.kvCacheHit ? "true" : "false") << "\n"
+      << "kv_restored_from_cold_store: "
+      << (result.kvRestoredFromColdStore ? "true" : "false") << "\n"
+      << "kv_page_count: " << result.kvPageCount << "\n"
+      << "kv_hot_pages: " << result.kvHotPages << "\n"
+      << "kv_warm_pages: " << result.kvWarmPages << "\n"
+      << "kv_cold_pages: " << result.kvColdPages << "\n"
+      << "kv_summary_rows: " << result.kvSummaryRows << "\n"
+      << "prefix_cache_entries: " << result.prefixCacheEntries << "\n"
+      << "mlx_plan_built: " << (result.mlxPlanBuilt ? "true" : "false") << "\n"
+      << "mlx_evaluated: " << (result.mlxEvaluated ? "true" : "false") << "\n"
+      << "moe_selected_experts: " << result.moeSelectedExperts << "\n"
+      << "moe_router_entropy: " << result.moeRouterEntropy << "\n"
+      << "moe_load_balance: " << result.moeLoadBalance << "\n"
+      << "moe_selected_mass: " << result.moeSelectedMass << "\n"
+      << "moe_pager_loads: " << result.moePagerLoads << "\n"
+      << "moe_pager_evictions: " << result.moePagerEvictions << "\n"
+      << "moe_pager_reuses: " << result.moePagerReuses << "\n"
+      << "moe_resident_experts: " << result.moeResidentExperts << "\n"
+      << "moe_sparsity_cache_hit: "
+      << (result.moeSparsityCacheHit ? "true" : "false") << "\n"
+      << "moe_sparsity_cache_hits: " << result.moeSparsityCacheHits << "\n"
+      << "moe_sparsity_cache_misses: " << result.moeSparsityCacheMisses << "\n"
+      << "moe_sparsity_cache_entries: " << result.moeSparsityCacheEntries
+      << "\n"
+      << "moe_sparsity_cache_hit_rate: "
+      << ComputeMoeSparsityCacheHitRate(result) << "\n"
+      << "moe_sparsity_pattern_hash: " << result.moeSparsityPatternHash << "\n"
+      << "moe_sparsity_pattern_key: " << result.moeSparsityPatternKey << "\n"
+      << "moe_shard_count: " << result.moeShardCount << "\n"
+      << "moe_active_experts: " << result.moeActiveExperts << "\n"
+      << "moe_lazy_load: " << (result.moeLazyLoad ? "true" : "false") << "\n"
+      << "moe_hit_rate: " << ComputeMoeHitRate(result) << "\n"
+      << "moe_eviction_rate: " << ComputeMoeEvictionRate(result) << "\n"
+      << "weight_dtype: " << result.weightDType << "\n"
+      << "neon_kernel_flavor: " << result.neonKernelFlavor << "\n"
+      << "dequant_path: " << result.dequantPath << "\n"
+      << "metal_device: " << result.metalDevice << "\n"
+      << "metal_queue_label: " << result.metalQueueLabel << "\n"
+      << "prompt_tokens: " << result.promptTokens.size() << "\n"
+      << "generated_tokens: " << result.generatedTokens.size() << "\n"
+      << "text: " << result.text << "\n";
 }
 
 void PrintRunJson(const us4::GenerationResult &result) {
@@ -284,6 +300,20 @@ void PrintRunJson(const us4::GenerationResult &result) {
             << "\"moe_pager_evictions\":" << result.moePagerEvictions << ","
             << "\"moe_pager_reuses\":" << result.moePagerReuses << ","
             << "\"moe_resident_experts\":" << result.moeResidentExperts << ","
+            << "\"moe_sparsity_cache_hit\":"
+            << (result.moeSparsityCacheHit ? "true" : "false") << ","
+            << "\"moe_sparsity_cache_hits\":" << result.moeSparsityCacheHits
+            << ","
+            << "\"moe_sparsity_cache_misses\":" << result.moeSparsityCacheMisses
+            << ","
+            << "\"moe_sparsity_cache_entries\":"
+            << result.moeSparsityCacheEntries << ","
+            << "\"moe_sparsity_cache_hit_rate\":"
+            << ComputeMoeSparsityCacheHitRate(result) << ","
+            << "\"moe_sparsity_pattern_hash\":" << result.moeSparsityPatternHash
+            << ","
+            << "\"moe_sparsity_pattern_key\":\""
+            << EscapeJson(result.moeSparsityPatternKey) << "\","
             << "\"moe_shard_count\":" << result.moeShardCount << ","
             << "\"moe_active_experts\":" << result.moeActiveExperts << ","
             << "\"moe_lazy_load\":" << (result.moeLazyLoad ? "true" : "false")

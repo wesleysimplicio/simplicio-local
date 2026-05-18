@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include "cache/sparsity_aware_cache.h"
 #include "moe/expert_pager.h"
 #include "moe/router.h"
 #include "moe/speculative_prefetch.h"
@@ -125,4 +126,45 @@ TEST(MoeContractTest,
   EXPECT_EQ(telemetry.executableExperts[1], actual.selected[1].expert);
   EXPECT_NE(telemetry.executableExperts[0], 1U);
   EXPECT_NE(telemetry.executableExperts[1], 1U);
+}
+
+TEST(MoeContractTest, SparsityAwareCacheKeysEntriesByFamilyAndExpertPattern) {
+  us4::Router router;
+  us4::SparsityAwareCache cache;
+  const us4::RouterDecision routing =
+      router.RouteTopK({1.3F, 0.8F, 0.6F, 0.1F}, 2);
+
+  const us4::SparsityCacheSnapshot first = cache.Touch("glm", routing);
+  const auto entry = cache.Lookup("glm", routing);
+
+  ASSERT_TRUE(entry.has_value());
+  EXPECT_FALSE(first.lastLookupHit);
+  EXPECT_EQ(first.entryCount, 1U);
+  EXPECT_EQ(first.hitCount, 0U);
+  EXPECT_EQ(first.missCount, 1U);
+  EXPECT_EQ(entry->family, "glm");
+  EXPECT_EQ(entry->experts.size(), 2U);
+  EXPECT_FALSE(entry->key.empty());
+  EXPECT_GT(entry->patternHash, 0U);
+}
+
+TEST(MoeContractTest,
+     SparsityAwareCacheExposesHitMissTelemetryWithoutCrossFamilyLeak) {
+  us4::Router router;
+  us4::SparsityAwareCache cache;
+  const us4::RouterDecision routing =
+      router.RouteTopK({1.4F, 0.9F, 0.7F, 0.2F}, 2);
+
+  const us4::SparsityCacheSnapshot first = cache.Touch("deepseek", routing);
+  const us4::SparsityCacheSnapshot second = cache.Touch("deepseek", routing);
+  const us4::SparsityCacheSnapshot third = cache.Touch("kimi", routing);
+
+  EXPECT_FALSE(first.lastLookupHit);
+  EXPECT_TRUE(second.lastLookupHit);
+  EXPECT_EQ(second.hitCount, 1U);
+  EXPECT_EQ(second.missCount, 1U);
+  EXPECT_DOUBLE_EQ(second.hitRatio, 0.5);
+  EXPECT_FALSE(third.lastLookupHit);
+  EXPECT_EQ(third.entryCount, 2U);
+  EXPECT_NE(second.lastKey, third.lastKey);
 }
