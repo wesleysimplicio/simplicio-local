@@ -65,6 +65,13 @@ struct GenerationResult {
   double moeSparsityCacheHitRatio = 0.0;
   std::size_t moeSparsityPatternHash = 0;
   std::string moeSparsityPatternKey;
+  bool multimodalCacheHit = false;
+  std::size_t multimodalCacheHits = 0;
+  std::size_t multimodalCacheMisses = 0;
+  std::size_t multimodalCacheEntries = 0;
+  double multimodalCacheHitRatio = 0.0;
+  std::size_t multimodalActiveModalities = 0;
+  std::string multimodalModalities;
   std::size_t moeShardCount = 0;
   std::size_t moeActiveExperts = 0;
   bool moeLazyLoad = false;

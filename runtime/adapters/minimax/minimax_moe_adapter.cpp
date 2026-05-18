@@ -2,8 +2,10 @@
 
 #include <algorithm>
 #include <cctype>
+#include <set>
 #include <sstream>
 
+#include "cache/multimodal_cache.h"
 #include "core/model_asset.h"
 
 namespace us4 {
@@ -41,6 +43,9 @@ MiniMaxMoEAdapter::Generate(const GenerationRequest &request,
       BuildRouteLogits(request, request.asset), 2);
   const SparsityCacheSnapshot cacheSnapshot =
       mutableContext.sparsityCache().Touch("minimax", routing);
+  const MultimodalCacheSnapshot multimodalSnapshot =
+      mutableContext.multimodalCache().Touch("minimax",
+                                             BuildModalityState(request));
   for (const ExpertScore &expert : routing.selected) {
     mutableContext.expertPager().Touch("minimax-expert-" +
                                        std::to_string(expert.expert));
@@ -70,6 +75,23 @@ MiniMaxMoEAdapter::Generate(const GenerationRequest &request,
   result.moeSparsityCacheHitRatio = cacheSnapshot.hitRatio;
   result.moeSparsityPatternHash = cacheSnapshot.lastPatternHash;
   result.moeSparsityPatternKey = cacheSnapshot.lastKey;
+  result.multimodalCacheHit = multimodalSnapshot.lastTouchHits > 0U;
+  result.multimodalCacheHits = multimodalSnapshot.hitCount;
+  result.multimodalCacheMisses = multimodalSnapshot.missCount;
+  result.multimodalCacheEntries = multimodalSnapshot.entryCount;
+  result.multimodalCacheHitRatio = multimodalSnapshot.hitRatio;
+  result.multimodalActiveModalities = multimodalSnapshot.activeModalities;
+  {
+    std::ostringstream modalities;
+    for (std::size_t index = 0;
+         index < multimodalSnapshot.lastModalities.size(); ++index) {
+      if (index > 0U) {
+        modalities << ",";
+      }
+      modalities << multimodalSnapshot.lastModalities[index];
+    }
+    result.multimodalModalities = modalities.str();
+  }
   return result;
 }
 
@@ -132,6 +154,35 @@ MiniMaxMoEAdapter::BuildRouteSignature(const RouterDecision &routing) const {
     signature << " e" << expert.expert;
   }
   return signature.str();
+}
+
+std::vector<ModalityTokenState>
+MiniMaxMoEAdapter::BuildModalityState(const GenerationRequest &request) const {
+  const std::vector<std::string> tokens = Tokenize(request.prompt);
+  std::vector<ModalityTokenState> states;
+
+  if (!tokens.empty()) {
+    states.push_back({.modality = "text", .tokens = tokens});
+  }
+
+  std::set<std::string> inserted;
+  for (const std::string &token : tokens) {
+    const std::string normalized = NormalizeRouteToken(token);
+    if ((normalized.find("image") != std::string::npos ||
+         normalized.find("vision") != std::string::npos) &&
+        !inserted.contains("image")) {
+      inserted.insert("image");
+      states.push_back({.modality = "image", .tokens = {normalized}});
+    }
+    if ((normalized.find("audio") != std::string::npos ||
+         normalized.find("speech") != std::string::npos) &&
+        !inserted.contains("audio")) {
+      inserted.insert("audio");
+      states.push_back({.modality = "audio", .tokens = {normalized}});
+    }
+  }
+
+  return states;
 }
 
 } // namespace us4

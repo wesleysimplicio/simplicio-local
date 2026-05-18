@@ -13,6 +13,7 @@
 #include "adapters/llama/llama_adapter.h"
 #include "adapters/llama/llama_config.h"
 #include "adapters/qwen/qwen_adapter.h"
+#include "cache/multimodal_cache.h"
 #include "cache/sparsity_aware_cache.h"
 #include "core/backend_selector.h"
 #include "core/gqa_attention.h"
@@ -1242,6 +1243,37 @@ int main() {
     ok &= Expect(
         second.lastKey != third.lastKey,
         "different families should produce different sparsity cache keys");
+  }
+
+  {
+    us4::MultimodalCache cache;
+    const us4::MultimodalCacheSnapshot first = cache.Touch(
+        "minimax",
+        {{.modality = "text", .tokens = {"image", "audio", "fusion"}},
+         {.modality = "image", .tokens = {"image"}},
+         {.modality = "audio", .tokens = {"audio"}}});
+    const us4::MultimodalCacheSnapshot second = cache.Touch(
+        "minimax",
+        {{.modality = "text", .tokens = {"image", "audio", "fusion"}},
+         {.modality = "image", .tokens = {"image"}},
+         {.modality = "audio", .tokens = {"audio"}}});
+    const us4::MultimodalCacheSnapshot third = cache.Touch(
+        "minimax",
+        {{.modality = "text", .tokens = {"logic", "wide", "context"}},
+         {.modality = "audio", .tokens = {"audio"}}});
+
+    ok &= Expect(first.entryCount == 3U,
+                 "multimodal cache should create one entry per modality state");
+    ok &= Expect(first.lastTouchMisses == 3U && first.lastTouchHits == 0U,
+                 "first multimodal cache touch should miss for each modality");
+    ok &= Expect(
+        second.lastTouchHits == 3U,
+        "second multimodal cache touch should hit every repeated modality");
+    ok &= Expect(
+        std::abs(second.hitRatio - 0.5) <= 1e-9,
+        "multimodal cache hit ratio should reflect repeated modality reuse");
+    ok &= Expect(third.entryCount == 4U,
+                 "new text state should add a new multimodal cache entry");
   }
 
   return ok ? EXIT_SUCCESS : EXIT_FAILURE;

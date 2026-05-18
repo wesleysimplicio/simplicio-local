@@ -42,6 +42,8 @@ ExpertPager &RuntimeContext::expertPager() { return expertPager_; }
 
 SparsityAwareCache &RuntimeContext::sparsityCache() { return sparsityCache_; }
 
+MultimodalCache &RuntimeContext::multimodalCache() { return multimodalCache_; }
+
 void RuntimeContext::SetMode(RuntimeMode mode) { mode_ = mode; }
 
 void RuntimeContext::SetBackend(BackendType backend) { backend_ = backend; }

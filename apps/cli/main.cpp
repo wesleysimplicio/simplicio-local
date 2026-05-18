@@ -90,6 +90,16 @@ double ComputeMoeSparsityCacheHitRate(const us4::GenerationResult &result) {
          static_cast<double>(denominator);
 }
 
+double ComputeMultimodalCacheHitRate(const us4::GenerationResult &result) {
+  const std::size_t denominator =
+      result.multimodalCacheHits + result.multimodalCacheMisses;
+  if (denominator == 0U) {
+    return 0.0;
+  }
+  return static_cast<double>(result.multimodalCacheHits) /
+         static_cast<double>(denominator);
+}
+
 void PrintHelp() {
   std::cout << "US4 V6 Apple Edition CLI\n"
             << "Usage:\n"
@@ -231,6 +241,16 @@ void PrintRunText(const us4::GenerationResult &result) {
       << ComputeMoeSparsityCacheHitRate(result) << "\n"
       << "moe_sparsity_pattern_hash: " << result.moeSparsityPatternHash << "\n"
       << "moe_sparsity_pattern_key: " << result.moeSparsityPatternKey << "\n"
+      << "multimodal_cache_hit: "
+      << (result.multimodalCacheHit ? "true" : "false") << "\n"
+      << "multimodal_cache_hits: " << result.multimodalCacheHits << "\n"
+      << "multimodal_cache_misses: " << result.multimodalCacheMisses << "\n"
+      << "multimodal_cache_entries: " << result.multimodalCacheEntries << "\n"
+      << "multimodal_cache_hit_rate: " << ComputeMultimodalCacheHitRate(result)
+      << "\n"
+      << "multimodal_active_modalities: " << result.multimodalActiveModalities
+      << "\n"
+      << "multimodal_modalities: " << result.multimodalModalities << "\n"
       << "moe_shard_count: " << result.moeShardCount << "\n"
       << "moe_active_experts: " << result.moeActiveExperts << "\n"
       << "moe_lazy_load: " << (result.moeLazyLoad ? "true" : "false") << "\n"
@@ -265,72 +285,79 @@ void PrintRunJson(const us4::GenerationResult &result) {
                     << "\"";
   }
 
-  std::cout << "{"
-            << "\"family\":\"" << EscapeJson(result.family) << "\","
-            << "\"model\":\"" << EscapeJson(result.modelName) << "\","
-            << "\"asset_format\":\"" << EscapeJson(result.assetFormat) << "\","
-            << "\"asset_path\":\"" << EscapeJson(result.assetPath) << "\","
-            << "\"mode\":\"" << EscapeJson(us4::ToString(result.mode)) << "\","
-            << "\"backend\":\"" << EscapeJson(result.backend) << "\","
-            << "\"backend_reason\":\"" << EscapeJson(result.backendReason)
-            << "\","
-            << "\"fallback\":" << (result.fellBack ? "true" : "false") << ","
-            << "\"shared_allocations\":" << result.sharedAllocations << ","
-            << "\"metal_dispatches\":" << result.metalDispatches << ","
-            << "\"mlx_operation_count\":" << result.mlxOperationCount << ","
-            << "\"kv_cache_hit\":" << (result.kvCacheHit ? "true" : "false")
-            << ","
-            << "\"kv_restored_from_cold_store\":"
-            << (result.kvRestoredFromColdStore ? "true" : "false") << ","
-            << "\"kv_page_count\":" << result.kvPageCount << ","
-            << "\"kv_hot_pages\":" << result.kvHotPages << ","
-            << "\"kv_warm_pages\":" << result.kvWarmPages << ","
-            << "\"kv_cold_pages\":" << result.kvColdPages << ","
-            << "\"kv_summary_rows\":" << result.kvSummaryRows << ","
-            << "\"prefix_cache_entries\":" << result.prefixCacheEntries << ","
-            << "\"mlx_plan_built\":" << (result.mlxPlanBuilt ? "true" : "false")
-            << ","
-            << "\"mlx_evaluated\":" << (result.mlxEvaluated ? "true" : "false")
-            << ","
-            << "\"moe_selected_experts\":" << result.moeSelectedExperts << ","
-            << "\"moe_router_entropy\":" << result.moeRouterEntropy << ","
-            << "\"moe_load_balance\":" << result.moeLoadBalance << ","
-            << "\"moe_selected_mass\":" << result.moeSelectedMass << ","
-            << "\"moe_pager_loads\":" << result.moePagerLoads << ","
-            << "\"moe_pager_evictions\":" << result.moePagerEvictions << ","
-            << "\"moe_pager_reuses\":" << result.moePagerReuses << ","
-            << "\"moe_resident_experts\":" << result.moeResidentExperts << ","
-            << "\"moe_sparsity_cache_hit\":"
-            << (result.moeSparsityCacheHit ? "true" : "false") << ","
-            << "\"moe_sparsity_cache_hits\":" << result.moeSparsityCacheHits
-            << ","
-            << "\"moe_sparsity_cache_misses\":" << result.moeSparsityCacheMisses
-            << ","
-            << "\"moe_sparsity_cache_entries\":"
-            << result.moeSparsityCacheEntries << ","
-            << "\"moe_sparsity_cache_hit_rate\":"
-            << ComputeMoeSparsityCacheHitRate(result) << ","
-            << "\"moe_sparsity_pattern_hash\":" << result.moeSparsityPatternHash
-            << ","
-            << "\"moe_sparsity_pattern_key\":\""
-            << EscapeJson(result.moeSparsityPatternKey) << "\","
-            << "\"moe_shard_count\":" << result.moeShardCount << ","
-            << "\"moe_active_experts\":" << result.moeActiveExperts << ","
-            << "\"moe_lazy_load\":" << (result.moeLazyLoad ? "true" : "false")
-            << ","
-            << "\"moe_hit_rate\":" << ComputeMoeHitRate(result) << ","
-            << "\"moe_eviction_rate\":" << ComputeMoeEvictionRate(result) << ","
-            << "\"weight_dtype\":\"" << EscapeJson(result.weightDType) << "\","
-            << "\"neon_kernel_flavor\":\""
-            << EscapeJson(result.neonKernelFlavor) << "\","
-            << "\"dequant_path\":\"" << EscapeJson(result.dequantPath) << "\","
-            << "\"metal_device\":\"" << EscapeJson(result.metalDevice) << "\","
-            << "\"metal_queue_label\":\"" << EscapeJson(result.metalQueueLabel)
-            << "\","
-            << "\"prompt_tokens\":[" << promptTokens.str() << "],"
-            << "\"generated_tokens\":[" << generatedTokens.str() << "],"
-            << "\"text\":\"" << EscapeJson(result.text) << "\""
-            << "}\n";
+  std::cout
+      << "{"
+      << "\"family\":\"" << EscapeJson(result.family) << "\","
+      << "\"model\":\"" << EscapeJson(result.modelName) << "\","
+      << "\"asset_format\":\"" << EscapeJson(result.assetFormat) << "\","
+      << "\"asset_path\":\"" << EscapeJson(result.assetPath) << "\","
+      << "\"mode\":\"" << EscapeJson(us4::ToString(result.mode)) << "\","
+      << "\"backend\":\"" << EscapeJson(result.backend) << "\","
+      << "\"backend_reason\":\"" << EscapeJson(result.backendReason) << "\","
+      << "\"fallback\":" << (result.fellBack ? "true" : "false") << ","
+      << "\"shared_allocations\":" << result.sharedAllocations << ","
+      << "\"metal_dispatches\":" << result.metalDispatches << ","
+      << "\"mlx_operation_count\":" << result.mlxOperationCount << ","
+      << "\"kv_cache_hit\":" << (result.kvCacheHit ? "true" : "false") << ","
+      << "\"kv_restored_from_cold_store\":"
+      << (result.kvRestoredFromColdStore ? "true" : "false") << ","
+      << "\"kv_page_count\":" << result.kvPageCount << ","
+      << "\"kv_hot_pages\":" << result.kvHotPages << ","
+      << "\"kv_warm_pages\":" << result.kvWarmPages << ","
+      << "\"kv_cold_pages\":" << result.kvColdPages << ","
+      << "\"kv_summary_rows\":" << result.kvSummaryRows << ","
+      << "\"prefix_cache_entries\":" << result.prefixCacheEntries << ","
+      << "\"mlx_plan_built\":" << (result.mlxPlanBuilt ? "true" : "false")
+      << ","
+      << "\"mlx_evaluated\":" << (result.mlxEvaluated ? "true" : "false") << ","
+      << "\"moe_selected_experts\":" << result.moeSelectedExperts << ","
+      << "\"moe_router_entropy\":" << result.moeRouterEntropy << ","
+      << "\"moe_load_balance\":" << result.moeLoadBalance << ","
+      << "\"moe_selected_mass\":" << result.moeSelectedMass << ","
+      << "\"moe_pager_loads\":" << result.moePagerLoads << ","
+      << "\"moe_pager_evictions\":" << result.moePagerEvictions << ","
+      << "\"moe_pager_reuses\":" << result.moePagerReuses << ","
+      << "\"moe_resident_experts\":" << result.moeResidentExperts << ","
+      << "\"moe_sparsity_cache_hit\":"
+      << (result.moeSparsityCacheHit ? "true" : "false") << ","
+      << "\"moe_sparsity_cache_hits\":" << result.moeSparsityCacheHits << ","
+      << "\"moe_sparsity_cache_misses\":" << result.moeSparsityCacheMisses
+      << ","
+      << "\"moe_sparsity_cache_entries\":" << result.moeSparsityCacheEntries
+      << ","
+      << "\"moe_sparsity_cache_hit_rate\":"
+      << ComputeMoeSparsityCacheHitRate(result) << ","
+      << "\"moe_sparsity_pattern_hash\":" << result.moeSparsityPatternHash
+      << ","
+      << "\"moe_sparsity_pattern_key\":\""
+      << EscapeJson(result.moeSparsityPatternKey) << "\","
+      << "\"multimodal_cache_hit\":"
+      << (result.multimodalCacheHit ? "true" : "false") << ","
+      << "\"multimodal_cache_hits\":" << result.multimodalCacheHits << ","
+      << "\"multimodal_cache_misses\":" << result.multimodalCacheMisses << ","
+      << "\"multimodal_cache_entries\":" << result.multimodalCacheEntries << ","
+      << "\"multimodal_cache_hit_rate\":"
+      << ComputeMultimodalCacheHitRate(result) << ","
+      << "\"multimodal_active_modalities\":"
+      << result.multimodalActiveModalities << ","
+      << "\"multimodal_modalities\":\""
+      << EscapeJson(result.multimodalModalities) << "\","
+      << "\"moe_shard_count\":" << result.moeShardCount << ","
+      << "\"moe_active_experts\":" << result.moeActiveExperts << ","
+      << "\"moe_lazy_load\":" << (result.moeLazyLoad ? "true" : "false") << ","
+      << "\"moe_hit_rate\":" << ComputeMoeHitRate(result) << ","
+      << "\"moe_eviction_rate\":" << ComputeMoeEvictionRate(result) << ","
+      << "\"weight_dtype\":\"" << EscapeJson(result.weightDType) << "\","
+      << "\"neon_kernel_flavor\":\"" << EscapeJson(result.neonKernelFlavor)
+      << "\","
+      << "\"dequant_path\":\"" << EscapeJson(result.dequantPath) << "\","
+      << "\"metal_device\":\"" << EscapeJson(result.metalDevice) << "\","
+      << "\"metal_queue_label\":\"" << EscapeJson(result.metalQueueLabel)
+      << "\","
+      << "\"prompt_tokens\":[" << promptTokens.str() << "],"
+      << "\"generated_tokens\":[" << generatedTokens.str() << "],"
+      << "\"text\":\"" << EscapeJson(result.text) << "\""
+      << "}\n";
 }
 
 void PrintAdapterList(const us4::HardwareProbeResult &probe) {

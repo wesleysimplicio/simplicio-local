@@ -1,6 +1,7 @@
 #pragma once
 
 #include "adapters/dense_adapter_base.h"
+#include "cache/multimodal_cache.h"
 
 namespace us4 {
 
@@ -24,6 +25,8 @@ private:
   std::vector<float> BuildRouteLogits(const GenerationRequest &request,
                                       const ModelAsset *asset) const;
   std::string BuildRouteSignature(const RouterDecision &routing) const;
+  std::vector<ModalityTokenState>
+  BuildModalityState(const GenerationRequest &request) const;
 };
 
 } // namespace us4
