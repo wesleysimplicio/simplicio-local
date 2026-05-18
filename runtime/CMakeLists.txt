@@ -35,6 +35,9 @@ add_library(us4_runtime_core
   metal/kernel_library.cpp
   mlx/dense_plan.cpp
   mlx/mlx_bridge.cpp
+  ane/ane_backend.cpp
+  ane/layer_offloader.cpp
+  ane/mixed_dispatch.cpp
   cache/multimodal_cache.cpp
   cache/sparsity_aware_cache.cpp
   scheduler/continuous_batcher.cpp
@@ -58,6 +61,7 @@ add_library(us4_runtime_core
   neon/neon_matmul.cpp
   telemetry/telemetry_types.cpp
   telemetry/telemetry_sink.cpp
+  tuning/thermal_monitor.cpp
 )
 
 target_include_directories(us4_runtime_core
