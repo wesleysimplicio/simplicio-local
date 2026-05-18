@@ -5,6 +5,7 @@
 #include <sstream>
 
 #include "core/model_asset.h"
+#include "moe/speculative_prefetch.h"
 
 namespace us4 {
 
@@ -36,8 +37,15 @@ bool KimiMoEAdapter::SupportsMetalBackend() const { return true; }
 GenerationResult KimiMoEAdapter::Generate(const GenerationRequest &request,
                                           const RuntimeContext &context) const {
   RuntimeContext &mutableContext = const_cast<RuntimeContext &>(context);
-  const RouterDecision routing = mutableContext.router().RouteTopK(
-      BuildRouteLogits(request, request.asset), 2);
+  const std::vector<float> routeLogits =
+      BuildRouteLogits(request, request.asset);
+  const RouterDecision routing =
+      mutableContext.router().RouteTopK(routeLogits, 2);
+  const SpeculativePrefetch prefetch(3);
+  const SpeculativePrefetchPlan prefetchPlan = prefetch.BuildPlan(
+      "kimi", mutableContext.router().RouteTopK(routeLogits, 3));
+  const SpeculativePrefetchTelemetry prefetchTelemetry =
+      prefetch.Reconcile(prefetchPlan, routing);
   const SparsityCacheSnapshot cacheSnapshot =
       mutableContext.sparsityCache().Touch("kimi", routing);
   for (const ExpertScore &expert : routing.selected) {
@@ -62,6 +70,14 @@ GenerationResult KimiMoEAdapter::Generate(const GenerationRequest &request,
   result.moePagerEvictions = pagerSnapshot.evictionCount;
   result.moePagerReuses = pagerSnapshot.reuseCount;
   result.moeResidentExperts = pagerSnapshot.residentCount;
+  result.moePrefetchPrefetched = prefetchTelemetry.prefetchedCount;
+  result.moePrefetchHits = prefetchTelemetry.hitCount;
+  result.moePrefetchMisses = prefetchTelemetry.missCount;
+  result.moePrefetchHitRatio = prefetchTelemetry.hitRatio;
+  result.moePrefetchWrongExpertLeakPrevented =
+      prefetchTelemetry.wrongExpertLeakPrevented;
+  result.moePrefetchExecutableExperts =
+      prefetchTelemetry.executableExperts.size();
   result.moeSparsityCacheHit = cacheSnapshot.lastLookupHit;
   result.moeSparsityCacheHits = cacheSnapshot.hitCount;
   result.moeSparsityCacheMisses = cacheSnapshot.missCount;

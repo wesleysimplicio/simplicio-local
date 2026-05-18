@@ -792,7 +792,8 @@ test.describe("Native CLI sprint 02 contract", () => {
     });
 
     expect(stderr.trim()).toBe("");
-    expect(JSON.parse(stdout)).toMatchObject({
+    const deepseekResult = JSON.parse(stdout);
+    expect(deepseekResult).toMatchObject({
       family : "deepseek",
       backend : "scalar",
       shared_allocations : 0,
@@ -810,11 +811,18 @@ test.describe("Native CLI sprint 02 contract", () => {
       moe_pager_evictions : 0,
       moe_pager_reuses : 0,
       moe_resident_experts : 2,
+      moe_prefetch_prefetched : 3,
+      moe_prefetch_hits : 2,
+      moe_prefetch_misses : 1,
+      moe_prefetch_hit_rate : expect.any(Number),
+      moe_prefetch_wrong_expert_leak_prevented : true,
+      moe_prefetch_executable_experts : 2,
       moe_hit_rate : 0,
       moe_eviction_rate : 0,
       generated_tokens : expect.any(Array),
     });
-    expect(JSON.parse(stdout).text).toContain("moe-route");
+    expect(deepseekResult.moe_prefetch_hit_rate).toBeCloseTo(2 / 3, 5);
+    expect(deepseekResult.text).toContain("moe-route");
   });
 
   test("glm moe path emits routed expert output", async ({}, testInfo) => {

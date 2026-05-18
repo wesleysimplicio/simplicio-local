@@ -32,6 +32,15 @@ Home de routing, paging e telemetria agregada para adapters sparse.
   - `missCount`
   - `hitRatio`
   - `wrongExpertLeakPrevented`
+- Os adapters MoE agora espelham isso no resultado/CLI como:
+  - `moe_prefetch_prefetched`
+  - `moe_prefetch_hits`
+  - `moe_prefetch_misses`
+  - `moe_prefetch_hit_rate`
+  - `moe_prefetch_wrong_expert_leak_prevented`
+  - `moe_prefetch_executable_experts`
+- A camada de cache tambem preserva:
+  - `moe_sparsity_cache_hit_rate`
 - O contrato de loader agora preserva tambem:
   - `moe_shard_count`
   - `moe_active_experts`

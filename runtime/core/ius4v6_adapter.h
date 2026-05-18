@@ -58,6 +58,12 @@ struct GenerationResult {
   std::size_t moePagerEvictions = 0;
   std::size_t moePagerReuses = 0;
   std::size_t moeResidentExperts = 0;
+  std::size_t moePrefetchPrefetched = 0;
+  std::size_t moePrefetchHits = 0;
+  std::size_t moePrefetchMisses = 0;
+  double moePrefetchHitRatio = 0.0;
+  bool moePrefetchWrongExpertLeakPrevented = false;
+  std::size_t moePrefetchExecutableExperts = 0;
   bool moeSparsityCacheHit = false;
   std::size_t moeSparsityCacheHits = 0;
   std::size_t moeSparsityCacheMisses = 0;

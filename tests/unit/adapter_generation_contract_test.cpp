@@ -92,6 +92,12 @@ TEST(AdapterGenerationContractTest,
   EXPECT_EQ(first.moeSparsityCacheEntries, 1U);
   EXPECT_GT(first.moeSparsityPatternHash, 0U);
   EXPECT_FALSE(first.moeSparsityPatternKey.empty());
+  EXPECT_EQ(first.moePrefetchPrefetched, 3U);
+  EXPECT_EQ(first.moePrefetchHits, 2U);
+  EXPECT_EQ(first.moePrefetchMisses, 1U);
+  EXPECT_DOUBLE_EQ(first.moePrefetchHitRatio, 2.0 / 3.0);
+  EXPECT_TRUE(first.moePrefetchWrongExpertLeakPrevented);
+  EXPECT_EQ(first.moePrefetchExecutableExperts, 2U);
 
   EXPECT_EQ(second.moePagerLoads, 2U);
   EXPECT_GE(second.moePagerReuses, 2U);
