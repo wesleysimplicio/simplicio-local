@@ -26,6 +26,9 @@ routing. Offload de experts cold pra RAM.
   visivel: a rota selecionada entra no prompt derivado, a saida expõe a
   assinatura `moe-route eX eY`, e o pager mostra reuse/eviction conforme a
   mudanca de experts no mesmo `RuntimeContext`.
+- `KimiMoEAdapter` agora espelha esse nivel de concretude com heuristica
+  propria de roteamento e assinatura `kimi-route eX eY`, tambem deixando reuse
+  e eviction do pager visiveis no fluxo nativo.
 - `runtime/moe/ExpertPager` agora expõe `load`, `eviction`, `reuse` e
   `residentCount` de forma visível, com `ExpertPagerSnapshot` preservando os
   experts residentes desta chamada.
@@ -37,7 +40,7 @@ routing. Offload de experts cold pra RAM.
 - [x] T08.1 - `runtime/moe/Router` (top-k softmax, expert selection, load balance)
 - [x] T08.2 - `runtime/moe/ExpertPager` (page experts em unified memory, evict LRU)
 - [x] T08.3 - `runtime/adapters/deepseek/DeepSeekMoEAdapter` (config, shared experts, routed experts)
-- [ ] T08.4 - `runtime/adapters/kimi/KimiMoEAdapter`
+- [x] T08.4 - `runtime/adapters/kimi/KimiMoEAdapter`
 - [ ] T08.5 - Loader MoE: lazy load por expert (sharded weights)
 - [ ] T08.6 - Telemetry: expert hit-rate, eviction count, router entropy
 

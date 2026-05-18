@@ -16,6 +16,8 @@ Home de routing, paging e telemetria agregada para adapters sparse.
 - `DeepSeekMoEAdapter` tambem usa a rota selecionada para materializar uma
   assinatura textual `moe-route eX eY`, deixando visivel no output nativo quais
   experts foram escolhidos para aquele prompt.
+- `KimiMoEAdapter` segue a mesma ideia com a assinatura `kimi-route eX eY`,
+  mantendo o pager observavel para prompts repetidos e para mudancas de rota.
 - `ExpertPager` agora projeta tambem:
   - `moe_pager_loads`
   - `moe_pager_evictions`
