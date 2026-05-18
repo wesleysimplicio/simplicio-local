@@ -1276,5 +1276,29 @@ int main() {
                  "new text state should add a new multimodal cache entry");
   }
 
+  {
+    const us4::IUS4V6Adapter *adapter =
+        us4::FindAdapterByModel("deepseek-v2-lite");
+    us4::RuntimeContext context(MakeProbe());
+    adapter->ConfigureRuntime(context);
+    const us4::GenerationResult result = adapter->Generate(
+        {.prompt = "code logic runtime", .maxTokens = 3}, context);
+
+    ok &= Expect(result.moePrefetchPrefetched == 3U,
+                 "moe generation should surface speculative prefetch breadth");
+    ok &= Expect(result.moePrefetchHits == 2U && result.moePrefetchMisses == 1U,
+                 "moe generation should surface speculative prefetch hit and "
+                 "miss counts");
+    ok &= Expect(
+        std::abs(result.moePrefetchHitRatio - (2.0 / 3.0)) <= 1e-9,
+        "moe generation should surface stable speculative prefetch hit ratio");
+    ok &=
+        Expect(result.moePrefetchWrongExpertLeakPrevented,
+               "moe generation should confirm wrong-expert leakage protection");
+    ok &= Expect(
+        result.moeSparsityCacheHitRatio == 0.0,
+        "first moe generation should expose zero sparsity cache hit ratio");
+  }
+
   return ok ? EXIT_SUCCESS : EXIT_FAILURE;
 }

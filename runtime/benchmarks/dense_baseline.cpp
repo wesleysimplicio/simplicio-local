@@ -124,6 +124,9 @@ RunCase(const us4::HardwareProbeResult &probe, const std::string_view label,
     std::cout << "moe_hit_rate=" << ComputeMoeHitRate(result) << "\n";
     std::cout << "moe_eviction_rate=" << ComputeMoeEvictionRate(result) << "\n";
     std::cout << "moe_router_entropy=" << result.moeRouterEntropy << "\n";
+    std::cout << "moe_prefetch_hit_rate=" << result.moePrefetchHitRatio << "\n";
+    std::cout << "moe_sparsity_cache_hit_rate="
+              << result.moeSparsityCacheHitRatio << "\n";
   }
   std::cout << "generated_tokens=" << observation.generatedTokenCount << "\n";
   std::cout << "elapsed_ms=" << observation.elapsedMs << "\n";
