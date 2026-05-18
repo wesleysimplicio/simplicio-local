@@ -1,5 +1,6 @@
 #pragma once
 
+#include "cache/multimodal_cache.h"
 #include "cache/sparsity_aware_cache.h"
 #include "core/backend_selector.h"
 #include "core/hardware_probe.h"
@@ -36,6 +37,7 @@ public:
   Router &router();
   ExpertPager &expertPager();
   SparsityAwareCache &sparsityCache();
+  MultimodalCache &multimodalCache();
   void SetMode(RuntimeMode mode);
   void SetBackend(BackendType backend);
 
@@ -53,6 +55,7 @@ private:
   Router router_;
   ExpertPager expertPager_;
   SparsityAwareCache sparsityCache_;
+  MultimodalCache multimodalCache_;
 };
 
 } // namespace us4

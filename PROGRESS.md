@@ -173,6 +173,28 @@ Validation:
 Next:
 Fechar PR/merge de T09.4 e seguir para T09.5 (multimodal cache).
 
+### Checkpoint 9
+
+Status: in_progress
+
+Task:
+T09.5 - Build multimodal cache surface
+
+Result:
+`MultimodalCache` entrou em `runtime/cache`, foi ligado apenas ao
+`MiniMaxMoEAdapter`, e o CLI nativo agora expõe hit/miss/modalities sem vazar
+essa semântica para os caminhos dense-only.
+
+Validation:
+`npm run lint`; `npm test -- --coverage`; `cmake --build build --config Release`;
+`ctest --test-dir build --output-on-failure -C Release`;
+`npx playwright test --reporter=list,html`; `npm run pack:dry`;
+`build\\runtime\\benchmarks\\dense_baseline.exe`
+
+Next:
+Fechar PR/merge de T09.5 e seguir para T09.6 (telemetria consolidada de prefetch
+e sparsity).
+
 Result:
 `GlmMoEAdapter` entrou no runtime nativo, registrado no adapter registry,
 com assinatura `glm-route eX eY`, fixture `glm-5.1` shard-aware, inferencia de

@@ -17,7 +17,7 @@ cache. Multimodal cache (image/audio tokens).
 - [x] T09.2 - `runtime/adapters/glm/GLMAdapter`
 - [x] T09.3 - `runtime/moe/SpeculativePrefetch` (predict next-token experts, preload em fundo)
 - [x] T09.4 - `runtime/cache/SparsityAwareCache` (cache hits by expert pattern hash)
-- [ ] T09.5 - `runtime/cache/MultimodalCache` (image patch tokens, audio frames)
+- [x] T09.5 - `runtime/cache/MultimodalCache` (image patch tokens, audio frames)
 - [ ] T09.6 - Telemetry: prefetch hit ratio, sparsity hit ratio
 
 ## Test plan

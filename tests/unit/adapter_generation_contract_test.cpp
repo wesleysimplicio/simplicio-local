@@ -184,6 +184,12 @@ TEST(AdapterGenerationContractTest,
   EXPECT_FALSE(first.moeSparsityCacheHit);
   EXPECT_EQ(first.moeSparsityCacheMisses, 1U);
   EXPECT_EQ(first.moeSparsityCacheEntries, 1U);
+  EXPECT_FALSE(first.multimodalCacheHit);
+  EXPECT_EQ(first.multimodalCacheHits, 0U);
+  EXPECT_EQ(first.multimodalCacheMisses, 3U);
+  EXPECT_EQ(first.multimodalCacheEntries, 3U);
+  EXPECT_EQ(first.multimodalActiveModalities, 3U);
+  EXPECT_EQ(first.multimodalModalities, "text,image,audio");
 
   EXPECT_EQ(second.moePagerLoads, 2U);
   EXPECT_GE(second.moePagerReuses, 2U);
@@ -192,6 +198,9 @@ TEST(AdapterGenerationContractTest,
   EXPECT_TRUE(second.moeSparsityCacheHit);
   EXPECT_GE(second.moeSparsityCacheHits, 1U);
   EXPECT_EQ(second.moeSparsityCacheEntries, 1U);
+  EXPECT_TRUE(second.multimodalCacheHit);
+  EXPECT_GE(second.multimodalCacheHits, 3U);
+  EXPECT_EQ(second.multimodalCacheEntries, 3U);
 
   EXPECT_EQ(third.moeSelectedExperts, 2U);
   EXPECT_GE(third.moePagerLoads, 3U);
@@ -199,6 +208,7 @@ TEST(AdapterGenerationContractTest,
   EXPECT_EQ(third.moeResidentExperts, 2U);
   EXPECT_NE(third.text.find("minimax-route"), std::string::npos);
   EXPECT_GE(third.moeSparsityCacheEntries, 2U);
+  EXPECT_GE(third.multimodalCacheEntries, 5U);
 }
 
 TEST(AdapterGenerationContractTest,
