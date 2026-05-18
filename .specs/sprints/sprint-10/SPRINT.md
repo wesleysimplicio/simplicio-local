@@ -1,6 +1,6 @@
 ---
 sprint: sprint-10
-status: todo
+status: done
 start: 2026-09-17
 end: 2026-09-30
 owner: us4-core
@@ -12,12 +12,12 @@ owner: us4-core
 Continuous batching multi-sessao. Speculative decoding P-EAGLE / EAGLE-3. Draft model loader. Cross-session KV isolation.
 
 ## Tasks
-- [ ] T10.1 — `runtime/scheduler/ContinuousBatcher` (token-level scheduling, fairness)
-- [ ] T10.2 — `runtime/scheduler/SessionPool` (multi-session state + KV namespace)
-- [ ] T10.3 — `runtime/speculative/PEagleDecoder` (draft + verify)
-- [ ] T10.4 — `runtime/speculative/Eagle3Decoder` (n-gram + tree verify)
-- [ ] T10.5 — Draft model loader (small companion model, shared tokenizer)
-- [ ] T10.6 — Acceptance rate telemetry
+- [x] T10.1 — `runtime/scheduler/ContinuousBatcher` (token-level scheduling, fairness)
+- [x] T10.2 — `runtime/scheduler/SessionPool` (multi-session state + KV namespace)
+- [x] T10.3 — `runtime/speculative/PEagleDecoder` (draft + verify)
+- [x] T10.4 — `runtime/speculative/Eagle3Decoder` (n-gram + tree verify)
+- [x] T10.5 — Draft model loader (small companion model, shared tokenizer)
+- [x] T10.6 — Acceptance rate telemetry
 
 ## Test plan
 - Unit: batcher fairness; speculative accept/reject correctness; session isolation.

@@ -37,6 +37,12 @@ add_library(us4_runtime_core
   mlx/mlx_bridge.cpp
   cache/multimodal_cache.cpp
   cache/sparsity_aware_cache.cpp
+  scheduler/continuous_batcher.cpp
+  scheduler/session_pool.cpp
+  speculative/draft_model_loader.cpp
+  speculative/eagle3_decoder.cpp
+  speculative/peagle_decoder.cpp
+  speculative/speculative_telemetry.cpp
   moe/expert_pager.cpp
   moe/moe_telemetry.cpp
   moe/router.cpp
