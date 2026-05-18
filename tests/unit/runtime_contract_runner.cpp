@@ -228,6 +228,13 @@ int main() {
                  "llama manifest should expose rope theta metadata");
     ok &= Expect(asset.metadata.contains("rope_scale"),
                  "llama manifest should expose rope scale metadata");
+    ok &= Expect(!asset.draftModelPath.empty() &&
+                     asset.draftModelPath.filename() == "draft-llama.gguf",
+                 "llama manifest should surface draft model path");
+    ok &= Expect(
+        asset.draftModelFormat == us4::ModelFormat::kGguf &&
+            asset.sharedTokenizer,
+        "llama manifest should surface draft format and shared tokenizer");
     ok &= Expect(config.hiddenSize == 8U && config.queryHeads == 2U &&
                      config.kvHeads == 1U && config.headDim == 4U,
                  "llama config should resolve head topology from manifest");

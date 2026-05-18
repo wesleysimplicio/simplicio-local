@@ -173,6 +173,10 @@ TEST(ModelAssetContractTest,
   EXPECT_EQ(asset.metadata.at("kv_heads"), "1");
   EXPECT_EQ(asset.metadata.at("tokenizer_json"),
             (FixtureRoot() / "llama-3.1-8b" / "tokenizer.json").string());
+  EXPECT_EQ(asset.draftModelPath,
+            (FixtureRoot() / "llama-3.1-8b" / "draft-llama.gguf"));
+  EXPECT_EQ(asset.draftModelFormat, us4::ModelFormat::kGguf);
+  EXPECT_TRUE(asset.sharedTokenizer);
 }
 
 TEST(ModelAssetContractTest,

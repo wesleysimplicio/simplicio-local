@@ -32,6 +32,8 @@ struct GenerationResult {
   std::string modelName;
   std::string assetFormat;
   std::string assetPath;
+  std::string draftModelFormat;
+  std::string draftModelPath;
   std::string backend;
   std::string backendReason;
   std::vector<std::string> promptTokens;
@@ -81,6 +83,7 @@ struct GenerationResult {
   std::size_t moeShardCount = 0;
   std::size_t moeActiveExperts = 0;
   bool moeLazyLoad = false;
+  bool sharedTokenizer = false;
   std::string weightDType;
   std::string neonKernelFlavor;
   std::string dequantPath;

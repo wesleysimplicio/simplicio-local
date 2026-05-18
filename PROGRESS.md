@@ -11,19 +11,19 @@ single-session enquanto abrimos a frente multi-sessao.
 Status: done
 
 Task:
-T10.4 - Build eagle3 speculative decoder surface
+T10.5 - Add draft model loader surface
 
 Result:
-`Eagle3Decoder` entrou em `runtime/speculative` com verify por arvore,
-clamp de breadth/depth, escolha do ramo com maior prefixo compartilhado e
-fallback explicito para preservar equivalencia com o caminho autoritativo.
+O loader agora preserva `draft_model_path`, `draft_model_format` e
+`shared_tokenizer` no `ModelAsset`, projeta isso no resultado nativo/CLI, e
+mantem a visibilidade do draft companion model nos caminhos fixture e GGUF.
 
 Validation:
 `npm run lint`; `npm test -- --coverage`; `npm run pack:dry`;
 `cmake --build build --config Release`; `ctest --test-dir build --output-on-failure -C Release`
 
 Next:
-T10.5 - abrir o draft model loader com tokenizer compartilhado.
+T10.6 - fechar telemetria de acceptance para speculative decoding.
 
 ## Checkpoints
 

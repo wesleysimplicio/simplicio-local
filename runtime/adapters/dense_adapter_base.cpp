@@ -651,6 +651,12 @@ GenerationResult DenseAdapterBase::FinalizeGenerationResult(
                            : "builtin";
   result.assetPath =
       request.asset != nullptr ? request.asset->sourcePath.string() : "";
+  result.draftModelFormat =
+      request.asset != nullptr && !request.asset->draftModelPath.empty()
+          ? std::string(ToString(request.asset->draftModelFormat))
+          : "none";
+  result.draftModelPath =
+      request.asset != nullptr ? request.asset->draftModelPath.string() : "";
   result.backend = std::string(ToString(backendSelection.selected));
   result.backendReason = std::string(backendSelection.reason);
   result.promptTokens = std::move(promptTokens);
@@ -678,6 +684,8 @@ GenerationResult DenseAdapterBase::FinalizeGenerationResult(
       request.asset != nullptr ? request.asset->moeActiveExperts : 0U;
   result.moeLazyLoad =
       request.asset != nullptr ? request.asset->moeLazyLoad : false;
+  result.sharedTokenizer =
+      request.asset != nullptr ? request.asset->sharedTokenizer : false;
   result.weightDType = request.asset != nullptr
                            ? std::string(ToString(request.asset->weightDType))
                            : "fp32";

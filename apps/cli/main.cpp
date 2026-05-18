@@ -205,6 +205,10 @@ void PrintRunText(const us4::GenerationResult &result) {
       << "asset_format: " << result.assetFormat << "\n"
       << "asset_path: "
       << (result.assetPath.empty() ? "<builtin>" : result.assetPath) << "\n"
+      << "draft_model_format: " << result.draftModelFormat << "\n"
+      << "draft_model_path: "
+      << (result.draftModelPath.empty() ? "<none>" : result.draftModelPath)
+      << "\n"
       << "mode: " << us4::ToString(result.mode) << "\n"
       << "backend: " << result.backend << "\n"
       << "backend_reason: " << result.backendReason << "\n"
@@ -262,6 +266,8 @@ void PrintRunText(const us4::GenerationResult &result) {
       << "moe_shard_count: " << result.moeShardCount << "\n"
       << "moe_active_experts: " << result.moeActiveExperts << "\n"
       << "moe_lazy_load: " << (result.moeLazyLoad ? "true" : "false") << "\n"
+      << "shared_tokenizer: " << (result.sharedTokenizer ? "true" : "false")
+      << "\n"
       << "moe_hit_rate: " << ComputeMoeHitRate(result) << "\n"
       << "moe_eviction_rate: " << ComputeMoeEvictionRate(result) << "\n"
       << "weight_dtype: " << result.weightDType << "\n"
@@ -299,6 +305,9 @@ void PrintRunJson(const us4::GenerationResult &result) {
       << "\"model\":\"" << EscapeJson(result.modelName) << "\","
       << "\"asset_format\":\"" << EscapeJson(result.assetFormat) << "\","
       << "\"asset_path\":\"" << EscapeJson(result.assetPath) << "\","
+      << "\"draft_model_format\":\"" << EscapeJson(result.draftModelFormat)
+      << "\","
+      << "\"draft_model_path\":\"" << EscapeJson(result.draftModelPath) << "\","
       << "\"mode\":\"" << EscapeJson(us4::ToString(result.mode)) << "\","
       << "\"backend\":\"" << EscapeJson(result.backend) << "\","
       << "\"backend_reason\":\"" << EscapeJson(result.backendReason) << "\","
@@ -361,6 +370,8 @@ void PrintRunJson(const us4::GenerationResult &result) {
       << "\"moe_shard_count\":" << result.moeShardCount << ","
       << "\"moe_active_experts\":" << result.moeActiveExperts << ","
       << "\"moe_lazy_load\":" << (result.moeLazyLoad ? "true" : "false") << ","
+      << "\"shared_tokenizer\":" << (result.sharedTokenizer ? "true" : "false")
+      << ","
       << "\"moe_hit_rate\":" << ComputeMoeHitRate(result) << ","
       << "\"moe_eviction_rate\":" << ComputeMoeEvictionRate(result) << ","
       << "\"weight_dtype\":\"" << EscapeJson(result.weightDType) << "\","
