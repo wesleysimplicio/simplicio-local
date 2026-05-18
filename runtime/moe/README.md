@@ -24,6 +24,10 @@ Home de routing, paging e telemetria agregada para adapters sparse.
   - `moe_lazy_load`
 - Esses campos sao derivados de `ModelAsset` e ficam visiveis no output do CLI
   para manifests/binarios MoE com shards declarados.
+- A camada de telemetria tambem deriva:
+  - `moe_hit_rate`
+  - `moe_eviction_rate`
+  - `moe_router_entropy`
 - `ExpertPager` agora projeta tambem:
   - `moe_pager_loads`
   - `moe_pager_evictions`

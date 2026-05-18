@@ -64,6 +64,24 @@ std::string DisplayPath(const std::string_view rawPath) {
   return rawFilesystemPath.generic_string();
 }
 
+double ComputeMoeHitRate(const us4::GenerationResult &result) {
+  const std::size_t denominator = result.moePagerLoads + result.moePagerReuses;
+  if (denominator == 0U) {
+    return 0.0;
+  }
+  return static_cast<double>(result.moePagerReuses) /
+         static_cast<double>(denominator);
+}
+
+double ComputeMoeEvictionRate(const us4::GenerationResult &result) {
+  const std::size_t denominator = result.moePagerLoads + result.moePagerReuses;
+  if (denominator == 0U) {
+    return 0.0;
+  }
+  return static_cast<double>(result.moePagerEvictions) /
+         static_cast<double>(denominator);
+}
+
 std::optional<us4::benchmarks::CaseObservation>
 RunCase(const us4::HardwareProbeResult &probe, const std::string_view label,
         const std::string_view model,
@@ -102,6 +120,11 @@ RunCase(const us4::HardwareProbeResult &probe, const std::string_view label,
   std::cout << "weight_dtype=" << observation.weightDType << "\n";
   std::cout << "neon_kernel_flavor=" << observation.neonKernelFlavor << "\n";
   std::cout << "dequant_path=" << observation.dequantPath << "\n";
+  if (result.moeSelectedExperts > 0 || result.moeShardCount > 0) {
+    std::cout << "moe_hit_rate=" << ComputeMoeHitRate(result) << "\n";
+    std::cout << "moe_eviction_rate=" << ComputeMoeEvictionRate(result) << "\n";
+    std::cout << "moe_router_entropy=" << result.moeRouterEntropy << "\n";
+  }
   std::cout << "generated_tokens=" << observation.generatedTokenCount << "\n";
   std::cout << "elapsed_ms=" << observation.elapsedMs << "\n";
   std::cout << "fell_back=" << (observation.fellBack ? "true" : "false")

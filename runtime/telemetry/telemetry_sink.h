@@ -14,16 +14,44 @@ struct TelemetrySnapshot {
   std::size_t promptTokens = 0;
   std::size_t generatedTokens = 0;
   RuntimeMode mode = RuntimeMode::kNano;
+  std::size_t moeSelectedExperts = 0;
+  double moeRouterEntropy = 0.0;
+  std::size_t moePagerLoads = 0;
+  std::size_t moePagerEvictions = 0;
+  std::size_t moePagerReuses = 0;
+
+  bool HasMoeTelemetry() const {
+    return moeSelectedExperts > 0 || moeRouterEntropy > 0.0 ||
+           moePagerLoads > 0 || moePagerEvictions > 0 || moePagerReuses > 0;
+  }
+
+  double MoeHitRate() const {
+    const std::size_t denominator = moePagerLoads + moePagerReuses;
+    if (denominator == 0U) {
+      return 0.0;
+    }
+    return static_cast<double>(moePagerReuses) /
+           static_cast<double>(denominator);
+  }
+
+  double MoeEvictionRate() const {
+    const std::size_t denominator = moePagerLoads + moePagerReuses;
+    if (denominator == 0U) {
+      return 0.0;
+    }
+    return static_cast<double>(moePagerEvictions) /
+           static_cast<double>(denominator);
+  }
 };
 
 class TelemetrySink {
- public:
-  void Record(const TelemetrySnapshot& snapshot);
-  const std::vector<TelemetrySnapshot>& Snapshots() const;
+public:
+  void Record(const TelemetrySnapshot &snapshot);
+  const std::vector<TelemetrySnapshot> &Snapshots() const;
   bool Empty() const;
 
- private:
+private:
   std::vector<TelemetrySnapshot> snapshots_;
 };
 
-}  // namespace us4
+} // namespace us4

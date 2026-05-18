@@ -788,6 +788,8 @@ test.describe("Native CLI sprint 02 contract", () => {
       moe_pager_evictions : 0,
       moe_pager_reuses : 0,
       moe_resident_experts : 2,
+      moe_hit_rate : 0,
+      moe_eviction_rate : 0,
       generated_tokens : expect.any(Array),
     });
     expect(JSON.parse(stdout).text).toContain("moe-route");
@@ -840,6 +842,8 @@ test.describe("Native CLI sprint 02 contract", () => {
       moe_pager_evictions : 0,
       moe_pager_reuses : 0,
       moe_resident_experts : 2,
+      moe_hit_rate : 0,
+      moe_eviction_rate : 0,
       generated_tokens : expect.any(Array),
     });
     expect(JSON.parse(stdout).text).toContain("kimi-route");
@@ -894,6 +898,8 @@ test.describe("Native CLI sprint 02 contract", () => {
            moe_shard_count : 2,
            moe_active_experts : 2,
            moe_lazy_load : true,
+           moe_hit_rate : 0,
+           moe_eviction_rate : 0,
            generated_tokens : expect.any(Array),
          });
        });

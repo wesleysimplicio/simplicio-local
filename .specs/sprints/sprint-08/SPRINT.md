@@ -32,6 +32,9 @@ routing. Offload de experts cold pra RAM.
 - `ModelAsset` e o CLI nativo agora preservam metadados shard-aware para MoE:
   `moe_lazy_load`, `moe_active_experts` e `moe_shard_count` ficam visiveis
   tanto em fixtures quanto em binarios com manifesto irmao.
+- A superficie de telemetria MoE agora inclui derivacoes estaveis de
+  `hit_rate`, `eviction_rate` e `router_entropy` tanto no CLI nativo quanto no
+  benchmark baseline.
 - `runtime/moe/ExpertPager` agora expõe `load`, `eviction`, `reuse` e
   `residentCount` de forma visível, com `ExpertPagerSnapshot` preservando os
   experts residentes desta chamada.
@@ -45,7 +48,7 @@ routing. Offload de experts cold pra RAM.
 - [x] T08.3 - `runtime/adapters/deepseek/DeepSeekMoEAdapter` (config, shared experts, routed experts)
 - [x] T08.4 - `runtime/adapters/kimi/KimiMoEAdapter`
 - [x] T08.5 - Loader MoE: lazy load por expert (sharded weights)
-- [ ] T08.6 - Telemetry: expert hit-rate, eviction count, router entropy
+- [x] T08.6 - Telemetry: expert hit-rate, eviction count, router entropy
 
 ## Test plan
 

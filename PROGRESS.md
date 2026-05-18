@@ -69,6 +69,27 @@ Validation:
 Next:
 Fechar PR/merge de T08.5 e seguir para T08.6 (telemetria MoE expandida).
 
+### Checkpoint 4
+
+Status: in_progress
+
+Task:
+T08.6 - Expand moe telemetry surface
+
+Result:
+O CLI nativo e o benchmark baseline agora expõem `moe_hit_rate`,
+`moe_eviction_rate` e `moe_router_entropy`, enquanto `TelemetrySnapshot`
+ganhou helpers semânticos para presença/hit/eviction de MoE.
+
+Validation:
+`npm run lint`; `npm test -- --coverage`; `cmake --build build --config Release`;
+`ctest --test-dir build --output-on-failure -C Release`;
+`npx playwright test --reporter=list,html`; `npm run pack:dry`;
+`build\\runtime\\benchmarks\\dense_baseline.exe`
+
+Next:
+Fechar PR/merge de T08.6 e encerrar a issue #20 antes de seguir para Sprint 09.
+
 ## Blockers
 
 Nenhum bloqueio funcional. O ambiente local continua sem GTest instalado, entao
@@ -85,5 +106,6 @@ os gates nativos seguem por `us4_runtime_smoke_test` e
 | `ctest --test-dir build --output-on-failure -C Release` | pass | smoke + contract runner |
 | `npx playwright test --reporter=list,html` | pass | 16 testes verdes na rodada atual |
 | `npx playwright test --reporter=list,html` | pass | 17 testes verdes com loader MoE shard-aware |
+| `npx playwright test --reporter=list,html` | pass | 17 testes verdes com telemetria MoE expandida |
 | `npm run pack:dry` | pass | tarball `0.1.27` ok |
 | `build\\runtime\\benchmarks\\dense_baseline.exe` | pass | observabilidade MoE/low-bit ok |

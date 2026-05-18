@@ -62,6 +62,24 @@ std::string EscapeJson(const std::string_view value) {
   return escaped;
 }
 
+double ComputeMoeHitRate(const us4::GenerationResult &result) {
+  const std::size_t denominator = result.moePagerLoads + result.moePagerReuses;
+  if (denominator == 0U) {
+    return 0.0;
+  }
+  return static_cast<double>(result.moePagerReuses) /
+         static_cast<double>(denominator);
+}
+
+double ComputeMoeEvictionRate(const us4::GenerationResult &result) {
+  const std::size_t denominator = result.moePagerLoads + result.moePagerReuses;
+  if (denominator == 0U) {
+    return 0.0;
+  }
+  return static_cast<double>(result.moePagerEvictions) /
+         static_cast<double>(denominator);
+}
+
 void PrintHelp() {
   std::cout << "US4 V6 Apple Edition CLI\n"
             << "Usage:\n"
@@ -200,6 +218,8 @@ void PrintRunText(const us4::GenerationResult &result) {
             << "moe_active_experts: " << result.moeActiveExperts << "\n"
             << "moe_lazy_load: " << (result.moeLazyLoad ? "true" : "false")
             << "\n"
+            << "moe_hit_rate: " << ComputeMoeHitRate(result) << "\n"
+            << "moe_eviction_rate: " << ComputeMoeEvictionRate(result) << "\n"
             << "weight_dtype: " << result.weightDType << "\n"
             << "neon_kernel_flavor: " << result.neonKernelFlavor << "\n"
             << "dequant_path: " << result.dequantPath << "\n"
@@ -268,6 +288,8 @@ void PrintRunJson(const us4::GenerationResult &result) {
             << "\"moe_active_experts\":" << result.moeActiveExperts << ","
             << "\"moe_lazy_load\":" << (result.moeLazyLoad ? "true" : "false")
             << ","
+            << "\"moe_hit_rate\":" << ComputeMoeHitRate(result) << ","
+            << "\"moe_eviction_rate\":" << ComputeMoeEvictionRate(result) << ","
             << "\"weight_dtype\":\"" << EscapeJson(result.weightDType) << "\","
             << "\"neon_kernel_flavor\":\""
             << EscapeJson(result.neonKernelFlavor) << "\","
