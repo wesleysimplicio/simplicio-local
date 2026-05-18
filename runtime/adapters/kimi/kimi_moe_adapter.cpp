@@ -1,6 +1,24 @@
 #include "adapters/kimi/kimi_moe_adapter.h"
 
+#include <algorithm>
+#include <cctype>
+#include <sstream>
+
+#include "core/model_asset.h"
+
 namespace us4 {
+
+namespace {
+
+std::string NormalizeRouteToken(std::string token) {
+  std::transform(token.begin(), token.end(), token.begin(),
+                 [](const unsigned char ch) {
+                   return static_cast<char>(std::tolower(ch));
+                 });
+  return token;
+}
+
+} // namespace
 
 KimiMoEAdapter::KimiMoEAdapter()
     : DenseAdapterBase("kimi", "kimi-k2-instruct") {}
@@ -18,17 +36,22 @@ bool KimiMoEAdapter::SupportsMetalBackend() const { return true; }
 GenerationResult KimiMoEAdapter::Generate(const GenerationRequest &request,
                                           const RuntimeContext &context) const {
   RuntimeContext &mutableContext = const_cast<RuntimeContext &>(context);
-  const RouterDecision routing =
-      mutableContext.router().RouteTopK({0.5F, 0.8F, 0.3F, 0.7F}, 2);
+  const RouterDecision routing = mutableContext.router().RouteTopK(
+      BuildRouteLogits(request, request.asset), 2);
   for (const ExpertScore &expert : routing.selected) {
     mutableContext.expertPager().Touch("kimi-expert-" +
                                        std::to_string(expert.expert));
   }
   const ExpertPagerSnapshot pagerSnapshot =
       mutableContext.expertPager().Snapshot();
-  GenerationResult result = DenseAdapterBase::Generate(request, context);
+  GenerationRequest routedRequest = request;
+  const std::string routeSignature = BuildRouteSignature(routing);
+  routedRequest.prompt = request.prompt.empty()
+                             ? routeSignature
+                             : request.prompt + " " + routeSignature;
+  GenerationResult result = DenseAdapterBase::Generate(routedRequest, context);
   result.family = "kimi";
-  result.text = "kimi " + result.text;
+  result.text = routeSignature + " " + result.text;
   result.moeSelectedExperts = routing.selected.size();
   result.moeRouterEntropy = routing.entropy;
   result.moeLoadBalance = routing.loadBalance;
@@ -49,5 +72,54 @@ std::vector<std::string> KimiMoEAdapter::Vocabulary() const {
 }
 
 std::string KimiMoEAdapter::DefaultPromptToken() const { return "hi"; }
+
+std::vector<float>
+KimiMoEAdapter::BuildRouteLogits(const GenerationRequest &request,
+                                 const ModelAsset *asset) const {
+  std::vector<float> logits = {0.35F, 0.85F, 0.45F, 0.65F};
+  std::vector<std::string> tokens = Tokenize(request.prompt);
+  if (tokens.empty() && asset != nullptr &&
+      !asset->defaultPromptToken.empty()) {
+    tokens.push_back(asset->defaultPromptToken);
+  }
+
+  for (const std::string &token : tokens) {
+    const std::string normalized = NormalizeRouteToken(token);
+    if (normalized.find("agent") != std::string::npos ||
+        normalized.find("tool") != std::string::npos) {
+      logits[0] += 0.30F;
+      logits[2] += 0.10F;
+    }
+    if (normalized.find("smart") != std::string::npos ||
+        normalized.find("reason") != std::string::npos) {
+      logits[1] += 0.30F;
+    }
+    if (normalized.find("fast") != std::string::npos ||
+        normalized.find("local") != std::string::npos) {
+      logits[2] += 0.30F;
+    }
+    if (normalized.find("wide") != std::string::npos ||
+        normalized.find("context") != std::string::npos) {
+      logits[3] += 0.25F;
+    }
+  }
+
+  if (asset != nullptr && asset->metadata.contains("seed")) {
+    logits[1] += static_cast<float>(asset->seed % 5U) * 0.01F;
+    logits[3] += static_cast<float>(asset->seed % 3U) * 0.01F;
+  }
+
+  return logits;
+}
+
+std::string
+KimiMoEAdapter::BuildRouteSignature(const RouterDecision &routing) const {
+  std::ostringstream signature;
+  signature << "kimi-route";
+  for (const ExpertScore &expert : routing.selected) {
+    signature << " e" << expert.expert;
+  }
+  return signature.str();
+}
 
 } // namespace us4

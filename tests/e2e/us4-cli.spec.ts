@@ -305,6 +305,7 @@ test.describe("Native CLI sprint 02 contract", () => {
          const deepseek = payload.models.find(
              (model) => model.family === "deepseek",
          );
+         const kimi = payload.models.find((model) => model.family === "kimi");
 
          expect(qwen).toMatchObject({
            family : "qwen",
@@ -330,6 +331,15 @@ test.describe("Native CLI sprint 02 contract", () => {
          expect(deepseek).toMatchObject({
            family : "deepseek",
            model : "deepseek-v2-lite",
+           architecture : "moe",
+           supports_moe : true,
+           supports_mlx : true,
+           supports_metal : true,
+           preferred_backend : expect.any(String),
+         });
+         expect(kimi).toMatchObject({
+           family : "kimi",
+           model : "kimi-k2-instruct",
            architecture : "moe",
            supports_moe : true,
            supports_mlx : true,
@@ -781,6 +791,58 @@ test.describe("Native CLI sprint 02 contract", () => {
       generated_tokens : expect.any(Array),
     });
     expect(JSON.parse(stdout).text).toContain("moe-route");
+  });
+
+  test("kimi moe path emits routed expert output", async ({}, testInfo) => {
+    const {stdout, stderr} = await execFileAsync(
+        nativeCliPath!,
+        [
+          "run",
+          "--model",
+          "kimi-k2-instruct",
+          "--prompt",
+          "smart context",
+          "--max-tokens",
+          "4",
+          "--json",
+        ],
+        {
+          cwd : repoRoot,
+          env : {
+            ...process.env,
+            NO_COLOR : "1",
+          },
+        },
+    );
+
+    await testInfo.attach("stdout-native-kimi", {
+      body : stdout.trim() || "(empty)",
+      contentType : "text/plain",
+    });
+    await testInfo.attach("stderr-native-kimi", {
+      body : stderr.trim() || "(empty)",
+      contentType : "text/plain",
+    });
+
+    expect(stderr.trim()).toBe("");
+    expect(JSON.parse(stdout)).toMatchObject({
+      family : "kimi",
+      backend : "scalar",
+      shared_allocations : 0,
+      metal_dispatches : 0,
+      mlx_operation_count : 0,
+      kv_page_count : 1,
+      moe_selected_experts : 2,
+      moe_router_entropy : expect.any(Number),
+      moe_load_balance : expect.any(Number),
+      moe_selected_mass : expect.any(Number),
+      moe_pager_loads : 2,
+      moe_pager_evictions : 0,
+      moe_pager_reuses : 0,
+      moe_resident_experts : 2,
+      generated_tokens : expect.any(Array),
+    });
+    expect(JSON.parse(stdout).text).toContain("kimi-route");
   });
 
   test(

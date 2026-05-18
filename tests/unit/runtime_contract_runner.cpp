@@ -701,6 +701,47 @@ int main() {
   }
 
   {
+    const us4::IUS4V6Adapter *kimi =
+        us4::FindAdapterByModel("kimi-k2-instruct");
+    ok &= Expect(kimi != nullptr, "kimi adapter should stay registered");
+    if (kimi != nullptr) {
+      us4::RuntimeContext moeContext(MakeProbe());
+      kimi->ConfigureRuntime(moeContext);
+      const us4::GenerationResult kimiResult = kimi->Generate(
+          {.prompt = "smart context", .maxTokens = 2}, moeContext);
+      ok &= Expect(kimiResult.family == "kimi",
+                   "kimi generation should preserve moe family");
+      ok &= Expect(kimiResult.moeSelectedExperts == 2U,
+                   "kimi generation should expose selected expert count");
+      ok &= Expect(kimiResult.moeRouterEntropy > 0.0F,
+                   "kimi generation should expose router entropy");
+      ok &= Expect(kimiResult.moeLoadBalance > 0.0F &&
+                       kimiResult.moeLoadBalance <= 1.0F,
+                   "kimi generation should expose load balance score");
+      ok &= Expect(kimiResult.moeSelectedMass > 0.0F &&
+                       kimiResult.moeSelectedMass <= 1.0F,
+                   "kimi generation should expose selected expert mass");
+      ok &= Expect(kimiResult.moePagerLoads == 2U,
+                   "kimi generation should expose pager loads");
+      ok &= Expect(kimiResult.moePagerEvictions == 0U,
+                   "kimi generation should expose pager evictions");
+      ok &= Expect(kimiResult.moePagerReuses == 0U,
+                   "kimi generation should expose pager reuse");
+      ok &= Expect(kimiResult.moeResidentExperts == 2U,
+                   "kimi generation should expose resident expert count");
+      ok &= Expect(kimiResult.text.find("kimi-route") != std::string::npos,
+                   "kimi generation should surface routed expert signature");
+
+      const us4::GenerationResult repeatedKimi = kimi->Generate(
+          {.prompt = "smart context", .maxTokens = 2}, moeContext);
+      ok &= Expect(repeatedKimi.moePagerLoads == 2U,
+                   "kimi repeat should not add extra loads for same experts");
+      ok &= Expect(repeatedKimi.moePagerReuses >= 2U,
+                   "kimi repeat should surface pager reuse");
+    }
+  }
+
+  {
     us4::HardwareProbeResult neonProbe = MakeProbe();
     neonProbe.hasNeon = true;
     neonProbe.neonVectorBits = 128;
