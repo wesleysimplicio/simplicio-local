@@ -19,6 +19,7 @@ set(us4_runtime_contract_test_sources
   neon_dequant_contract_test.cpp
   neon_contract_test.cpp
   block_gemm_contract_test.cpp
+  lowbit_contract_test.cpp
   runtime_acceleration_contract_test.cpp
   gqa_attention_contract_test.cpp
   rope_contract_test.cpp

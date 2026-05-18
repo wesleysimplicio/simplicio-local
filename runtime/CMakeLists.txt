@@ -9,6 +9,7 @@ add_library(us4_runtime_core
   core/tensor.cpp
   cpu/scalar_matmul.cpp
   cpu/scalar_attention.cpp
+  cpu/ternary_lut.cpp
   adapters/dense_adapter_base.cpp
   adapters/adapter_registry.cpp
   adapters/bitnet/bitnet_adapter.cpp
@@ -34,6 +35,7 @@ add_library(us4_runtime_core
   mlx/mlx_bridge.cpp
   moe/expert_pager.cpp
   moe/router.cpp
+  neon/bitnet_matmul.cpp
   neon/block_gemm.cpp
   neon/dequant_int4.cpp
   neon/dequant_int8.cpp
