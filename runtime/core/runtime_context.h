@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ane/ane_backend.h"
+#include "ane/layer_offloader.h"
 #include "cache/multimodal_cache.h"
 #include "cache/sparsity_aware_cache.h"
 #include "core/backend_selector.h"
@@ -32,6 +33,8 @@ public:
   const MetalCommandQueue &metalQueue() const;
   AneBackend &aneBackend();
   const AneBackend &aneBackend() const;
+  LayerOffloader &layerOffloader();
+  const LayerOffloader &layerOffloader() const;
   MlxBridge &mlxBridge();
   const MlxBridge &mlxBridge() const;
   KvPager &kvPager();
@@ -53,6 +56,7 @@ private:
   UnifiedAllocator allocator_;
   MetalCommandQueue metalQueue_;
   AneBackend aneBackend_;
+  LayerOffloader layerOffloader_;
   MlxBridge mlxBridge_;
   KvPager kvPager_;
   PrefixCache prefixCache_;

@@ -4,6 +4,7 @@
 #include "adapters/llama/llama_adapter.h"
 #include "adapters/qwen/qwen_adapter.h"
 #include "ane/ane_backend.h"
+#include "ane/layer_offloader.h"
 #include "core/runtime_context.h"
 #include "memory/unified_allocator.h"
 #include "metal/autorelease_scope.h"
@@ -88,6 +89,45 @@ TEST(RuntimeAccelerationContractTest, AneBackendCompilesAndPredictsOnM5Probe) {
   EXPECT_TRUE(context.aneBackend().LastPredictionSucceeded());
   EXPECT_EQ(context.aneBackend().PredictionCount(), 1U);
   EXPECT_EQ(context.aneBackend().Reason(), "ane-predict-recorded");
+}
+
+TEST(RuntimeAccelerationContractTest,
+     LayerOffloaderKeepsEligibleAndFallbackBoundariesExplicit) {
+  us4::HardwareProbeResult probe = MakeAppleProbe();
+  probe.chip = "Apple M5";
+  probe.hasAne = true;
+  probe.supportsCoreMl = true;
+
+  const us4::LayerOffloader offloader(probe);
+  EXPECT_TRUE(offloader.Available());
+  EXPECT_EQ(offloader.Reason(), "ane-layer-offloader-ready");
+
+  const us4::OffloadDecision eligible =
+      offloader.Decide({.family = "llama",
+                        .layerName = "decoder.block.0.mlp.up",
+                        .layerType = us4::OffloadLayerType::kMlpUpProjection,
+                        .mode = us4::RuntimeMode::kFull,
+                        .tokenCount = 16U,
+                        .hiddenSize = 4096U,
+                        .weightDType = us4::DType::kFloat16,
+                        .staticShape = true});
+  EXPECT_TRUE(eligible.eligible);
+  EXPECT_FALSE(eligible.fallbackToMetal);
+  EXPECT_EQ(eligible.backend, "ane");
+  EXPECT_EQ(eligible.reason, "ane-layer-eligible");
+
+  const us4::OffloadDecision routerFallback =
+      offloader.Decide({.family = "deepseek",
+                        .layerName = "router.0",
+                        .layerType = us4::OffloadLayerType::kRouter,
+                        .mode = us4::RuntimeMode::kFull,
+                        .tokenCount = 16U,
+                        .hiddenSize = 4096U,
+                        .weightDType = us4::DType::kFloat16,
+                        .staticShape = true});
+  EXPECT_FALSE(routerFallback.eligible);
+  EXPECT_TRUE(routerFallback.fallbackToMetal);
+  EXPECT_EQ(routerFallback.reason, "ane-router-cpu");
 }
 
 TEST(RuntimeAccelerationContractTest,

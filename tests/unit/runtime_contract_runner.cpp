@@ -14,6 +14,7 @@
 #include "adapters/llama/llama_config.h"
 #include "adapters/qwen/qwen_adapter.h"
 #include "ane/ane_backend.h"
+#include "ane/layer_offloader.h"
 #include "cache/multimodal_cache.h"
 #include "cache/sparsity_aware_cache.h"
 #include "core/backend_selector.h"
@@ -446,6 +447,32 @@ int main() {
                  "ane backend should record predict intent");
     ok &= Expect(aneContext.aneBackend().PredictionCount() == 1U,
                  "ane backend should count predictions");
+    const us4::OffloadDecision eligibleLayer =
+        aneContext.layerOffloader().Decide(
+            {.family = "llama",
+             .layerName = "decoder.block.0.mlp.up",
+             .layerType = us4::OffloadLayerType::kMlpUpProjection,
+             .mode = us4::RuntimeMode::kFull,
+             .tokenCount = 8U,
+             .hiddenSize = 4096U,
+             .weightDType = us4::DType::kFloat16,
+             .staticShape = true});
+    ok &= Expect(eligibleLayer.eligible && !eligibleLayer.fallbackToMetal &&
+                     eligibleLayer.backend == "ane",
+                 "ane layer offloader should accept static mlp projections");
+    const us4::OffloadDecision fallbackLayer =
+        aneContext.layerOffloader().Decide(
+            {.family = "deepseek",
+             .layerName = "router.0",
+             .layerType = us4::OffloadLayerType::kRouter,
+             .mode = us4::RuntimeMode::kFull,
+             .tokenCount = 8U,
+             .hiddenSize = 4096U,
+             .weightDType = us4::DType::kFloat16,
+             .staticShape = true});
+    ok &= Expect(!fallbackLayer.eligible && fallbackLayer.fallbackToMetal &&
+                     fallbackLayer.reason == "ane-router-cpu",
+                 "ane layer offloader should keep router layers off ANE");
   }
 
   {

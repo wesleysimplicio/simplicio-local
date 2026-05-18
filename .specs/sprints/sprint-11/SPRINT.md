@@ -13,7 +13,7 @@ Apple Neural Engine backend para chips M5+. Offload de dense layers (attention/M
 
 ## Tasks
 - [x] T11.1 — `runtime/ane/AneBackend` (CoreML model compile, predict)
-- [ ] T11.2 — `runtime/ane/LayerOffloader` (chooses which layers go to ANE)
+- [x] T11.2 — `runtime/ane/LayerOffloader` (chooses which layers go to ANE)
 - [ ] T11.3 — Mixed dispatch coordinator (Metal hot path + ANE static layers)
 - [ ] T11.4 — `runtime/tuning/ThermalMonitor` (read `IOPMrootDomain`/`powermetrics`, downgrade dispatch)
 - [ ] T11.5 — Bench Llama/Qwen em ANE + Metal vs Metal-only

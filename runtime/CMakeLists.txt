@@ -1,5 +1,6 @@
 add_library(us4_runtime_core
   ane/ane_backend.cpp
+  ane/layer_offloader.cpp
   core/backend_selector.cpp
   core/runtime_mode.cpp
   core/hardware_probe.cpp

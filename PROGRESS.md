@@ -11,12 +11,13 @@ sem quebrar o fallback estavel para Metal/MLX/NEON.
 Status: done
 
 Task:
-T11.1 - Build ane backend surface
+T11.2 - Build ane layer offloader surface
 
 Result:
-`AneBackend` entrou no runtime, o selector agora prefere `ane` em `FULL` para
-probes M5+, e o `RuntimeContext` ganhou a superficie de compile/predict com
-fallback explicito para hosts sem ANE.
+`LayerOffloader` entrou com heuristica explicita para attention/MLP estaticos,
+mantendo embedding, router, low-bit e shapes nao-estaticos fora do caminho ANE.
+O `RuntimeContext` agora expõe essa decisao e o dense path ANE consegue
+materializar compile intent so para camadas elegiveis.
 
 Validation:
 `npm run lint`; `npm test -- --coverage`; `npm run pack:dry`;
@@ -24,7 +25,7 @@ Validation:
 `ctest --test-dir build --output-on-failure -C Release`
 
 Next:
-T11.2 - abrir o layer offloader para decidir quais blocos vao para ANE.
+T11.3 - coordenar mixed dispatch entre Metal e ANE.
 
 ## Checkpoints
 

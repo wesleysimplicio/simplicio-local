@@ -108,6 +108,30 @@ void RecordBackendScaffold(const IUS4V6Adapter &adapter,
   case BackendType::kScalarCpu:
   case BackendType::kNeon:
   case BackendType::kAne:
+    if (mutableContext.layerOffloader().Available()) {
+      const OffloadDecision attentionDecision =
+          mutableContext.layerOffloader().Decide(
+              {.family = std::string(adapter.Family()),
+               .layerName = "decoder.block.0.attention_out",
+               .layerType = OffloadLayerType::kAttentionOutput,
+               .mode = context.mode(),
+               .tokenCount = std::max<std::size_t>(request.maxTokens, 1U),
+               .hiddenSize = kHiddenSize,
+               .weightDType = request.asset != nullptr
+                                  ? request.asset->weightDType
+                                  : DType::kFloat32,
+               .staticShape = true});
+      if (attentionDecision.eligible) {
+        (void)mutableContext.aneBackend().Compile(
+            {.kind = AneModelKind::kAttentionMlp,
+             .family = std::string(adapter.Family()),
+             .layerName = "decoder.block.0.attention_out",
+             .tokenCount = std::max<std::size_t>(request.maxTokens, 1U),
+             .usesSharedTokenizer =
+                 request.asset != nullptr && request.asset->sharedTokenizer,
+             .staticShapePreferred = true});
+      }
+    }
     break;
   }
 }
