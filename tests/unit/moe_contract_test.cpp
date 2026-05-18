@@ -9,11 +9,13 @@ TEST(MoeContractTest, RouterReturnsScoresSortedByTopK) {
 
   ASSERT_EQ(topk.size(), 3U);
   EXPECT_EQ(topk[0].expert, 1U);
-  EXPECT_FLOAT_EQ(topk[0].score, 0.8F);
+  EXPECT_FLOAT_EQ(topk[0].logit, 0.8F);
   EXPECT_EQ(topk[1].expert, 3U);
-  EXPECT_FLOAT_EQ(topk[1].score, 0.7F);
+  EXPECT_FLOAT_EQ(topk[1].logit, 0.7F);
   EXPECT_EQ(topk[2].expert, 2U);
-  EXPECT_FLOAT_EQ(topk[2].score, 0.4F);
+  EXPECT_FLOAT_EQ(topk[2].logit, 0.4F);
+  EXPECT_GT(topk[0].score, topk[1].score);
+  EXPECT_GT(topk[1].score, topk[2].score);
 }
 
 TEST(MoeContractTest, RouterClampsKToAvailableExperts) {
@@ -23,6 +25,23 @@ TEST(MoeContractTest, RouterClampsKToAvailableExperts) {
   ASSERT_EQ(topk.size(), 2U);
   EXPECT_EQ(topk[0].expert, 0U);
   EXPECT_EQ(topk[1].expert, 1U);
+}
+
+TEST(MoeContractTest, RouterDecisionExposesEntropyMassAndBalance) {
+  us4::Router router;
+  const auto decision = router.RouteTopK({2.0F, 1.0F, 0.0F, -1.0F}, 2);
+
+  ASSERT_EQ(decision.selected.size(), 2U);
+  EXPECT_EQ(decision.totalExperts, 4U);
+  EXPECT_GT(decision.entropy, 0.0F);
+  EXPECT_GT(decision.loadBalance, 0.0F);
+  EXPECT_LE(decision.loadBalance, 1.0F);
+  EXPECT_GT(decision.selectedMass, 0.0F);
+  EXPECT_LE(decision.selectedMass, 1.0F);
+  EXPECT_FLOAT_EQ(decision.selected[0].logit, 2.0F);
+  ASSERT_TRUE(router.LastDecision().has_value());
+  EXPECT_EQ(router.LastDecision()->selected.size(), 2U);
+  EXPECT_FLOAT_EQ(router.LastDecision()->selectedMass, decision.selectedMass);
 }
 
 TEST(MoeContractTest, ExpertPagerRetainsMostFrequentlyTouchedExperts) {
