@@ -28,6 +28,24 @@ std::string_view ToString(const OffloadLayerType layerType) {
   return "embedding";
 }
 
+LayerOffloadPlan PlanLayerOffload(const std::vector<LayerDescriptor> &layers,
+                                  const bool aneAvailable) {
+  LayerOffloadPlan plan;
+  for (const LayerDescriptor &layer : layers) {
+    const bool aneCandidate =
+        layer.staticShape &&
+        (layer.kind == LayerKind::kAttention || layer.kind == LayerKind::kMlp);
+    if (aneAvailable && aneCandidate) {
+      plan.aneLayers.push_back(layer.name);
+    } else if (layer.kind == LayerKind::kStateful) {
+      plan.rejectedLayers.push_back(layer.name);
+    } else {
+      plan.metalLayers.push_back(layer.name);
+    }
+  }
+  return plan;
+}
+
 LayerOffloader::LayerOffloader(const HardwareProbeResult &hardware)
     : available_(hardware.hasAne && hardware.supportsCoreMl) {
   if (!available_) {

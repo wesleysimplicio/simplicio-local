@@ -34,6 +34,11 @@ struct AneCompiledModel {
   bool staticShapePreferred = true;
 };
 
+struct AneReadiness {
+  bool available = false;
+  std::string fallbackReason = "ane-unavailable";
+};
+
 std::string_view ToString(AneModelKind kind);
 
 class AneBackend {
@@ -43,7 +48,9 @@ public:
 
   bool Available() const;
   std::string_view Reason() const;
+  AneReadiness Probe(const HardwareProbeResult &hardware) const;
   bool Compile(const AneCompilePlan &plan);
+  bool CompileForOffload(std::string_view modelName, std::string &reason) const;
   bool Predict(std::size_t acceptedTokens, std::size_t rejectedTokens);
   bool LastPredictionSucceeded() const;
   std::size_t PredictionCount() const;

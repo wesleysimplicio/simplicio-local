@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include "core/hardware_probe.h"
 #include "core/runtime_mode.h"
@@ -37,7 +38,29 @@ struct OffloadDecision {
   std::string reason = "ane-unavailable";
 };
 
+enum class LayerKind {
+  kAttention,
+  kMlp,
+  kStateful,
+  kEmbedding,
+  kRouter,
+};
+
+struct LayerDescriptor {
+  std::string name;
+  LayerKind kind = LayerKind::kStateful;
+  bool staticShape = false;
+};
+
+struct LayerOffloadPlan {
+  std::vector<std::string> aneLayers;
+  std::vector<std::string> metalLayers;
+  std::vector<std::string> rejectedLayers;
+};
+
 std::string_view ToString(OffloadLayerType layerType);
+LayerOffloadPlan PlanLayerOffload(const std::vector<LayerDescriptor> &layers,
+                                  bool aneAvailable);
 
 class LayerOffloader {
 public:

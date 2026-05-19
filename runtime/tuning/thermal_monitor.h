@@ -1,13 +1,34 @@
 #pragma once
 
-#include <cstddef>
 #include <string>
+#include <string_view>
+
+#include "core/hardware_probe.h"
+#include "core/runtime_mode.h"
 
 namespace us4 {
 
-// Thermal monitor contract. Sprint 11 reads thermal signals from
-// `IOPMrootDomain`/`powermetrics` on Apple Silicon. The runtime turns the
-// reading into a downgrade decision that downstream dispatch consumes.
+enum class ThermalPressureLevel {
+  kUnavailable,
+  kNominal,
+  kElevated,
+  kCritical,
+};
+
+struct ThermalSample {
+  bool available = false;
+  ThermalPressureLevel level = ThermalPressureLevel::kUnavailable;
+  std::string source = "none";
+  std::string reason = "thermal-unavailable";
+};
+
+struct ThermalDecision {
+  RuntimeMode requestedMode = RuntimeMode::kNano;
+  RuntimeMode effectiveMode = RuntimeMode::kNano;
+  ThermalPressureLevel level = ThermalPressureLevel::kUnavailable;
+  bool downgraded = false;
+  std::string reason = "thermal-unavailable";
+};
 
 enum class ThermalState {
   kNominal,
@@ -27,6 +48,24 @@ struct ThermalDowngradeDecision {
   std::string reason;
 };
 
-ThermalDowngradeDecision DecideThermalDowngrade(const ThermalReading& reading);
+std::string_view ToString(ThermalPressureLevel level);
+ThermalDowngradeDecision DecideThermalDowngrade(const ThermalReading &reading);
 
-}  // namespace us4
+class ThermalMonitor {
+public:
+  ThermalMonitor() = default;
+  explicit ThermalMonitor(const HardwareProbeResult &hardware);
+
+  bool Available() const;
+  std::string_view Reason() const;
+  ThermalSample Sample() const;
+  ThermalDecision Decide(RuntimeMode requestedMode);
+  const ThermalDecision &LastDecision() const;
+
+private:
+  bool available_ = false;
+  ThermalSample sample_;
+  ThermalDecision lastDecision_;
+};
+
+} // namespace us4

@@ -27,6 +27,16 @@ bool AneBackend::Available() const { return available_; }
 
 std::string_view AneBackend::Reason() const { return reason_; }
 
+AneReadiness AneBackend::Probe(const HardwareProbeResult &hardware) const {
+  if (hardware.hasAne && hardware.chip.find("M5") != std::string::npos) {
+    return {.available = true, .fallbackReason = "ready"};
+  }
+  if (hardware.isAppleSilicon && hardware.chip.find("M") != std::string::npos) {
+    return {.available = false, .fallbackReason = "chip-too-old"};
+  }
+  return {.available = false, .fallbackReason = "ane-unavailable"};
+}
+
 bool AneBackend::Compile(const AneCompilePlan &plan) {
   if (!available_ || plan.family.empty() || plan.layerName.empty() ||
       plan.tokenCount == 0) {
@@ -46,6 +56,12 @@ bool AneBackend::Compile(const AneCompilePlan &plan) {
   lastPredictionSucceeded_ = false;
   reason_ = "ane-model-compiled";
   return true;
+}
+
+bool AneBackend::CompileForOffload(std::string_view /*modelName*/,
+                                   std::string &reason) const {
+  reason = "compile-deferred";
+  return false;
 }
 
 bool AneBackend::Predict(const std::size_t acceptedTokens,

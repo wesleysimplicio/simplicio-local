@@ -197,7 +197,7 @@ int main() {
   // Sprint 04 T04.6: explicit NEON re-bench rows for Qwen and Gemma so the
   // evidence file always exposes scalar vs neon for the same dense adapters.
   if (!RunCase(probe, "dense-qwen/scalar-requested", "qwen-0.5b", std::nullopt,
-               us4::BackendType::kScalar)
+               us4::BackendType::kScalarCpu)
            .has_value()) {
     return 1;
   }
@@ -206,8 +206,8 @@ int main() {
            .has_value()) {
     return 1;
   }
-  if (!RunCase(probe, "dense-gemma/scalar-requested", "gemma-2b-it", std::nullopt,
-               us4::BackendType::kScalar)
+  if (!RunCase(probe, "dense-gemma/scalar-requested", "gemma-2b-it",
+               std::nullopt, us4::BackendType::kScalarCpu)
            .has_value()) {
     return 1;
   }
