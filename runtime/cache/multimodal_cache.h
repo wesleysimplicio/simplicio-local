@@ -1,52 +1,55 @@
 #pragma once
 
 #include <cstddef>
-#include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
 namespace us4 {
 
-// Multimodal cache keeps image patch tokens and audio frame embeddings keyed
-// by a stable asset hash + tile id. Dense-only adapters never touch this
-// cache; it stays isolated through its own namespace.
-
-enum class MultimodalModality {
-  kImage,
-  kAudio,
-};
-
-struct MultimodalCacheKey {
-  std::string assetHash;
-  MultimodalModality modality = MultimodalModality::kImage;
-  std::size_t tileIndex = 0;
+struct ModalityTokenState {
+  std::string modality;
+  std::vector<std::string> tokens;
 };
 
 struct MultimodalCacheEntry {
-  std::vector<float> tokens;
-  std::size_t hitCount = 0;
+  std::string family;
+  std::string modality;
+  std::string key;
+  std::size_t tokenCount = 0;
+  std::size_t uses = 0;
+  std::size_t hits = 0;
 };
 
-bool operator==(const MultimodalCacheKey& lhs, const MultimodalCacheKey& rhs);
-
-struct MultimodalCacheKeyHash {
-  std::size_t operator()(const MultimodalCacheKey& key) const noexcept;
+struct MultimodalCacheSnapshot {
+  std::size_t entryCount = 0;
+  std::size_t hitCount = 0;
+  std::size_t missCount = 0;
+  double hitRatio = 0.0;
+  std::size_t lastTouchHits = 0;
+  std::size_t lastTouchMisses = 0;
+  std::size_t activeModalities = 0;
+  std::vector<std::string> lastModalities;
 };
 
 class MultimodalCache {
- public:
-  void Store(MultimodalCacheKey key, std::vector<float> tokens);
-  std::optional<std::vector<float>> Lookup(const MultimodalCacheKey& key);
+public:
+  MultimodalCacheSnapshot Touch(std::string_view family,
+                                const std::vector<ModalityTokenState> &states);
   std::size_t EntryCount() const;
-  std::size_t HitCount() const { return hits_; }
-  std::size_t MissCount() const { return misses_; }
 
- private:
-  std::unordered_map<MultimodalCacheKey, MultimodalCacheEntry,
-                     MultimodalCacheKeyHash> entries_;
-  std::size_t hits_ = 0;
-  std::size_t misses_ = 0;
+private:
+  static std::size_t ComputeTokenHash(const std::vector<std::string> &tokens);
+  static std::string BuildKey(std::string_view family,
+                              std::string_view modality, std::size_t tokenHash);
+  MultimodalCacheSnapshot
+  Snapshot(std::size_t lastTouchHits, std::size_t lastTouchMisses,
+           std::vector<std::string> lastModalities) const;
+
+  std::unordered_map<std::string, MultimodalCacheEntry> entries_;
+  std::size_t hitCount_ = 0;
+  std::size_t missCount_ = 0;
 };
 
-}  // namespace us4
+} // namespace us4

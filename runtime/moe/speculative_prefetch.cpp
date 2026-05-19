@@ -4,53 +4,72 @@
 
 namespace us4 {
 
-void SpeculativePrefetch::Observe(const std::string &previousExpert,
-                                  const std::string &nextExpert) {
-  ++transitions_[previousExpert][nextExpert];
+SpeculativePrefetch::SpeculativePrefetch(const std::size_t breadth)
+    : breadth_(std::max<std::size_t>(breadth, 1U)) {}
+
+SpeculativePrefetchPlan
+SpeculativePrefetch::BuildPlan(const std::string_view family,
+                               const RouterDecision &prediction) const {
+  SpeculativePrefetchPlan plan;
+  plan.family = std::string(family);
+
+  const std::size_t count =
+      std::min<std::size_t>(breadth_, prediction.selected.size());
+  plan.prefetchedExperts.reserve(count);
+  plan.prefetchedKeys.reserve(count);
+  for (std::size_t index = 0; index < count; ++index) {
+    const std::size_t expert = prediction.selected[index].expert;
+    plan.prefetchedExperts.push_back(expert);
+    plan.prefetchedKeys.push_back(plan.family + "-expert-" +
+                                  std::to_string(expert));
+  }
+
+  return plan;
 }
 
-std::vector<std::string>
-SpeculativePrefetch::Predict(const std::string &previousExpert,
-                             const std::size_t topK) const {
-  std::vector<std::string> result;
-  const auto it = transitions_.find(previousExpert);
-  if (it == transitions_.end() || topK == 0) {
-    return result;
+std::vector<std::size_t>
+SpeculativePrefetch::ExecutableExperts(const SpeculativePrefetchPlan &,
+                                       const RouterDecision &actual) const {
+  std::vector<std::size_t> executable;
+  executable.reserve(actual.selected.size());
+  for (const ExpertScore &expert : actual.selected) {
+    executable.push_back(expert.expert);
   }
-  std::vector<std::pair<std::string, std::size_t>> scored(it->second.begin(),
-                                                          it->second.end());
-  std::sort(scored.begin(), scored.end(),
-            [](const std::pair<std::string, std::size_t> &lhs,
-               const std::pair<std::string, std::size_t> &rhs) {
-              if (lhs.second != rhs.second) {
-                return lhs.second > rhs.second;
-              }
-              return lhs.first < rhs.first;
-            });
-  for (std::size_t index = 0; index < std::min(topK, scored.size()); ++index) {
-    result.push_back(scored[index].first);
-  }
-  return result;
+  return executable;
 }
 
-void SpeculativePrefetch::RecordOutcome(
-    const std::vector<std::string> &predicted, const std::string &observed) {
-  lastAttempts_ = predicted.size();
-  lastHits_ = 0;
-  for (const auto &candidate : predicted) {
-    if (candidate == observed) {
-      ++lastHits_;
+SpeculativePrefetchTelemetry
+SpeculativePrefetch::Reconcile(const SpeculativePrefetchPlan &plan,
+                               const RouterDecision &actual) const {
+  SpeculativePrefetchTelemetry telemetry;
+  telemetry.prefetchedCount = plan.prefetchedExperts.size();
+  telemetry.executableExperts = ExecutableExperts(plan, actual);
+
+  for (const std::size_t expert : plan.prefetchedExperts) {
+    const bool matched = std::find(telemetry.executableExperts.begin(),
+                                   telemetry.executableExperts.end(),
+                                   expert) != telemetry.executableExperts.end();
+    if (matched) {
+      ++telemetry.hitCount;
+    } else {
+      ++telemetry.missCount;
     }
   }
-  totalAttempts_ += lastAttempts_;
-  totalHits_ += lastHits_;
-}
 
-float SpeculativePrefetch::HitRatio() const {
-  if (totalAttempts_ == 0) {
-    return 0.0F;
-  }
-  return static_cast<float>(totalHits_) / static_cast<float>(totalAttempts_);
+  telemetry.hitRatio = telemetry.prefetchedCount == 0U
+                           ? 0.0
+                           : static_cast<double>(telemetry.hitCount) /
+                                 static_cast<double>(telemetry.prefetchedCount);
+
+  telemetry.wrongExpertLeakPrevented = std::all_of(
+      telemetry.executableExperts.begin(), telemetry.executableExperts.end(),
+      [&actual](const std::size_t expert) {
+        return std::any_of(actual.selected.begin(), actual.selected.end(),
+                           [expert](const ExpertScore &actualExpert) {
+                             return actualExpert.expert == expert;
+                           });
+      });
+  return telemetry;
 }
 
 } // namespace us4

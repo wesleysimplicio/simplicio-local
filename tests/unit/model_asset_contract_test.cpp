@@ -37,7 +37,7 @@ std::filesystem::path FixtureRoot() {
 } // namespace
 
 TEST(ModelAssetContractTest, LoadsFixtureManifestMetadataAcrossFamilies) {
-  constexpr std::array<ManifestExpectation, 7> kManifestExpectations = {{
+  constexpr std::array<ManifestExpectation, 9> kManifestExpectations = {{
       {"qwen-0.5b", "qwen", "qwen-0.5b-fixture", us4::DType::kFloat16, 41051U,
        "hi", false},
       {"gemma-2b-it", "gemma", "gemma-2b-it-fixture", us4::DType::kFloat16,
@@ -50,8 +50,12 @@ TEST(ModelAssetContractTest, LoadsFixtureManifestMetadataAcrossFamilies) {
        us4::DType::kInt4, 30021U, "hi", true},
       {"deepseek-v2-lite", "deepseek", "deepseek-v2-lite-fixture",
        us4::DType::kBFloat16, 52002U, "hi", true},
+      {"glm-5.1", "glm", "glm-5.1-fixture", us4::DType::kBFloat16, 51045U, "hi",
+       true},
       {"kimi-k2-instruct", "kimi", "kimi-k2-instruct-fixture",
        us4::DType::kBFloat16, 62002U, "hi", true},
+      {"minimax-m2", "minimax", "minimax-m2-fixture", us4::DType::kBFloat16,
+       72027U, "hi", true},
   }};
 
   for (const ManifestExpectation &expectation : kManifestExpectations) {
@@ -77,7 +81,7 @@ TEST(ModelAssetContractTest, LoadsFixtureManifestMetadataAcrossFamilies) {
 }
 
 TEST(ModelAssetContractTest, DetectsSupportedBinaryModelFormatsAcrossFamilies) {
-  constexpr std::array<FileDetectionExpectation, 7> kFileDetectionExpectations =
+  constexpr std::array<FileDetectionExpectation, 9> kFileDetectionExpectations =
       {{
           {"qwen-0.5b", "toy-qwen.gguf", us4::ModelFormat::kGguf, "qwen",
            "toy-qwen", us4::DType::kFloat16},
@@ -94,8 +98,13 @@ TEST(ModelAssetContractTest, DetectsSupportedBinaryModelFormatsAcrossFamilies) {
           {"deepseek-v2-lite", "toy-deepseek.safetensors",
            us4::ModelFormat::kSafetensors, "deepseek", "toy-deepseek",
            us4::DType::kBFloat16},
+          {"glm-5.1", "toy-glm.safetensors", us4::ModelFormat::kSafetensors,
+           "glm", "toy-glm", us4::DType::kBFloat16},
           {"kimi-k2-instruct", "toy-kimi.safetensors",
            us4::ModelFormat::kSafetensors, "kimi", "toy-kimi",
+           us4::DType::kBFloat16},
+          {"minimax-m2", "toy-minimax.safetensors",
+           us4::ModelFormat::kSafetensors, "minimax", "toy-minimax",
            us4::DType::kBFloat16},
       }};
 
@@ -164,6 +173,10 @@ TEST(ModelAssetContractTest,
   EXPECT_EQ(asset.metadata.at("kv_heads"), "1");
   EXPECT_EQ(asset.metadata.at("tokenizer_json"),
             (FixtureRoot() / "llama-3.1-8b" / "tokenizer.json").string());
+  EXPECT_EQ(asset.draftModelPath,
+            (FixtureRoot() / "llama-3.1-8b" / "draft-llama.gguf"));
+  EXPECT_EQ(asset.draftModelFormat, us4::ModelFormat::kGguf);
+  EXPECT_TRUE(asset.sharedTokenizer);
 }
 
 TEST(ModelAssetContractTest,
@@ -184,5 +197,37 @@ TEST(ModelAssetContractTest,
     EXPECT_EQ(asset.defaultPromptToken, "hi");
     EXPECT_TRUE(asset.metadata.contains("weight_dtype"));
     EXPECT_TRUE(asset.metadata.contains("tokenizer_json"));
+  }
+}
+
+TEST(ModelAssetContractTest,
+     MoeAssetsSurfaceShardAwareLoaderMetadataAcrossManifestAndBinaryInputs) {
+  const std::array<std::filesystem::path, 8> kInputs = {
+      FixtureRoot() / "deepseek-v2-lite" / "model.us4manifest",
+      FixtureRoot() / "deepseek-v2-lite" / "toy-deepseek.safetensors",
+      FixtureRoot() / "glm-5.1" / "model.us4manifest",
+      FixtureRoot() / "glm-5.1" / "toy-glm.safetensors",
+      FixtureRoot() / "kimi-k2-instruct" / "model.us4manifest",
+      FixtureRoot() / "kimi-k2-instruct" / "toy-kimi.safetensors",
+      FixtureRoot() / "minimax-m2" / "model.us4manifest",
+      FixtureRoot() / "minimax-m2" / "toy-minimax.safetensors",
+  };
+
+  for (const std::filesystem::path &inputPath : kInputs) {
+    SCOPED_TRACE(inputPath.string());
+
+    us4::ModelAsset asset;
+    std::string error;
+    ASSERT_TRUE(us4::LoadModelAsset(inputPath, asset, &error)) << error;
+
+    EXPECT_TRUE(asset.moeLazyLoad);
+    EXPECT_EQ(asset.moeActiveExperts, 2U);
+    ASSERT_EQ(asset.expertShardPaths.size(), 2U);
+    EXPECT_EQ(asset.expertShardPaths[0].filename(), "experts-00.safetensors");
+    EXPECT_EQ(asset.expertShardPaths[1].filename(), "experts-01.safetensors");
+    EXPECT_EQ(asset.metadata.at("moe_lazy_load"), "true");
+    EXPECT_EQ(asset.metadata.at("moe_active_experts"), "2");
+    EXPECT_EQ(asset.metadata.at("moe_expert_shards"),
+              "experts-00.safetensors,experts-01.safetensors");
   }
 }

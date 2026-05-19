@@ -62,6 +62,44 @@ std::string EscapeJson(const std::string_view value) {
   return escaped;
 }
 
+double ComputeMoeHitRate(const us4::GenerationResult &result) {
+  const std::size_t denominator = result.moePagerLoads + result.moePagerReuses;
+  if (denominator == 0U) {
+    return 0.0;
+  }
+  return static_cast<double>(result.moePagerReuses) /
+         static_cast<double>(denominator);
+}
+
+double ComputeMoeEvictionRate(const us4::GenerationResult &result) {
+  const std::size_t denominator = result.moePagerLoads + result.moePagerReuses;
+  if (denominator == 0U) {
+    return 0.0;
+  }
+  return static_cast<double>(result.moePagerEvictions) /
+         static_cast<double>(denominator);
+}
+
+double ComputeMoeSparsityCacheHitRate(const us4::GenerationResult &result) {
+  const std::size_t denominator =
+      result.moeSparsityCacheHits + result.moeSparsityCacheMisses;
+  if (denominator == 0U) {
+    return 0.0;
+  }
+  return static_cast<double>(result.moeSparsityCacheHits) /
+         static_cast<double>(denominator);
+}
+
+double ComputeMultimodalCacheHitRate(const us4::GenerationResult &result) {
+  const std::size_t denominator =
+      result.multimodalCacheHits + result.multimodalCacheMisses;
+  if (denominator == 0U) {
+    return 0.0;
+  }
+  return static_cast<double>(result.multimodalCacheHits) /
+         static_cast<double>(denominator);
+}
+
 void PrintHelp() {
   std::cout << "US4 V6 Apple Edition CLI\n"
             << "Usage:\n"
@@ -161,41 +199,95 @@ void PrintProbeJson(const us4::HardwareProbeResult &probe) {
 }
 
 void PrintRunText(const us4::GenerationResult &result) {
-  std::cout << "family: " << result.family << "\n"
-            << "model: " << result.modelName << "\n"
-            << "asset_format: " << result.assetFormat << "\n"
-            << "asset_path: "
-            << (result.assetPath.empty() ? "<builtin>" : result.assetPath)
-            << "\n"
-            << "mode: " << us4::ToString(result.mode) << "\n"
-            << "backend: " << result.backend << "\n"
-            << "backend_reason: " << result.backendReason << "\n"
-            << "fallback: " << (result.fellBack ? "true" : "false") << "\n"
-            << "shared_allocations: " << result.sharedAllocations << "\n"
-            << "metal_dispatches: " << result.metalDispatches << "\n"
-            << "mlx_operation_count: " << result.mlxOperationCount << "\n"
-            << "kv_cache_hit: " << (result.kvCacheHit ? "true" : "false")
-            << "\n"
-            << "kv_restored_from_cold_store: "
-            << (result.kvRestoredFromColdStore ? "true" : "false") << "\n"
-            << "kv_page_count: " << result.kvPageCount << "\n"
-            << "kv_hot_pages: " << result.kvHotPages << "\n"
-            << "kv_warm_pages: " << result.kvWarmPages << "\n"
-            << "kv_cold_pages: " << result.kvColdPages << "\n"
-            << "kv_summary_rows: " << result.kvSummaryRows << "\n"
-            << "prefix_cache_entries: " << result.prefixCacheEntries << "\n"
-            << "mlx_plan_built: " << (result.mlxPlanBuilt ? "true" : "false")
-            << "\n"
-            << "mlx_evaluated: " << (result.mlxEvaluated ? "true" : "false")
-            << "\n"
-            << "weight_dtype: " << result.weightDType << "\n"
-            << "neon_kernel_flavor: " << result.neonKernelFlavor << "\n"
-            << "dequant_path: " << result.dequantPath << "\n"
-            << "metal_device: " << result.metalDevice << "\n"
-            << "metal_queue_label: " << result.metalQueueLabel << "\n"
-            << "prompt_tokens: " << result.promptTokens.size() << "\n"
-            << "generated_tokens: " << result.generatedTokens.size() << "\n"
-            << "text: " << result.text << "\n";
+  std::cout
+      << "family: " << result.family << "\n"
+      << "model: " << result.modelName << "\n"
+      << "asset_format: " << result.assetFormat << "\n"
+      << "asset_path: "
+      << (result.assetPath.empty() ? "<builtin>" : result.assetPath) << "\n"
+      << "draft_model_format: " << result.draftModelFormat << "\n"
+      << "draft_model_path: "
+      << (result.draftModelPath.empty() ? "<none>" : result.draftModelPath)
+      << "\n"
+      << "speculative_strategy: " << result.speculativeStrategy << "\n"
+      << "speculative_session_scope: " << result.speculativeSessionScope << "\n"
+      << "mode: " << us4::ToString(result.mode) << "\n"
+      << "backend: " << result.backend << "\n"
+      << "backend_reason: " << result.backendReason << "\n"
+      << "fallback: " << (result.fellBack ? "true" : "false") << "\n"
+      << "shared_allocations: " << result.sharedAllocations << "\n"
+      << "metal_dispatches: " << result.metalDispatches << "\n"
+      << "mlx_operation_count: " << result.mlxOperationCount << "\n"
+      << "kv_cache_hit: " << (result.kvCacheHit ? "true" : "false") << "\n"
+      << "kv_restored_from_cold_store: "
+      << (result.kvRestoredFromColdStore ? "true" : "false") << "\n"
+      << "kv_page_count: " << result.kvPageCount << "\n"
+      << "kv_hot_pages: " << result.kvHotPages << "\n"
+      << "kv_warm_pages: " << result.kvWarmPages << "\n"
+      << "kv_cold_pages: " << result.kvColdPages << "\n"
+      << "kv_summary_rows: " << result.kvSummaryRows << "\n"
+      << "prefix_cache_entries: " << result.prefixCacheEntries << "\n"
+      << "mlx_plan_built: " << (result.mlxPlanBuilt ? "true" : "false") << "\n"
+      << "mlx_evaluated: " << (result.mlxEvaluated ? "true" : "false") << "\n"
+      << "moe_selected_experts: " << result.moeSelectedExperts << "\n"
+      << "moe_router_entropy: " << result.moeRouterEntropy << "\n"
+      << "moe_load_balance: " << result.moeLoadBalance << "\n"
+      << "moe_selected_mass: " << result.moeSelectedMass << "\n"
+      << "moe_pager_loads: " << result.moePagerLoads << "\n"
+      << "moe_pager_evictions: " << result.moePagerEvictions << "\n"
+      << "moe_pager_reuses: " << result.moePagerReuses << "\n"
+      << "moe_resident_experts: " << result.moeResidentExperts << "\n"
+      << "moe_prefetch_prefetched: " << result.moePrefetchPrefetched << "\n"
+      << "moe_prefetch_hits: " << result.moePrefetchHits << "\n"
+      << "moe_prefetch_misses: " << result.moePrefetchMisses << "\n"
+      << "moe_prefetch_hit_rate: " << result.moePrefetchHitRatio << "\n"
+      << "moe_prefetch_wrong_expert_leak_prevented: "
+      << (result.moePrefetchWrongExpertLeakPrevented ? "true" : "false") << "\n"
+      << "moe_prefetch_executable_experts: "
+      << result.moePrefetchExecutableExperts << "\n"
+      << "moe_sparsity_cache_hit: "
+      << (result.moeSparsityCacheHit ? "true" : "false") << "\n"
+      << "moe_sparsity_cache_hits: " << result.moeSparsityCacheHits << "\n"
+      << "moe_sparsity_cache_misses: " << result.moeSparsityCacheMisses << "\n"
+      << "moe_sparsity_cache_entries: " << result.moeSparsityCacheEntries
+      << "\n"
+      << "moe_sparsity_cache_hit_rate: "
+      << ComputeMoeSparsityCacheHitRate(result) << "\n"
+      << "moe_sparsity_pattern_hash: " << result.moeSparsityPatternHash << "\n"
+      << "moe_sparsity_pattern_key: " << result.moeSparsityPatternKey << "\n"
+      << "multimodal_cache_hit: "
+      << (result.multimodalCacheHit ? "true" : "false") << "\n"
+      << "multimodal_cache_hits: " << result.multimodalCacheHits << "\n"
+      << "multimodal_cache_misses: " << result.multimodalCacheMisses << "\n"
+      << "multimodal_cache_entries: " << result.multimodalCacheEntries << "\n"
+      << "multimodal_cache_hit_rate: " << ComputeMultimodalCacheHitRate(result)
+      << "\n"
+      << "multimodal_active_modalities: " << result.multimodalActiveModalities
+      << "\n"
+      << "multimodal_modalities: " << result.multimodalModalities << "\n"
+      << "moe_shard_count: " << result.moeShardCount << "\n"
+      << "moe_active_experts: " << result.moeActiveExperts << "\n"
+      << "moe_lazy_load: " << (result.moeLazyLoad ? "true" : "false") << "\n"
+      << "shared_tokenizer: " << (result.sharedTokenizer ? "true" : "false")
+      << "\n"
+      << "speculative_accepted_tokens: " << result.speculativeAcceptedTokens
+      << "\n"
+      << "speculative_rejected_tokens: " << result.speculativeRejectedTokens
+      << "\n"
+      << "speculative_acceptance_rate: " << result.speculativeAcceptanceRate
+      << "\n"
+      << "speculative_fallback_token: " << result.speculativeFallbackToken
+      << "\n"
+      << "moe_hit_rate: " << ComputeMoeHitRate(result) << "\n"
+      << "moe_eviction_rate: " << ComputeMoeEvictionRate(result) << "\n"
+      << "weight_dtype: " << result.weightDType << "\n"
+      << "neon_kernel_flavor: " << result.neonKernelFlavor << "\n"
+      << "dequant_path: " << result.dequantPath << "\n"
+      << "metal_device: " << result.metalDevice << "\n"
+      << "metal_queue_label: " << result.metalQueueLabel << "\n"
+      << "prompt_tokens: " << result.promptTokens.size() << "\n"
+      << "generated_tokens: " << result.generatedTokens.size() << "\n"
+      << "text: " << result.text << "\n";
 }
 
 void PrintRunJson(const us4::GenerationResult &result) {
@@ -217,44 +309,104 @@ void PrintRunJson(const us4::GenerationResult &result) {
                     << "\"";
   }
 
-  std::cout << "{"
-            << "\"family\":\"" << EscapeJson(result.family) << "\","
-            << "\"model\":\"" << EscapeJson(result.modelName) << "\","
-            << "\"asset_format\":\"" << EscapeJson(result.assetFormat) << "\","
-            << "\"asset_path\":\"" << EscapeJson(result.assetPath) << "\","
-            << "\"mode\":\"" << EscapeJson(us4::ToString(result.mode)) << "\","
-            << "\"backend\":\"" << EscapeJson(result.backend) << "\","
-            << "\"backend_reason\":\"" << EscapeJson(result.backendReason)
-            << "\","
-            << "\"fallback\":" << (result.fellBack ? "true" : "false") << ","
-            << "\"shared_allocations\":" << result.sharedAllocations << ","
-            << "\"metal_dispatches\":" << result.metalDispatches << ","
-            << "\"mlx_operation_count\":" << result.mlxOperationCount << ","
-            << "\"kv_cache_hit\":" << (result.kvCacheHit ? "true" : "false")
-            << ","
-            << "\"kv_restored_from_cold_store\":"
-            << (result.kvRestoredFromColdStore ? "true" : "false") << ","
-            << "\"kv_page_count\":" << result.kvPageCount << ","
-            << "\"kv_hot_pages\":" << result.kvHotPages << ","
-            << "\"kv_warm_pages\":" << result.kvWarmPages << ","
-            << "\"kv_cold_pages\":" << result.kvColdPages << ","
-            << "\"kv_summary_rows\":" << result.kvSummaryRows << ","
-            << "\"prefix_cache_entries\":" << result.prefixCacheEntries << ","
-            << "\"mlx_plan_built\":" << (result.mlxPlanBuilt ? "true" : "false")
-            << ","
-            << "\"mlx_evaluated\":" << (result.mlxEvaluated ? "true" : "false")
-            << ","
-            << "\"weight_dtype\":\"" << EscapeJson(result.weightDType) << "\","
-            << "\"neon_kernel_flavor\":\""
-            << EscapeJson(result.neonKernelFlavor) << "\","
-            << "\"dequant_path\":\"" << EscapeJson(result.dequantPath) << "\","
-            << "\"metal_device\":\"" << EscapeJson(result.metalDevice) << "\","
-            << "\"metal_queue_label\":\"" << EscapeJson(result.metalQueueLabel)
-            << "\","
-            << "\"prompt_tokens\":[" << promptTokens.str() << "],"
-            << "\"generated_tokens\":[" << generatedTokens.str() << "],"
-            << "\"text\":\"" << EscapeJson(result.text) << "\""
-            << "}\n";
+  std::cout
+      << "{"
+      << "\"family\":\"" << EscapeJson(result.family) << "\","
+      << "\"model\":\"" << EscapeJson(result.modelName) << "\","
+      << "\"asset_format\":\"" << EscapeJson(result.assetFormat) << "\","
+      << "\"asset_path\":\"" << EscapeJson(result.assetPath) << "\","
+      << "\"draft_model_format\":\"" << EscapeJson(result.draftModelFormat)
+      << "\","
+      << "\"draft_model_path\":\"" << EscapeJson(result.draftModelPath) << "\","
+      << "\"speculative_strategy\":\"" << EscapeJson(result.speculativeStrategy)
+      << "\","
+      << "\"speculative_session_scope\":\""
+      << EscapeJson(result.speculativeSessionScope) << "\","
+      << "\"mode\":\"" << EscapeJson(us4::ToString(result.mode)) << "\","
+      << "\"backend\":\"" << EscapeJson(result.backend) << "\","
+      << "\"backend_reason\":\"" << EscapeJson(result.backendReason) << "\","
+      << "\"fallback\":" << (result.fellBack ? "true" : "false") << ","
+      << "\"shared_allocations\":" << result.sharedAllocations << ","
+      << "\"metal_dispatches\":" << result.metalDispatches << ","
+      << "\"mlx_operation_count\":" << result.mlxOperationCount << ","
+      << "\"kv_cache_hit\":" << (result.kvCacheHit ? "true" : "false") << ","
+      << "\"kv_restored_from_cold_store\":"
+      << (result.kvRestoredFromColdStore ? "true" : "false") << ","
+      << "\"kv_page_count\":" << result.kvPageCount << ","
+      << "\"kv_hot_pages\":" << result.kvHotPages << ","
+      << "\"kv_warm_pages\":" << result.kvWarmPages << ","
+      << "\"kv_cold_pages\":" << result.kvColdPages << ","
+      << "\"kv_summary_rows\":" << result.kvSummaryRows << ","
+      << "\"prefix_cache_entries\":" << result.prefixCacheEntries << ","
+      << "\"mlx_plan_built\":" << (result.mlxPlanBuilt ? "true" : "false")
+      << ","
+      << "\"mlx_evaluated\":" << (result.mlxEvaluated ? "true" : "false") << ","
+      << "\"moe_selected_experts\":" << result.moeSelectedExperts << ","
+      << "\"moe_router_entropy\":" << result.moeRouterEntropy << ","
+      << "\"moe_load_balance\":" << result.moeLoadBalance << ","
+      << "\"moe_selected_mass\":" << result.moeSelectedMass << ","
+      << "\"moe_pager_loads\":" << result.moePagerLoads << ","
+      << "\"moe_pager_evictions\":" << result.moePagerEvictions << ","
+      << "\"moe_pager_reuses\":" << result.moePagerReuses << ","
+      << "\"moe_resident_experts\":" << result.moeResidentExperts << ","
+      << "\"moe_prefetch_prefetched\":" << result.moePrefetchPrefetched << ","
+      << "\"moe_prefetch_hits\":" << result.moePrefetchHits << ","
+      << "\"moe_prefetch_misses\":" << result.moePrefetchMisses << ","
+      << "\"moe_prefetch_hit_rate\":" << result.moePrefetchHitRatio << ","
+      << "\"moe_prefetch_wrong_expert_leak_prevented\":"
+      << (result.moePrefetchWrongExpertLeakPrevented ? "true" : "false") << ","
+      << "\"moe_prefetch_executable_experts\":"
+      << result.moePrefetchExecutableExperts << ","
+      << "\"moe_sparsity_cache_hit\":"
+      << (result.moeSparsityCacheHit ? "true" : "false") << ","
+      << "\"moe_sparsity_cache_hits\":" << result.moeSparsityCacheHits << ","
+      << "\"moe_sparsity_cache_misses\":" << result.moeSparsityCacheMisses
+      << ","
+      << "\"moe_sparsity_cache_entries\":" << result.moeSparsityCacheEntries
+      << ","
+      << "\"moe_sparsity_cache_hit_rate\":"
+      << ComputeMoeSparsityCacheHitRate(result) << ","
+      << "\"moe_sparsity_pattern_hash\":" << result.moeSparsityPatternHash
+      << ","
+      << "\"moe_sparsity_pattern_key\":\""
+      << EscapeJson(result.moeSparsityPatternKey) << "\","
+      << "\"multimodal_cache_hit\":"
+      << (result.multimodalCacheHit ? "true" : "false") << ","
+      << "\"multimodal_cache_hits\":" << result.multimodalCacheHits << ","
+      << "\"multimodal_cache_misses\":" << result.multimodalCacheMisses << ","
+      << "\"multimodal_cache_entries\":" << result.multimodalCacheEntries << ","
+      << "\"multimodal_cache_hit_rate\":"
+      << ComputeMultimodalCacheHitRate(result) << ","
+      << "\"multimodal_active_modalities\":"
+      << result.multimodalActiveModalities << ","
+      << "\"multimodal_modalities\":\""
+      << EscapeJson(result.multimodalModalities) << "\","
+      << "\"moe_shard_count\":" << result.moeShardCount << ","
+      << "\"moe_active_experts\":" << result.moeActiveExperts << ","
+      << "\"moe_lazy_load\":" << (result.moeLazyLoad ? "true" : "false") << ","
+      << "\"shared_tokenizer\":" << (result.sharedTokenizer ? "true" : "false")
+      << ","
+      << "\"speculative_accepted_tokens\":" << result.speculativeAcceptedTokens
+      << ","
+      << "\"speculative_rejected_tokens\":" << result.speculativeRejectedTokens
+      << ","
+      << "\"speculative_acceptance_rate\":" << result.speculativeAcceptanceRate
+      << ","
+      << "\"speculative_fallback_token\":\""
+      << EscapeJson(result.speculativeFallbackToken) << "\","
+      << "\"moe_hit_rate\":" << ComputeMoeHitRate(result) << ","
+      << "\"moe_eviction_rate\":" << ComputeMoeEvictionRate(result) << ","
+      << "\"weight_dtype\":\"" << EscapeJson(result.weightDType) << "\","
+      << "\"neon_kernel_flavor\":\"" << EscapeJson(result.neonKernelFlavor)
+      << "\","
+      << "\"dequant_path\":\"" << EscapeJson(result.dequantPath) << "\","
+      << "\"metal_device\":\"" << EscapeJson(result.metalDevice) << "\","
+      << "\"metal_queue_label\":\"" << EscapeJson(result.metalQueueLabel)
+      << "\","
+      << "\"prompt_tokens\":[" << promptTokens.str() << "],"
+      << "\"generated_tokens\":[" << generatedTokens.str() << "],"
+      << "\"text\":\"" << EscapeJson(result.text) << "\""
+      << "}\n";
 }
 
 void PrintAdapterList(const us4::HardwareProbeResult &probe) {

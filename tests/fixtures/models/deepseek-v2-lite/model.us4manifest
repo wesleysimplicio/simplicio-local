@@ -4,3 +4,6 @@ weight_dtype=bf16
 seed=52002
 default_prompt_token=hi
 vocabulary=deepseek,moe,experts,route,local,apple,runtime,pager,selects,tokens,with,balance,.,fast,wide,hi
+moe_lazy_load=true
+moe_active_experts=2
+moe_expert_shards=experts-00.safetensors,experts-01.safetensors

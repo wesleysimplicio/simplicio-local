@@ -1,55 +1,87 @@
 #include "speculative/eagle3_decoder.h"
 
 #include <algorithm>
-#include <sstream>
 
 namespace us4 {
 
 namespace {
 
-std::string ContextKey(const std::vector<std::string> &context) {
-  std::ostringstream stream;
-  for (std::size_t i = 0; i < context.size(); ++i) {
-    if (i > 0) {
-      stream << '|';
-    }
-    stream << context[i];
+std::size_t SharedPrefix(const std::vector<int> &lhs,
+                         const std::vector<int> &rhs) {
+  const std::size_t limit = std::min(lhs.size(), rhs.size());
+  std::size_t count = 0U;
+  while (count < limit && lhs[count] == rhs[count]) {
+    ++count;
   }
-  return stream.str();
+  return count;
 }
 
 } // namespace
 
-Eagle3Decoder::Eagle3Decoder(const std::size_t verifyWindow)
-    : verifyWindow_(verifyWindow == 0 ? 1U : verifyWindow) {}
+Eagle3Decoder::Eagle3Decoder(const std::size_t maxBranches,
+                             const std::size_t maxDepth)
+    : maxBranches_(std::max<std::size_t>(1U, maxBranches)),
+      maxDepth_(std::max<std::size_t>(1U, maxDepth)) {}
 
-void Eagle3Decoder::RememberNGram(const std::vector<std::string> &sequence) {
-  if (sequence.size() < 2U) {
-    return;
+Eagle3DraftTree Eagle3Decoder::BuildTree(
+    const std::vector<std::vector<int>> &proposalBranches) const {
+  Eagle3DraftTree tree;
+  const std::size_t branchCount =
+      std::min<std::size_t>(maxBranches_, proposalBranches.size());
+  tree.branches.reserve(branchCount);
+  for (std::size_t index = 0; index < branchCount; ++index) {
+    Eagle3Branch branch;
+    const std::vector<int> &proposal = proposalBranches[index];
+    const std::size_t depth = std::min<std::size_t>(maxDepth_, proposal.size());
+    branch.tokens.assign(proposal.begin(), proposal.begin() + depth);
+    tree.branches.push_back(std::move(branch));
   }
-  std::vector<std::string> context(sequence.begin(), sequence.end() - 1);
-  ngrams_[ContextKey(context)].push_back(sequence.back());
+  return tree;
 }
 
-std::vector<std::string>
-Eagle3Decoder::PredictFromContext(const std::vector<std::string> &context,
-                                  const std::size_t length) const {
-  std::vector<std::string> result;
-  const auto it = ngrams_.find(ContextKey(context));
-  if (it == ngrams_.end()) {
+Eagle3VerificationResult
+Eagle3Decoder::Verify(const std::vector<int> &authoritativeTokens,
+                      const Eagle3DraftTree &tree) const {
+  Eagle3VerificationResult result;
+  if (tree.branches.empty()) {
+    result.matchesAuthoritativePath = authoritativeTokens.empty();
     return result;
   }
-  for (std::size_t index = 0; index < std::min(length, it->second.size());
-       ++index) {
-    result.push_back(it->second[index]);
-  }
-  return result;
-}
 
-SpeculativeVerifyResult
-Eagle3Decoder::Verify(const std::vector<SpeculativeDraftToken> &drafts) const {
-  PEagleDecoder verifier(verifyWindow_);
-  return verifier.Verify(drafts);
+  std::size_t bestIndex = 0U;
+  std::size_t bestPrefix = 0U;
+  for (std::size_t index = 0; index < tree.branches.size(); ++index) {
+    const std::size_t prefix =
+        SharedPrefix(tree.branches[index].tokens, authoritativeTokens);
+    if (prefix > bestPrefix) {
+      bestPrefix = prefix;
+      bestIndex = index;
+    }
+  }
+
+  result.chosenBranchIndex = bestIndex;
+  result.acceptedDepth = bestPrefix;
+  result.rejectedBranches = tree.branches.size() - 1U;
+  result.foundMatchingBranch = bestPrefix > 0U;
+
+  const Eagle3Branch &branch = tree.branches[bestIndex];
+  result.committedTokens.assign(branch.tokens.begin(),
+                                branch.tokens.begin() + bestPrefix);
+
+  if (bestPrefix < authoritativeTokens.size() &&
+      bestPrefix < branch.tokens.size()) {
+    result.fallbackToken = authoritativeTokens[bestPrefix];
+    result.committedTokens.push_back(*result.fallbackToken);
+  }
+
+  if (result.committedTokens.size() <= authoritativeTokens.size()) {
+    result.matchesAuthoritativePath =
+        std::equal(result.committedTokens.begin(), result.committedTokens.end(),
+                   authoritativeTokens.begin(),
+                   authoritativeTokens.begin() + result.committedTokens.size());
+  }
+
+  return result;
 }
 
 } // namespace us4

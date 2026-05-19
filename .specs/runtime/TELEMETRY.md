@@ -99,6 +99,12 @@ A partir de Sprint 08 (`runtime/moe/`):
 - `router_entropy`,
 - `prefetch_hit_ratio` (Sprint 09).
 
+No contrato CLI/bench atual, isso aparece como:
+
+- `moe_hit_rate`,
+- `moe_eviction_rate`,
+- `moe_router_entropy`.
+
 ## 7. Telemetria de correctness
 
 A partir do primeiro adapter capaz de inferencia (Sprint 02 com fixtures de

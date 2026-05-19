@@ -14,10 +14,10 @@ Apple Neural Engine backend para chips M5+. Offload de dense layers (attention/M
 ## Tasks
 - [x] T11.1 — `runtime/ane/AneBackend` (CoreML model compile, predict)
 - [x] T11.2 — `runtime/ane/LayerOffloader` (chooses which layers go to ANE)
-- [x] T11.3 — Mixed dispatch coordinator (Metal hot path + ANE static layers)
-- [x] T11.4 — `runtime/tuning/ThermalMonitor` (read `IOPMrootDomain`/`powermetrics`, downgrade dispatch)
-- [x] T11.5 — Bench Llama/Qwen em ANE + Metal vs Metal-only
-- [x] T11.6 — Fallback graceful em chips < M5
+- [ ] T11.3 — Mixed dispatch coordinator (Metal hot path + ANE static layers)
+- [ ] T11.4 — `runtime/tuning/ThermalMonitor` (read `IOPMrootDomain`/`powermetrics`, downgrade dispatch)
+- [ ] T11.5 — Bench Llama/Qwen em ANE + Metal vs Metal-only
+- [ ] T11.6 — Fallback graceful em chips < M5
 
 ## Test plan
 - Unit: layer offloader picks valid layers; thermal monitor reads signal.
@@ -29,9 +29,3 @@ Apple Neural Engine backend para chips M5+. Offload de dense layers (attention/M
 - ANE habilitado em FULL para M5+; Metal continua em M1-M4.
 - Coverage >=80% em `runtime/ane`.
 - ADR-008 ANE layer offload heuristic.
-
-## Hardware constraints
-
-- T11.5 (bench) and the E2E target require a physical M5+ host with ANE
-  enabled. Contract-grade tests run on every host; the speedup target is
-  validated in CI on the dedicated `macos-14` M5 lane once available.

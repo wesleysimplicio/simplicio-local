@@ -35,7 +35,7 @@ function makeTempProject(name = 'agentic-target') {
 test('prints help and version', () => {
   const help = runCli(['--help'], root);
   assert.equal(help.status, 0, help.stderr);
-  assert.match(help.stdout, /agentic-starter/);
+  assert.match(help.stdout, /llm-project-mapper/);
   assert.match(help.stdout, /--append-gitignore/);
   assert.match(help.stdout, /windsurf\|kiro\|copilot/);
 
@@ -143,7 +143,7 @@ test('writes starter files, metadata, and ignores into target project', () => {
   const meta = JSON.parse(fs.readFileSync(path.join(target, '.starter-meta.json'), 'utf8'));
   assert.equal(meta.product_name, 'write-target');
   assert.equal(meta.stack, 'next-ts');
-  assert.equal(meta.cli, '@wesleysimplicio/agentic-starter');
+  assert.equal(meta.cli, '@wesleysimplicio/llm-project-mapper');
   assert.equal(meta.project_mode, 'root');
   assert.deepEqual(meta.projects, []);
   assert.deepEqual(meta.init_must_ask, []);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -8,28 +9,52 @@
 
 namespace us4 {
 
-// AneBackend contract surface.
-//
-// The Apple Neural Engine path is opt-in and only viable on M5+ chips. The
-// runtime never assumes ANE availability. Instead, the backend exposes a
-// readiness probe plus an explicit fallback reason so non-M5 hosts can
-// surface the limitation in CLI/bench output.
-
-struct AneReadiness {
-  bool available = false;
-  std::string chip;          // "M5", "M5 Pro", ...
-  std::string fallbackReason; // "chip-too-old", "compile-unavailable", "ready"
+enum class AneModelKind {
+  kDenseProjection,
+  kAttentionMlp,
 };
+
+struct AneCompilePlan {
+  AneModelKind kind = AneModelKind::kDenseProjection;
+  std::string family;
+  std::string layerName;
+  std::size_t tokenCount = 0;
+  bool usesSharedTokenizer = false;
+  bool staticShapePreferred = true;
+};
+
+struct AneCompiledModel {
+  AneModelKind kind = AneModelKind::kDenseProjection;
+  std::string family;
+  std::string layerName;
+  std::string computeUnits;
+  std::string targetChip;
+  bool usedCoreMlCompileIntent = false;
+  bool supportsPrediction = false;
+  bool staticShapePreferred = true;
+};
+
+std::string_view ToString(AneModelKind kind);
 
 class AneBackend {
- public:
-  AneReadiness Probe(const HardwareProbeResult& hardware) const;
+public:
+  AneBackend() = default;
+  explicit AneBackend(const HardwareProbeResult &hardware);
 
-  // CompileForOffload exposes the planned CoreML compile/predict surface. The
-  // current implementation reports availability without producing real
-  // CoreML artifacts; once the toolchain integration lands this routine
-  // owns the compile step.
-  bool CompileForOffload(const std::string& modelId, std::string& reason) const;
+  bool Available() const;
+  std::string_view Reason() const;
+  bool Compile(const AneCompilePlan &plan);
+  bool Predict(std::size_t acceptedTokens, std::size_t rejectedTokens);
+  bool LastPredictionSucceeded() const;
+  std::size_t PredictionCount() const;
+  const std::optional<AneCompiledModel> &LastCompiledModel() const;
+
+private:
+  bool available_ = false;
+  bool lastPredictionSucceeded_ = false;
+  std::size_t predictionCount_ = 0;
+  std::string reason_ = "ane-unavailable";
+  std::optional<AneCompiledModel> lastCompiledModel_;
 };
 
-}  // namespace us4
+} // namespace us4

@@ -1,41 +1,37 @@
 #pragma once
 
 #include <cstddef>
-#include <string>
+#include <optional>
 #include <vector>
 
 namespace us4 {
 
-// P-EAGLE speculative decoder contract. The target model issues draft tokens
-// via a small companion model and verifies a window of speculative tokens
-// against the target's actual probabilities. Accept/reject decisions are
-// deterministic for a fixed seed and the verified output stays bit-identical
-// to the non-speculative path.
-
-struct SpeculativeDraftToken {
-  std::string token;
-  float draftLogit = 0.0F;
-  float targetLogit = 0.0F;
+struct PEagleDraft {
+  std::vector<int> tokens;
 };
 
-struct SpeculativeVerifyResult {
-  std::vector<std::string> acceptedTokens;
-  std::size_t rejectedAt = std::numeric_limits<std::size_t>::max();
-  std::size_t draftAttempts = 0;
-  std::size_t accepted = 0;
+struct PEagleVerificationResult {
+  std::vector<int> committedTokens;
+  std::size_t acceptedCount = 0U;
+  std::size_t rejectedCount = 0U;
+  std::optional<int> fallbackToken;
+  double acceptanceRate = 0.0;
+  bool allAccepted = false;
+  bool matchesAuthoritativePath = false;
 };
 
 class PEagleDecoder {
- public:
-  // The default acceptance window matches the original P-EAGLE paper; the
-  // value is exposed for tests and benchmarks to override.
-  explicit PEagleDecoder(std::size_t verifyWindow = 4);
+public:
+  explicit PEagleDecoder(std::size_t maxDraftTokens = 4U);
 
-  SpeculativeVerifyResult
-  Verify(const std::vector<SpeculativeDraftToken>& drafts) const;
+  [[nodiscard]] std::size_t MaxDraftTokens() const noexcept;
+  [[nodiscard]] PEagleDraft Draft(const std::vector<int> &proposalTokens) const;
+  [[nodiscard]] PEagleVerificationResult
+  Verify(const std::vector<int> &authoritativeTokens,
+         const PEagleDraft &draft) const;
 
- private:
-  std::size_t verifyWindow_;
+private:
+  std::size_t maxDraftTokens_ = 4U;
 };
 
-}  // namespace us4
+} // namespace us4

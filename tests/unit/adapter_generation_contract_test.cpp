@@ -41,13 +41,260 @@ TEST(AdapterGenerationContractTest,
   const us4::IUS4V6Adapter *qwen = us4::FindAdapterByModel("QWEN-0.5B");
   const us4::IUS4V6Adapter *gemma = us4::FindAdapterByModel("gemma");
   const us4::IUS4V6Adapter *deepseek = us4::FindAdapterByModel("deepseek");
+  const us4::IUS4V6Adapter *glm = us4::FindAdapterByModel("glm");
+  const us4::IUS4V6Adapter *kimi = us4::FindAdapterByModel("kimi");
+  const us4::IUS4V6Adapter *minimax = us4::FindAdapterByModel("minimax");
 
   ASSERT_NE(qwen, nullptr);
   ASSERT_NE(gemma, nullptr);
   ASSERT_NE(deepseek, nullptr);
+  ASSERT_NE(glm, nullptr);
+  ASSERT_NE(kimi, nullptr);
+  ASSERT_NE(minimax, nullptr);
   EXPECT_EQ(qwen->Architecture(), us4::ArchitectureType::kDense);
   EXPECT_EQ(gemma->Architecture(), us4::ArchitectureType::kDense);
   EXPECT_EQ(deepseek->Architecture(), us4::ArchitectureType::kMoe);
+  EXPECT_EQ(glm->Architecture(), us4::ArchitectureType::kMoe);
+  EXPECT_EQ(kimi->Architecture(), us4::ArchitectureType::kMoe);
+  EXPECT_EQ(minimax->Architecture(), us4::ArchitectureType::kMoe);
+}
+
+TEST(AdapterGenerationContractTest,
+     DeepSeekMoeAdapterConsumesRouteMetadataAndReusesPagerWithinContext) {
+  const us4::IUS4V6Adapter *adapter =
+      us4::FindAdapterByModel("deepseek-v2-lite");
+  ASSERT_NE(adapter, nullptr);
+
+  us4::RuntimeContext context(MakeProbe());
+  adapter->ConfigureRuntime(context);
+
+  const us4::GenerationResult first = adapter->Generate(
+      {.prompt = "code logic runtime", .maxTokens = 3}, context);
+  const us4::GenerationResult second = adapter->Generate(
+      {.prompt = "code logic runtime", .maxTokens = 3}, context);
+  const us4::GenerationResult third =
+      adapter->Generate({.prompt = "wide context", .maxTokens = 3}, context);
+
+  EXPECT_EQ(first.family, "deepseek");
+  EXPECT_EQ(first.moeSelectedExperts, 2U);
+  EXPECT_GT(first.moeRouterEntropy, 0.0F);
+  EXPECT_GT(first.moeSelectedMass, 0.0F);
+  EXPECT_NE(first.text.find("moe-route"), std::string::npos);
+  EXPECT_NE(first.text.find("e0"), std::string::npos);
+  EXPECT_NE(first.text.find("e1"), std::string::npos);
+  EXPECT_EQ(first.moePagerLoads, 2U);
+  EXPECT_EQ(first.moePagerReuses, 0U);
+  EXPECT_EQ(first.moePagerEvictions, 0U);
+  EXPECT_EQ(first.moeResidentExperts, 2U);
+  EXPECT_FALSE(first.moeSparsityCacheHit);
+  EXPECT_EQ(first.moeSparsityCacheHits, 0U);
+  EXPECT_EQ(first.moeSparsityCacheMisses, 1U);
+  EXPECT_EQ(first.moeSparsityCacheEntries, 1U);
+  EXPECT_GT(first.moeSparsityPatternHash, 0U);
+  EXPECT_FALSE(first.moeSparsityPatternKey.empty());
+  EXPECT_EQ(first.moePrefetchPrefetched, 3U);
+  EXPECT_EQ(first.moePrefetchHits, 2U);
+  EXPECT_EQ(first.moePrefetchMisses, 1U);
+  EXPECT_DOUBLE_EQ(first.moePrefetchHitRatio, 2.0 / 3.0);
+  EXPECT_TRUE(first.moePrefetchWrongExpertLeakPrevented);
+  EXPECT_EQ(first.moePrefetchExecutableExperts, 2U);
+
+  EXPECT_EQ(second.moePagerLoads, 2U);
+  EXPECT_GE(second.moePagerReuses, 2U);
+  EXPECT_EQ(second.moePagerEvictions, 0U);
+  EXPECT_NE(second.text.find("moe-route"), std::string::npos);
+  EXPECT_TRUE(second.moeSparsityCacheHit);
+  EXPECT_GE(second.moeSparsityCacheHits, 1U);
+  EXPECT_EQ(second.moeSparsityCacheEntries, 1U);
+  EXPECT_GT(second.moeSparsityCacheHitRatio, 0.0);
+
+  EXPECT_EQ(third.moeSelectedExperts, 2U);
+  EXPECT_GE(third.moePagerLoads, 3U);
+  EXPECT_GE(third.moePagerEvictions, 1U);
+  EXPECT_EQ(third.moeResidentExperts, 2U);
+  EXPECT_NE(third.text.find("moe-route"), std::string::npos);
+  EXPECT_GE(third.moeSparsityCacheEntries, 2U);
+}
+
+TEST(AdapterGenerationContractTest,
+     KimiMoeAdapterConsumesRouteMetadataAndReusesPagerWithinContext) {
+  const us4::IUS4V6Adapter *adapter =
+      us4::FindAdapterByModel("kimi-k2-instruct");
+  ASSERT_NE(adapter, nullptr);
+
+  us4::RuntimeContext context(MakeProbe());
+  adapter->ConfigureRuntime(context);
+
+  const us4::GenerationResult first =
+      adapter->Generate({.prompt = "smart context", .maxTokens = 3}, context);
+  const us4::GenerationResult second =
+      adapter->Generate({.prompt = "smart context", .maxTokens = 3}, context);
+  const us4::GenerationResult third =
+      adapter->Generate({.prompt = "fast local", .maxTokens = 3}, context);
+
+  EXPECT_EQ(first.family, "kimi");
+  EXPECT_EQ(first.moeSelectedExperts, 2U);
+  EXPECT_GT(first.moeRouterEntropy, 0.0F);
+  EXPECT_GT(first.moeSelectedMass, 0.0F);
+  EXPECT_NE(first.text.find("kimi-route"), std::string::npos);
+  EXPECT_NE(first.text.find("e1"), std::string::npos);
+  EXPECT_NE(first.text.find("e3"), std::string::npos);
+  EXPECT_EQ(first.moePagerLoads, 2U);
+  EXPECT_EQ(first.moePagerReuses, 0U);
+  EXPECT_EQ(first.moePagerEvictions, 0U);
+  EXPECT_EQ(first.moeResidentExperts, 2U);
+  EXPECT_FALSE(first.moeSparsityCacheHit);
+  EXPECT_EQ(first.moeSparsityCacheMisses, 1U);
+  EXPECT_EQ(first.moeSparsityCacheEntries, 1U);
+
+  EXPECT_EQ(second.moePagerLoads, 2U);
+  EXPECT_GE(second.moePagerReuses, 2U);
+  EXPECT_EQ(second.moePagerEvictions, 0U);
+  EXPECT_NE(second.text.find("kimi-route"), std::string::npos);
+  EXPECT_TRUE(second.moeSparsityCacheHit);
+  EXPECT_GE(second.moeSparsityCacheHits, 1U);
+  EXPECT_EQ(second.moeSparsityCacheEntries, 1U);
+
+  EXPECT_EQ(third.moeSelectedExperts, 2U);
+  EXPECT_GE(third.moePagerLoads, 3U);
+  EXPECT_GE(third.moePagerEvictions, 1U);
+  EXPECT_EQ(third.moeResidentExperts, 2U);
+  EXPECT_NE(third.text.find("kimi-route"), std::string::npos);
+  EXPECT_GE(third.moeSparsityCacheEntries, 2U);
+}
+
+TEST(AdapterGenerationContractTest,
+     MiniMaxMoeAdapterConsumesRouteMetadataAndReusesPagerWithinContext) {
+  const us4::IUS4V6Adapter *adapter = us4::FindAdapterByModel("minimax-m2");
+  ASSERT_NE(adapter, nullptr);
+
+  us4::RuntimeContext context(MakeProbe());
+  adapter->ConfigureRuntime(context);
+
+  const us4::GenerationResult first = adapter->Generate(
+      {.prompt = "image audio fusion", .maxTokens = 3}, context);
+  const us4::GenerationResult second = adapter->Generate(
+      {.prompt = "image audio fusion", .maxTokens = 3}, context);
+  const us4::GenerationResult third = adapter->Generate(
+      {.prompt = "logic wide context", .maxTokens = 3}, context);
+
+  EXPECT_EQ(first.family, "minimax");
+  EXPECT_EQ(first.moeSelectedExperts, 2U);
+  EXPECT_GT(first.moeRouterEntropy, 0.0F);
+  EXPECT_GT(first.moeSelectedMass, 0.0F);
+  EXPECT_NE(first.text.find("minimax-route"), std::string::npos);
+  EXPECT_EQ(first.moePagerLoads, 2U);
+  EXPECT_EQ(first.moePagerReuses, 0U);
+  EXPECT_EQ(first.moePagerEvictions, 0U);
+  EXPECT_EQ(first.moeResidentExperts, 2U);
+  EXPECT_FALSE(first.moeSparsityCacheHit);
+  EXPECT_EQ(first.moeSparsityCacheMisses, 1U);
+  EXPECT_EQ(first.moeSparsityCacheEntries, 1U);
+  EXPECT_FALSE(first.multimodalCacheHit);
+  EXPECT_EQ(first.multimodalCacheHits, 0U);
+  EXPECT_EQ(first.multimodalCacheMisses, 3U);
+  EXPECT_EQ(first.multimodalCacheEntries, 3U);
+  EXPECT_EQ(first.multimodalActiveModalities, 3U);
+  EXPECT_EQ(first.multimodalModalities, "text,image,audio");
+
+  EXPECT_EQ(second.moePagerLoads, 2U);
+  EXPECT_GE(second.moePagerReuses, 2U);
+  EXPECT_EQ(second.moePagerEvictions, 0U);
+  EXPECT_NE(second.text.find("minimax-route"), std::string::npos);
+  EXPECT_TRUE(second.moeSparsityCacheHit);
+  EXPECT_GE(second.moeSparsityCacheHits, 1U);
+  EXPECT_EQ(second.moeSparsityCacheEntries, 1U);
+  EXPECT_TRUE(second.multimodalCacheHit);
+  EXPECT_GE(second.multimodalCacheHits, 3U);
+  EXPECT_EQ(second.multimodalCacheEntries, 3U);
+
+  EXPECT_EQ(third.moeSelectedExperts, 2U);
+  EXPECT_GE(third.moePagerLoads, 3U);
+  EXPECT_GE(third.moePagerEvictions, 1U);
+  EXPECT_EQ(third.moeResidentExperts, 2U);
+  EXPECT_NE(third.text.find("minimax-route"), std::string::npos);
+  EXPECT_GE(third.moeSparsityCacheEntries, 2U);
+  EXPECT_GE(third.multimodalCacheEntries, 5U);
+}
+
+TEST(AdapterGenerationContractTest,
+     GlmMoeAdapterConsumesRouteMetadataAndReusesPagerWithinContext) {
+  const us4::IUS4V6Adapter *adapter = us4::FindAdapterByModel("glm-5.1");
+  ASSERT_NE(adapter, nullptr);
+
+  us4::RuntimeContext context(MakeProbe());
+  adapter->ConfigureRuntime(context);
+
+  const us4::GenerationResult first = adapter->Generate(
+      {.prompt = "tool reason vision", .maxTokens = 3}, context);
+  const us4::GenerationResult second = adapter->Generate(
+      {.prompt = "tool reason vision", .maxTokens = 3}, context);
+  const us4::GenerationResult third = adapter->Generate(
+      {.prompt = "wide context code", .maxTokens = 3}, context);
+
+  EXPECT_EQ(first.family, "glm");
+  EXPECT_EQ(first.moeSelectedExperts, 2U);
+  EXPECT_GT(first.moeRouterEntropy, 0.0F);
+  EXPECT_GT(first.moeSelectedMass, 0.0F);
+  EXPECT_NE(first.text.find("glm-route"), std::string::npos);
+  EXPECT_EQ(first.moePagerLoads, 2U);
+  EXPECT_EQ(first.moePagerReuses, 0U);
+  EXPECT_EQ(first.moePagerEvictions, 0U);
+  EXPECT_EQ(first.moeResidentExperts, 2U);
+  EXPECT_FALSE(first.moeSparsityCacheHit);
+  EXPECT_EQ(first.moeSparsityCacheMisses, 1U);
+  EXPECT_EQ(first.moeSparsityCacheEntries, 1U);
+
+  EXPECT_EQ(second.moePagerLoads, 2U);
+  EXPECT_GE(second.moePagerReuses, 2U);
+  EXPECT_EQ(second.moePagerEvictions, 0U);
+  EXPECT_NE(second.text.find("glm-route"), std::string::npos);
+  EXPECT_TRUE(second.moeSparsityCacheHit);
+  EXPECT_GE(second.moeSparsityCacheHits, 1U);
+  EXPECT_EQ(second.moeSparsityCacheEntries, 1U);
+
+  EXPECT_EQ(third.moeSelectedExperts, 2U);
+  EXPECT_GE(third.moePagerLoads, 3U);
+  EXPECT_GE(third.moePagerEvictions, 1U);
+  EXPECT_EQ(third.moeResidentExperts, 2U);
+  EXPECT_NE(third.text.find("glm-route"), std::string::npos);
+  EXPECT_GE(third.moeSparsityCacheEntries, 2U);
+}
+
+TEST(AdapterGenerationContractTest,
+     MoeAdaptersSurfaceShardAwareLoaderTelemetryWhenAssetIsProvided) {
+  const std::array<std::pair<const char *, std::filesystem::path>, 4> kCases = {
+      {
+          {"deepseek-v2-lite", RepoRoot() / "tests" / "fixtures" / "models" /
+                                   "deepseek-v2-lite" / "model.us4manifest"},
+          {"glm-5.1", RepoRoot() / "tests" / "fixtures" / "models" / "glm-5.1" /
+                          "model.us4manifest"},
+          {"kimi-k2-instruct", RepoRoot() / "tests" / "fixtures" / "models" /
+                                   "kimi-k2-instruct" / "model.us4manifest"},
+          {"minimax-m2", RepoRoot() / "tests" / "fixtures" / "models" /
+                             "minimax-m2" / "model.us4manifest"},
+      }};
+
+  for (const auto &[modelName, manifestPath] : kCases) {
+    SCOPED_TRACE(modelName);
+
+    const us4::IUS4V6Adapter *adapter = us4::FindAdapterByModel(modelName);
+    ASSERT_NE(adapter, nullptr);
+
+    us4::ModelAsset asset;
+    std::string error;
+    ASSERT_TRUE(us4::LoadModelAsset(manifestPath, asset, &error)) << error;
+
+    us4::RuntimeContext context(MakeProbe());
+    adapter->ConfigureRuntime(context);
+    const us4::GenerationResult result = adapter->Generate(
+        {.prompt = "smart context", .maxTokens = 3, .asset = &asset}, context);
+
+    EXPECT_EQ(result.moeShardCount, 2U);
+    EXPECT_EQ(result.moeActiveExperts, 2U);
+    EXPECT_TRUE(result.moeLazyLoad);
+    EXPECT_EQ(result.assetFormat, "fixture-manifest");
+  }
 }
 
 TEST(AdapterGenerationContractTest,

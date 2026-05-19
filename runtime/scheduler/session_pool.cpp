@@ -2,20 +2,23 @@
 
 namespace us4 {
 
-SessionContext &SessionPool::GetOrCreate(const std::string &sessionId) {
-  auto it = sessions_.find(sessionId);
-  if (it != sessions_.end()) {
-    return it->second;
+SessionState &SessionPool::Acquire(std::string sessionId) {
+  auto [it, inserted] = sessions_.try_emplace(sessionId, SessionState{});
+  SessionState &state = it->second;
+  if (inserted) {
+    state.sessionId = it->first;
+    state.kvNamespace = BuildKvNamespace(state.sessionId);
+    state.generation = 1U;
   }
-  SessionContext context;
-  context.sessionId = sessionId;
-  context.kvNamespace = "session::" + sessionId;
-  sessions_[sessionId] = std::move(context);
-  return sessions_[sessionId];
+  return state;
 }
 
-std::optional<SessionContext>
-SessionPool::Snapshot(const std::string &sessionId) const {
+bool SessionPool::Release(const std::string &sessionId) {
+  return sessions_.erase(sessionId) > 0U;
+}
+
+std::optional<SessionState>
+SessionPool::Lookup(const std::string &sessionId) const {
   const auto it = sessions_.find(sessionId);
   if (it == sessions_.end()) {
     return std::nullopt;
@@ -23,17 +26,28 @@ SessionPool::Snapshot(const std::string &sessionId) const {
   return it->second;
 }
 
-void SessionPool::AppendRollingContext(const std::string &sessionId,
-                                       const std::vector<float> &tokens) {
-  auto &context = GetOrCreate(sessionId);
-  context.rollingContext.insert(context.rollingContext.end(), tokens.begin(),
-                                tokens.end());
+std::string SessionPool::NamespacedKvKey(const std::string &sessionId,
+                                         const std::string &logicalKey) {
+  const SessionState &state = Acquire(sessionId);
+  return state.kvNamespace + "::kv::" + logicalKey;
 }
 
-void SessionPool::Drop(const std::string &sessionId) {
-  sessions_.erase(sessionId);
+std::string SessionPool::NamespacedPrefixKey(const std::string &sessionId,
+                                             const std::string &prefix) {
+  const SessionState &state = Acquire(sessionId);
+  return state.kvNamespace + "::prefix::" + prefix;
 }
 
-std::size_t SessionPool::Size() const { return sessions_.size(); }
+void SessionPool::RecordPromptPrefix(const std::string &sessionId,
+                                     std::string prefix) {
+  SessionState &state = Acquire(sessionId);
+  state.lastPromptPrefix = std::move(prefix);
+}
+
+std::size_t SessionPool::ActiveSessionCount() const { return sessions_.size(); }
+
+std::string SessionPool::BuildKvNamespace(const std::string &sessionId) {
+  return "session::" + sessionId;
+}
 
 } // namespace us4

@@ -28,6 +28,12 @@ struct ModelAsset {
   std::vector<std::string> vocabulary;
   std::string defaultPromptToken;
   std::filesystem::path sourcePath;
+  std::filesystem::path draftModelPath;
+  ModelFormat draftModelFormat = ModelFormat::kUnknown;
+  bool sharedTokenizer = false;
+  bool moeLazyLoad = false;
+  std::size_t moeActiveExperts = 0;
+  std::vector<std::filesystem::path> expertShardPaths;
   std::unordered_map<std::string, std::string> metadata;
 };
 

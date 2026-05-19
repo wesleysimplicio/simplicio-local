@@ -1,68 +1,113 @@
 #include "scheduler/continuous_batcher.h"
 
 #include <algorithm>
-#include <unordered_set>
 #include <utility>
 
 namespace us4 {
 
-ContinuousBatcher::ContinuousBatcher(const std::size_t fairnessQuantum)
-    : fairnessQuantum_(fairnessQuantum == 0 ? 1U : fairnessQuantum) {}
+ContinuousBatcher::ContinuousBatcher(const std::size_t maxBatchTokens)
+    : maxBatchTokens_(std::max<std::size_t>(1U, maxBatchTokens)) {}
 
-void ContinuousBatcher::Submit(SessionTokenRequest request) {
-  queue_.push_back(std::move(request));
+std::size_t ContinuousBatcher::MaxBatchTokens() const noexcept {
+  return maxBatchTokens_;
 }
 
-std::optional<SessionTokenRequest> ContinuousBatcher::NextToken() {
-  if (queue_.empty()) {
-    return std::nullopt;
+BatchDecision
+ContinuousBatcher::Schedule(const std::vector<SessionDemand> &demands) const {
+  BatchDecision decision;
+  decision.totalGrantedTokens = 0U;
+  decision.activeSessions = 0U;
+  decision.fairnessRounds = 0U;
+  decision.singleSessionPassthrough = false;
+
+  struct ActiveDemand {
+    SessionDemand demand;
+    std::size_t remainingTokens = 0U;
+    std::size_t grantedTokens = 0U;
+    std::size_t roundsVisited = 0U;
+  };
+
+  std::vector<ActiveDemand> active;
+  active.reserve(demands.size());
+  for (const SessionDemand &demand : demands) {
+    if (demand.pendingTokens == 0U) {
+      continue;
+    }
+    ActiveDemand state;
+    state.demand = demand;
+    state.remainingTokens = demand.pendingTokens;
+    state.grantedTokens = 0U;
+    state.roundsVisited = 0U;
+    active.push_back(std::move(state));
   }
 
-  // Single-session shortcut: FIFO.
-  if (queue_.size() == 1U) {
-    auto request = queue_.front();
-    queue_.pop_front();
-    lastSession_ = request.sessionId;
-    lastSessionRun_ = 1U;
-    return request;
+  std::sort(active.begin(), active.end(),
+            [](const ActiveDemand &lhs, const ActiveDemand &rhs) {
+              if (lhs.demand.arrivalOrder != rhs.demand.arrivalOrder) {
+                return lhs.demand.arrivalOrder < rhs.demand.arrivalOrder;
+              }
+              return lhs.demand.sessionId < rhs.demand.sessionId;
+            });
+
+  decision.activeSessions = active.size();
+  decision.singleSessionPassthrough = active.size() == 1U;
+
+  if (decision.singleSessionPassthrough && !active.empty()) {
+    ActiveDemand &state = active.front();
+    const std::size_t grant = std::min(state.remainingTokens, maxBatchTokens_);
+    state.remainingTokens -= grant;
+    state.grantedTokens = grant;
+    state.roundsVisited = grant > 0U ? 1U : 0U;
+    decision.totalGrantedTokens = grant;
+    decision.fairnessRounds = grant > 0U ? 1U : 0U;
+    decision.slices.push_back(
+        {state.demand.sessionId, state.grantedTokens, state.roundsVisited});
+    return decision;
   }
 
-  // Look for a request from a different session if the current one already
-  // exhausted its quantum.
-  if (!lastSession_.empty() && lastSessionRun_ >= fairnessQuantum_) {
-    for (auto it = queue_.begin(); it != queue_.end(); ++it) {
-      if (it->sessionId != lastSession_) {
-        auto request = std::move(*it);
-        queue_.erase(it);
-        lastSession_ = request.sessionId;
-        lastSessionRun_ = 1U;
-        return request;
+  std::size_t remainingBatchTokens = maxBatchTokens_;
+  while (remainingBatchTokens > 0U) {
+    bool anyGrantThisRound = false;
+    for (ActiveDemand &state : active) {
+      if (remainingBatchTokens == 0U) {
+        break;
       }
+      if (state.remainingTokens == 0U) {
+        continue;
+      }
+
+      const std::size_t fairnessWeight =
+          std::max<std::size_t>(1U, state.demand.fairnessWeight);
+      const std::size_t grant = std::min(
+          {state.remainingTokens, fairnessWeight, remainingBatchTokens});
+      if (grant == 0U) {
+        continue;
+      }
+
+      state.remainingTokens -= grant;
+      state.grantedTokens += grant;
+      state.roundsVisited += 1U;
+      remainingBatchTokens -= grant;
+      decision.totalGrantedTokens += grant;
+      anyGrantThisRound = true;
     }
-  }
 
-  auto request = queue_.front();
-  queue_.pop_front();
-  if (request.sessionId == lastSession_) {
-    ++lastSessionRun_;
-  } else {
-    lastSession_ = request.sessionId;
-    lastSessionRun_ = 1U;
-  }
-  return request;
-}
-
-std::size_t ContinuousBatcher::QueueSize() const { return queue_.size(); }
-
-std::vector<std::string> ContinuousBatcher::ActiveSessions() const {
-  std::unordered_set<std::string> seen;
-  std::vector<std::string> result;
-  for (const auto &request : queue_) {
-    if (seen.insert(request.sessionId).second) {
-      result.push_back(request.sessionId);
+    if (!anyGrantThisRound) {
+      break;
     }
+    decision.fairnessRounds += 1U;
   }
-  return result;
+
+  decision.slices.reserve(active.size());
+  for (const ActiveDemand &state : active) {
+    if (state.grantedTokens == 0U) {
+      continue;
+    }
+    decision.slices.push_back(
+        {state.demand.sessionId, state.grantedTokens, state.roundsVisited});
+  }
+
+  return decision;
 }
 
 } // namespace us4

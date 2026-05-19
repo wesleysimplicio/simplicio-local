@@ -2,36 +2,55 @@
 
 #include <cstddef>
 #include <string>
-#include <vector>
+#include <string_view>
+
+#include "core/hardware_probe.h"
+#include "core/runtime_mode.h"
+#include "core/tensor.h"
 
 namespace us4 {
 
-// LayerOffloader picks which layers go to the ANE based on a small
-// allow-list of layer types. Attention and MLP layers without time-varying
-// state are good candidates; layers tied to KV cache state must stay on
-// Metal.
-
-enum class LayerKind {
-  kAttention,
-  kMlp,
+enum class OffloadLayerType {
   kEmbedding,
-  kProjection,
-  kStateful,
+  kAttentionQkv,
+  kAttentionOutput,
+  kMlpUpProjection,
+  kMlpDownProjection,
+  kRouter,
 };
 
-struct LayerDescriptor {
-  std::string name;
-  LayerKind kind = LayerKind::kStateful;
-  bool isStatic = false;
+struct OffloadLayerRequest {
+  std::string family;
+  std::string layerName;
+  OffloadLayerType layerType = OffloadLayerType::kEmbedding;
+  RuntimeMode mode = RuntimeMode::kNano;
+  std::size_t tokenCount = 0;
+  std::size_t hiddenSize = 0;
+  DType weightDType = DType::kFloat32;
+  bool staticShape = true;
 };
 
-struct LayerOffloadPlan {
-  std::vector<std::string> aneLayers;
-  std::vector<std::string> metalLayers;
-  std::vector<std::string> rejectedLayers;
+struct OffloadDecision {
+  bool eligible = false;
+  bool fallbackToMetal = true;
+  std::string backend = "metal";
+  std::string reason = "ane-unavailable";
 };
 
-LayerOffloadPlan PlanLayerOffload(const std::vector<LayerDescriptor>& layers,
-                                  bool aneAvailable);
+std::string_view ToString(OffloadLayerType layerType);
 
-}  // namespace us4
+class LayerOffloader {
+public:
+  LayerOffloader() = default;
+  explicit LayerOffloader(const HardwareProbeResult &hardware);
+
+  bool Available() const;
+  std::string_view Reason() const;
+  OffloadDecision Decide(const OffloadLayerRequest &request) const;
+
+private:
+  bool available_ = false;
+  std::string reason_ = "ane-unavailable";
+};
+
+} // namespace us4

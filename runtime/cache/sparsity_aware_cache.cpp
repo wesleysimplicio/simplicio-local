@@ -1,55 +1,99 @@
 #include "cache/sparsity_aware_cache.h"
 
-#include <algorithm>
 #include <utility>
 
 namespace us4 {
 
-SparsityAwareCache::SparsityAwareCache(const std::size_t capacity)
-    : capacity_(capacity == 0 ? 1U : capacity) {}
+namespace {
 
-void SparsityAwareCache::Store(std::string patternHash,
-                               std::vector<float> activation) {
-  if (entries_.size() >= capacity_ && entries_.find(patternHash) == entries_.end()) {
-    // Evict the least-hit entry; deterministic tiebreak by hash string.
-    auto victim = entries_.begin();
-    for (auto it = entries_.begin(); it != entries_.end(); ++it) {
-      if (it->second.hitCount < victim->second.hitCount ||
-          (it->second.hitCount == victim->second.hitCount &&
-           it->first < victim->first)) {
-        victim = it;
-      }
-    }
-    if (victim != entries_.end()) {
-      entries_.erase(victim);
-    }
-  }
-  SparsityCacheEntry entry;
-  entry.patternHash = patternHash;
-  entry.activation = std::move(activation);
-  entries_[std::move(patternHash)] = std::move(entry);
-}
+constexpr std::size_t kHashOffset = 1469598103934665603ULL;
+constexpr std::size_t kHashPrime = 1099511628211ULL;
 
-std::optional<std::vector<float>>
-SparsityAwareCache::Lookup(const std::string &patternHash) {
-  const auto it = entries_.find(patternHash);
+} // namespace
+
+std::optional<SparsityCacheEntry>
+SparsityAwareCache::Lookup(const std::string_view family,
+                           const RouterDecision &routing) const {
+  const std::size_t patternHash = ComputePatternHash(routing.selected);
+  const std::string key = BuildKey(family, patternHash, routing.selected);
+  const auto it = entries_.find(key);
   if (it == entries_.end()) {
-    ++totalMisses_;
     return std::nullopt;
   }
-  ++it->second.hitCount;
-  ++totalHits_;
-  return it->second.activation;
+  return it->second;
+}
+
+SparsityCacheSnapshot SparsityAwareCache::Touch(const std::string_view family,
+                                                const RouterDecision &routing) {
+  const std::size_t patternHash = ComputePatternHash(routing.selected);
+  const std::string key = BuildKey(family, patternHash, routing.selected);
+  const auto it = entries_.find(key);
+  if (it != entries_.end()) {
+    ++hitCount_;
+    ++it->second.uses;
+    ++it->second.hits;
+    return Snapshot(true, key, patternHash);
+  }
+
+  ++missCount_;
+  SparsityCacheEntry entry;
+  entry.family = std::string(family);
+  entry.key = key;
+  entry.patternHash = patternHash;
+  entry.uses = 1U;
+  entry.hits = 0U;
+  entry.experts.reserve(routing.selected.size());
+  for (const ExpertScore &expert : routing.selected) {
+    entry.experts.push_back(expert.expert);
+  }
+  entries_.emplace(key, std::move(entry));
+  return Snapshot(false, key, patternHash);
 }
 
 std::size_t SparsityAwareCache::EntryCount() const { return entries_.size(); }
 
-float SparsityAwareCache::HitRatio() const {
-  const std::size_t total = totalHits_ + totalMisses_;
-  if (total == 0) {
-    return 0.0F;
+std::size_t SparsityAwareCache::ComputePatternHash(
+    const std::vector<ExpertScore> &experts) {
+  std::size_t hash = kHashOffset;
+  for (const ExpertScore &expert : experts) {
+    hash ^= expert.expert + 0x9e3779b97f4a7c15ULL + (hash << 6U) + (hash >> 2U);
+    hash *= kHashPrime;
   }
-  return static_cast<float>(totalHits_) / static_cast<float>(total);
+  return hash;
+}
+
+std::string
+SparsityAwareCache::BuildKey(const std::string_view family,
+                             const std::size_t patternHash,
+                             const std::vector<ExpertScore> &experts) {
+  std::string key(family);
+  key += ":";
+  key += std::to_string(patternHash);
+  key += ":";
+  for (std::size_t index = 0; index < experts.size(); ++index) {
+    if (index > 0U) {
+      key += "-";
+    }
+    key += std::to_string(experts[index].expert);
+  }
+  return key;
+}
+
+SparsityCacheSnapshot
+SparsityAwareCache::Snapshot(const bool lastLookupHit, std::string key,
+                             const std::size_t patternHash) const {
+  SparsityCacheSnapshot snapshot;
+  snapshot.entryCount = entries_.size();
+  snapshot.hitCount = hitCount_;
+  snapshot.missCount = missCount_;
+  const std::size_t denominator = hitCount_ + missCount_;
+  snapshot.hitRatio = denominator == 0U ? 0.0
+                                        : static_cast<double>(hitCount_) /
+                                              static_cast<double>(denominator);
+  snapshot.lastLookupHit = lastLookupHit;
+  snapshot.lastKey = std::move(key);
+  snapshot.lastPatternHash = patternHash;
+  return snapshot;
 }
 
 } // namespace us4

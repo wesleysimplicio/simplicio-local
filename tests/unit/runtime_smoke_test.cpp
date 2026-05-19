@@ -57,10 +57,17 @@ int main() {
 
   us4::TelemetrySink sink;
   ok &= Expect(sink.Empty(), "telemetry sink should start empty");
-  sink.Record({12.5, 34.0, probe.unifiedMemoryGiB, 8, 4, context.mode()});
+  sink.Record({12.5, 34.0, probe.unifiedMemoryGiB, 8, 4, context.mode(), 2,
+               0.69, 2, 1, 3});
   ok &= Expect(!sink.Empty(), "telemetry sink should store snapshots");
   ok &= Expect(sink.Snapshots().size() == 1,
                "telemetry sink should keep one snapshot");
+  ok &= Expect(sink.Snapshots().front().HasMoeTelemetry(),
+               "telemetry snapshot should expose moe presence");
+  ok &= Expect(sink.Snapshots().front().MoeHitRate() > 0.0,
+               "telemetry snapshot should derive moe hit rate");
+  ok &= Expect(sink.Snapshots().front().MoeEvictionRate() > 0.0,
+               "telemetry snapshot should derive moe eviction rate");
 
   const auto adapters = us4::ListAdapters();
   ok &= Expect(adapters.size() >= 7,

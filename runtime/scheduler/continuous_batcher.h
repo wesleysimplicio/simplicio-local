@@ -1,44 +1,42 @@
 #pragma once
 
 #include <cstddef>
-#include <deque>
-#include <optional>
 #include <string>
 #include <vector>
 
 namespace us4 {
 
-// Continuous batcher: round-robin across active sessions while honouring a
-// per-session quantum so heavy prompts cannot starve interactive ones.
-//
-// Contract guarantees:
-// - tokens admitted from session N go to the same output channel as long as
-//   the session is registered;
-// - the next token always comes from a different session than the previous
-//   one when more than one session has work pending;
-// - single-session use degrades to a simple FIFO and stays compatible with
-//   the existing adapter API.
-
-struct SessionTokenRequest {
+struct SessionDemand {
   std::string sessionId;
-  std::string prompt;
+  std::size_t pendingTokens = 0U;
+  std::size_t fairnessWeight = 1U;
+  std::size_t arrivalOrder = 0U;
+};
+
+struct ScheduledSlice {
+  std::string sessionId;
+  std::size_t grantedTokens = 0U;
+  std::size_t roundsVisited = 0U;
+};
+
+struct BatchDecision {
+  std::vector<ScheduledSlice> slices;
+  std::size_t totalGrantedTokens = 0U;
+  std::size_t activeSessions = 0U;
+  std::size_t fairnessRounds = 0U;
+  bool singleSessionPassthrough = false;
 };
 
 class ContinuousBatcher {
- public:
-  explicit ContinuousBatcher(std::size_t fairnessQuantum = 1);
+public:
+  explicit ContinuousBatcher(std::size_t maxBatchTokens = 8U);
 
-  void Submit(SessionTokenRequest request);
-  std::optional<SessionTokenRequest> NextToken();
-  std::size_t QueueSize() const;
-  std::vector<std::string> ActiveSessions() const;
+  [[nodiscard]] std::size_t MaxBatchTokens() const noexcept;
+  [[nodiscard]] BatchDecision
+  Schedule(const std::vector<SessionDemand> &demands) const;
 
- private:
-  std::size_t fairnessQuantum_;
-  std::size_t cursor_ = 0;
-  std::size_t lastSessionRun_ = 0;
-  std::string lastSession_;
-  std::deque<SessionTokenRequest> queue_;
+private:
+  std::size_t maxBatchTokens_ = 8U;
 };
 
-}  // namespace us4
+} // namespace us4

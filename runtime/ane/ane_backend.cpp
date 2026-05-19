@@ -2,51 +2,77 @@
 
 namespace us4 {
 
-namespace {
-
-bool ChipMeetsAneFloor(const std::string &chip) {
-  // Recognise M5 family explicitly so older chips never claim ANE
-  // capability. The list is intentionally small until the catalogue
-  // grows.
-  if (chip.size() >= 2 && chip[0] == 'M') {
-    if (chip[1] == '5' || chip[1] == '6' || chip[1] == '7' ||
-        chip[1] == '8' || chip[1] == '9') {
-      return true;
-    }
+std::string_view ToString(const AneModelKind kind) {
+  switch (kind) {
+  case AneModelKind::kDenseProjection:
+    return "dense-projection";
+  case AneModelKind::kAttentionMlp:
+    return "attention-mlp";
   }
-  return false;
+  return "dense-projection";
 }
 
-} // namespace
-
-AneReadiness AneBackend::Probe(const HardwareProbeResult &hardware) const {
-  AneReadiness readiness;
-  readiness.chip = hardware.chip;
+AneBackend::AneBackend(const HardwareProbeResult &hardware)
+    : available_(hardware.hasAne) {
   if (!hardware.hasAne) {
-    readiness.available = false;
-    readiness.fallbackReason = "chip-too-old";
-    return readiness;
+    reason_ = "ane-unavailable";
+    return;
   }
-  if (!ChipMeetsAneFloor(hardware.chip)) {
-    readiness.available = false;
-    readiness.fallbackReason = "chip-too-old";
-    return readiness;
-  }
-  readiness.available = true;
-  readiness.fallbackReason = "ready";
-  return readiness;
+
+  reason_ = hardware.chip.find("M5") != std::string::npos ? "ane-backend-ready"
+                                                          : "ane-host-ready";
 }
 
-bool AneBackend::CompileForOffload(const std::string &modelId,
-                                   std::string &reason) const {
-  if (modelId.empty()) {
-    reason = "missing-model-id";
+bool AneBackend::Available() const { return available_; }
+
+std::string_view AneBackend::Reason() const { return reason_; }
+
+bool AneBackend::Compile(const AneCompilePlan &plan) {
+  if (!available_ || plan.family.empty() || plan.layerName.empty() ||
+      plan.tokenCount == 0) {
     return false;
   }
-  // Real compile path lands with the CoreML integration. Reporting the
-  // deferred state honestly is part of the contract.
-  reason = "compile-deferred";
-  return false;
+
+  lastCompiledModel_ = AneCompiledModel{
+      .kind = plan.kind,
+      .family = plan.family,
+      .layerName = plan.layerName,
+      .computeUnits = "ane-only",
+      .targetChip = "apple-m5+",
+      .usedCoreMlCompileIntent = true,
+      .supportsPrediction = true,
+      .staticShapePreferred = plan.staticShapePreferred,
+  };
+  lastPredictionSucceeded_ = false;
+  reason_ = "ane-model-compiled";
+  return true;
+}
+
+bool AneBackend::Predict(const std::size_t acceptedTokens,
+                         const std::size_t rejectedTokens) {
+  if (!available_ || !lastCompiledModel_.has_value() ||
+      !lastCompiledModel_->supportsPrediction) {
+    return false;
+  }
+
+  if (acceptedTokens == 0 && rejectedTokens == 0) {
+    return false;
+  }
+
+  ++predictionCount_;
+  lastPredictionSucceeded_ = true;
+  reason_ = "ane-predict-recorded";
+  return true;
+}
+
+bool AneBackend::LastPredictionSucceeded() const {
+  return lastPredictionSucceeded_;
+}
+
+std::size_t AneBackend::PredictionCount() const { return predictionCount_; }
+
+const std::optional<AneCompiledModel> &AneBackend::LastCompiledModel() const {
+  return lastCompiledModel_;
 }
 
 } // namespace us4

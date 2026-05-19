@@ -3,37 +3,52 @@
 #include <cstddef>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
+#include "moe/router.h"
+
 namespace us4 {
 
-// SparsityAwareCache keeps a small map keyed by the expert pattern hash that
-// produced a given output. Adapters can use this to short-circuit repeated
-// computation when the same routing pattern shows up across the prompt.
-
 struct SparsityCacheEntry {
-  std::string patternHash;
-  std::vector<float> activation;
+  std::string family;
+  std::string key;
+  std::size_t patternHash = 0;
+  std::vector<std::size_t> experts;
+  std::size_t uses = 0;
+  std::size_t hits = 0;
+};
+
+struct SparsityCacheSnapshot {
+  std::size_t entryCount = 0;
   std::size_t hitCount = 0;
+  std::size_t missCount = 0;
+  double hitRatio = 0.0;
+  bool lastLookupHit = false;
+  std::string lastKey;
+  std::size_t lastPatternHash = 0;
 };
 
 class SparsityAwareCache {
- public:
-  explicit SparsityAwareCache(std::size_t capacity = 16);
-
-  void Store(std::string patternHash, std::vector<float> activation);
-  std::optional<std::vector<float>> Lookup(const std::string& patternHash);
+public:
+  std::optional<SparsityCacheEntry> Lookup(std::string_view family,
+                                           const RouterDecision &routing) const;
+  SparsityCacheSnapshot Touch(std::string_view family,
+                              const RouterDecision &routing);
   std::size_t EntryCount() const;
-  std::size_t HitCount() const { return totalHits_; }
-  std::size_t MissCount() const { return totalMisses_; }
-  float HitRatio() const;
 
- private:
-  std::size_t capacity_;
+private:
+  static std::size_t
+  ComputePatternHash(const std::vector<ExpertScore> &experts);
+  static std::string BuildKey(std::string_view family, std::size_t patternHash,
+                              const std::vector<ExpertScore> &experts);
+  SparsityCacheSnapshot Snapshot(bool lastLookupHit, std::string key,
+                                 std::size_t patternHash) const;
+
   std::unordered_map<std::string, SparsityCacheEntry> entries_;
-  std::size_t totalHits_ = 0;
-  std::size_t totalMisses_ = 0;
+  std::size_t hitCount_ = 0;
+  std::size_t missCount_ = 0;
 };
 
-}  // namespace us4
+} // namespace us4

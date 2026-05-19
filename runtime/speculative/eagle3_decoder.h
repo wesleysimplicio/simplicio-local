@@ -1,31 +1,42 @@
 #pragma once
 
 #include <cstddef>
-#include <string>
-#include <unordered_map>
+#include <optional>
 #include <vector>
-
-#include "speculative/peagle_decoder.h"
 
 namespace us4 {
 
-// EAGLE-3 extends P-EAGLE with an n-gram tree that captures multi-token
-// patterns. The decoder reuses the verify-window semantics but adds an
-// n-gram lookup so the verifier can short-circuit obvious patterns.
-
-class Eagle3Decoder {
- public:
-  explicit Eagle3Decoder(std::size_t verifyWindow = 4);
-
-  void RememberNGram(const std::vector<std::string>& sequence);
-  std::vector<std::string> PredictFromContext(
-      const std::vector<std::string>& context, std::size_t length) const;
-  SpeculativeVerifyResult Verify(
-      const std::vector<SpeculativeDraftToken>& drafts) const;
-
- private:
-  std::size_t verifyWindow_;
-  std::unordered_map<std::string, std::vector<std::string>> ngrams_;
+struct Eagle3Branch {
+  std::vector<int> tokens;
 };
 
-}  // namespace us4
+struct Eagle3DraftTree {
+  std::vector<Eagle3Branch> branches;
+};
+
+struct Eagle3VerificationResult {
+  std::size_t chosenBranchIndex = 0U;
+  std::size_t acceptedDepth = 0U;
+  std::size_t rejectedBranches = 0U;
+  std::vector<int> committedTokens;
+  std::optional<int> fallbackToken;
+  bool foundMatchingBranch = false;
+  bool matchesAuthoritativePath = false;
+};
+
+class Eagle3Decoder {
+public:
+  Eagle3Decoder(std::size_t maxBranches = 3U, std::size_t maxDepth = 4U);
+
+  [[nodiscard]] Eagle3DraftTree
+  BuildTree(const std::vector<std::vector<int>> &proposalBranches) const;
+  [[nodiscard]] Eagle3VerificationResult
+  Verify(const std::vector<int> &authoritativeTokens,
+         const Eagle3DraftTree &tree) const;
+
+private:
+  std::size_t maxBranches_ = 3U;
+  std::size_t maxDepth_ = 4U;
+};
+
+} // namespace us4

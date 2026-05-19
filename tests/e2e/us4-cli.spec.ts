@@ -305,6 +305,11 @@ test.describe("Native CLI sprint 02 contract", () => {
          const deepseek = payload.models.find(
              (model) => model.family === "deepseek",
          );
+         const glm = payload.models.find((model) => model.family === "glm");
+         const kimi = payload.models.find((model) => model.family === "kimi");
+         const minimax = payload.models.find(
+             (model) => model.family === "minimax",
+         );
 
          expect(qwen).toMatchObject({
            family : "qwen",
@@ -330,6 +335,33 @@ test.describe("Native CLI sprint 02 contract", () => {
          expect(deepseek).toMatchObject({
            family : "deepseek",
            model : "deepseek-v2-lite",
+           architecture : "moe",
+           supports_moe : true,
+           supports_mlx : true,
+           supports_metal : true,
+           preferred_backend : expect.any(String),
+         });
+         expect(glm).toMatchObject({
+           family : "glm",
+           model : "glm-5.1",
+           architecture : "moe",
+           supports_moe : true,
+           supports_mlx : true,
+           supports_metal : true,
+           preferred_backend : expect.any(String),
+         });
+         expect(kimi).toMatchObject({
+           family : "kimi",
+           model : "kimi-k2-instruct",
+           architecture : "moe",
+           supports_moe : true,
+           supports_mlx : true,
+           supports_metal : true,
+           preferred_backend : expect.any(String),
+         });
+         expect(minimax).toMatchObject({
+           family : "minimax",
+           model : "minimax-m2",
            architecture : "moe",
            supports_moe : true,
            supports_mlx : true,
@@ -642,6 +674,14 @@ test.describe("Native CLI sprint 02 contract", () => {
            model : "llama-3.1-8b-fixture",
            asset_format : "fixture-manifest",
            asset_path : expect.stringContaining("llama-3.1-8b"),
+           draft_model_format : "gguf",
+           draft_model_path : expect.stringContaining("draft-llama.gguf"),
+           shared_tokenizer : true,
+           speculative_strategy : "peagle",
+           speculative_session_scope : "per-request",
+           speculative_accepted_tokens : expect.any(Number),
+           speculative_rejected_tokens : expect.any(Number),
+           speculative_acceptance_rate : expect.any(Number),
            prompt_tokens : [ "hello" ],
            generated_tokens : expect.any(Array),
          });
@@ -717,6 +757,14 @@ test.describe("Native CLI sprint 02 contract", () => {
            model : "toy-llama",
            asset_format : "gguf",
            asset_path : expect.stringContaining("toy-llama.gguf"),
+           draft_model_format : "gguf",
+           draft_model_path : expect.stringContaining("draft-llama.gguf"),
+           shared_tokenizer : true,
+           speculative_strategy : "peagle",
+           speculative_session_scope : "per-request",
+           speculative_accepted_tokens : expect.any(Number),
+           speculative_rejected_tokens : expect.any(Number),
+           speculative_acceptance_rate : expect.any(Number),
            backend_reason : expect.stringMatching(/^auto-/),
            fallback : false,
            prompt_tokens : [ "hello" ],
@@ -760,7 +808,8 @@ test.describe("Native CLI sprint 02 contract", () => {
     });
 
     expect(stderr.trim()).toBe("");
-    expect(JSON.parse(stdout)).toMatchObject({
+    const deepseekResult = JSON.parse(stdout);
+    expect(deepseekResult).toMatchObject({
       family : "deepseek",
       backend : "scalar",
       shared_allocations : 0,
@@ -770,9 +819,258 @@ test.describe("Native CLI sprint 02 contract", () => {
       kv_restored_from_cold_store : false,
       kv_page_count : 1,
       kv_summary_rows : 0,
+      moe_selected_experts : 2,
+      moe_router_entropy : expect.any(Number),
+      moe_load_balance : expect.any(Number),
+      moe_selected_mass : expect.any(Number),
+      moe_pager_loads : 2,
+      moe_pager_evictions : 0,
+      moe_pager_reuses : 0,
+      moe_resident_experts : 2,
+      moe_prefetch_prefetched : 3,
+      moe_prefetch_hits : 2,
+      moe_prefetch_misses : 1,
+      moe_prefetch_hit_rate : expect.any(Number),
+      moe_prefetch_wrong_expert_leak_prevented : true,
+      moe_prefetch_executable_experts : 2,
+      moe_hit_rate : 0,
+      moe_eviction_rate : 0,
       generated_tokens : expect.any(Array),
     });
+    expect(deepseekResult.moe_prefetch_hit_rate).toBeCloseTo(2 / 3, 5);
+    expect(deepseekResult.text).toContain("moe-route");
   });
+
+  test("glm moe path emits routed expert output", async ({}, testInfo) => {
+    const {stdout, stderr} = await execFileAsync(
+        nativeCliPath!,
+        [
+          "run",
+          "--model",
+          "glm-5.1",
+          "--prompt",
+          "tool reason vision",
+          "--max-tokens",
+          "4",
+          "--json",
+        ],
+        {
+          cwd : repoRoot,
+          env : {
+            ...process.env,
+            NO_COLOR : "1",
+          },
+        },
+    );
+
+    await testInfo.attach("stdout-native-glm", {
+      body : stdout.trim() || "(empty)",
+      contentType : "text/plain",
+    });
+    await testInfo.attach("stderr-native-glm", {
+      body : stderr.trim() || "(empty)",
+      contentType : "text/plain",
+    });
+
+    expect(stderr.trim()).toBe("");
+    expect(JSON.parse(stdout)).toMatchObject({
+      family : "glm",
+      backend : "scalar",
+      shared_allocations : 0,
+      metal_dispatches : 0,
+      mlx_operation_count : 0,
+      kv_page_count : 1,
+      moe_selected_experts : 2,
+      moe_router_entropy : expect.any(Number),
+      moe_load_balance : expect.any(Number),
+      moe_selected_mass : expect.any(Number),
+      moe_pager_loads : 2,
+      moe_pager_evictions : 0,
+      moe_pager_reuses : 0,
+      moe_resident_experts : 2,
+      moe_sparsity_cache_hit : false,
+      moe_sparsity_cache_hits : 0,
+      moe_sparsity_cache_misses : 1,
+      moe_sparsity_cache_entries : 1,
+      moe_sparsity_cache_hit_rate : 0,
+      moe_sparsity_pattern_hash : expect.any(Number),
+      moe_sparsity_pattern_key : expect.stringContaining("glm:"),
+      moe_hit_rate : 0,
+      moe_eviction_rate : 0,
+      generated_tokens : expect.any(Array),
+    });
+    expect(JSON.parse(stdout).text).toContain("glm-route");
+  });
+
+  test("kimi moe path emits routed expert output", async ({}, testInfo) => {
+    const {stdout, stderr} = await execFileAsync(
+        nativeCliPath!,
+        [
+          "run",
+          "--model",
+          "kimi-k2-instruct",
+          "--prompt",
+          "smart context",
+          "--max-tokens",
+          "4",
+          "--json",
+        ],
+        {
+          cwd : repoRoot,
+          env : {
+            ...process.env,
+            NO_COLOR : "1",
+          },
+        },
+    );
+
+    await testInfo.attach("stdout-native-kimi", {
+      body : stdout.trim() || "(empty)",
+      contentType : "text/plain",
+    });
+    await testInfo.attach("stderr-native-kimi", {
+      body : stderr.trim() || "(empty)",
+      contentType : "text/plain",
+    });
+
+    expect(stderr.trim()).toBe("");
+    expect(JSON.parse(stdout)).toMatchObject({
+      family : "kimi",
+      backend : "scalar",
+      shared_allocations : 0,
+      metal_dispatches : 0,
+      mlx_operation_count : 0,
+      kv_page_count : 1,
+      moe_selected_experts : 2,
+      moe_router_entropy : expect.any(Number),
+      moe_load_balance : expect.any(Number),
+      moe_selected_mass : expect.any(Number),
+      moe_pager_loads : 2,
+      moe_pager_evictions : 0,
+      moe_pager_reuses : 0,
+      moe_resident_experts : 2,
+      moe_hit_rate : 0,
+      moe_eviction_rate : 0,
+      generated_tokens : expect.any(Array),
+    });
+    expect(JSON.parse(stdout).text).toContain("kimi-route");
+  });
+
+  test("minimax moe path emits routed expert output", async ({}, testInfo) => {
+    const {stdout, stderr} = await execFileAsync(
+        nativeCliPath!,
+        [
+          "run",
+          "--model",
+          "minimax-m2",
+          "--prompt",
+          "image audio fusion",
+          "--max-tokens",
+          "4",
+          "--json",
+        ],
+        {
+          cwd : repoRoot,
+          env : {
+            ...process.env,
+            NO_COLOR : "1",
+          },
+        },
+    );
+
+    await testInfo.attach("stdout-native-minimax", {
+      body : stdout.trim() || "(empty)",
+      contentType : "text/plain",
+    });
+    await testInfo.attach("stderr-native-minimax", {
+      body : stderr.trim() || "(empty)",
+      contentType : "text/plain",
+    });
+
+    expect(stderr.trim()).toBe("");
+    expect(JSON.parse(stdout)).toMatchObject({
+      family : "minimax",
+      backend : "scalar",
+      shared_allocations : 0,
+      metal_dispatches : 0,
+      mlx_operation_count : 0,
+      kv_page_count : 1,
+      moe_selected_experts : 2,
+      moe_router_entropy : expect.any(Number),
+      moe_load_balance : expect.any(Number),
+      moe_selected_mass : expect.any(Number),
+      moe_pager_loads : 2,
+      moe_pager_evictions : 0,
+      moe_pager_reuses : 0,
+      moe_resident_experts : 2,
+      multimodal_cache_hit : false,
+      multimodal_cache_hits : 0,
+      multimodal_cache_misses : 3,
+      multimodal_cache_entries : 3,
+      multimodal_cache_hit_rate : 0,
+      multimodal_active_modalities : 3,
+      multimodal_modalities : "text,image,audio",
+      moe_hit_rate : 0,
+      moe_eviction_rate : 0,
+      generated_tokens : expect.any(Array),
+    });
+    expect(JSON.parse(stdout).text).toContain("minimax-route");
+  });
+
+  test("moe manifest path keeps shard-aware loader telemetry visible",
+       async ({}, testInfo) => {
+         const fixturePath = path.join(
+             repoRoot,
+             "tests",
+             "fixtures",
+             "models",
+             "deepseek-v2-lite",
+             "model.us4manifest",
+         );
+         const {stdout, stderr} = await execFileAsync(
+             nativeCliPath!,
+             [
+               "run",
+               "--model-path",
+               fixturePath,
+               "--prompt",
+               "code logic runtime",
+               "--max-tokens",
+               "4",
+               "--json",
+             ],
+             {
+               cwd : repoRoot,
+               env : {
+                 ...process.env,
+                 NO_COLOR : "1",
+               },
+             },
+         );
+
+         await testInfo.attach("stdout-native-moe-loader", {
+           body : stdout.trim() || "(empty)",
+           contentType : "text/plain",
+         });
+         await testInfo.attach("stderr-native-moe-loader", {
+           body : stderr.trim() || "(empty)",
+           contentType : "text/plain",
+         });
+
+         expect(stderr.trim()).toBe("");
+         expect(JSON.parse(stdout)).toMatchObject({
+           family : "deepseek",
+           model : "deepseek-v2-lite-fixture",
+           asset_format : "fixture-manifest",
+           asset_path : expect.stringContaining("deepseek-v2-lite"),
+           moe_shard_count : 2,
+           moe_active_experts : 2,
+           moe_lazy_load : true,
+           moe_hit_rate : 0,
+           moe_eviction_rate : 0,
+           generated_tokens : expect.any(Array),
+         });
+       });
 
   test(
       "bitnet gguf loader keeps low-bit telemetry visible without explicit model",

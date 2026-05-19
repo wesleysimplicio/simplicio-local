@@ -2,41 +2,42 @@
 
 #include <cstddef>
 #include <string>
-#include <unordered_map>
+#include <string_view>
 #include <vector>
+
+#include "moe/router.h"
 
 namespace us4 {
 
-// SpeculativePrefetch tracks how often the router asks for expert N after
-// expert M. The runtime uses the observed transition counts to predict which
-// experts to prefetch in parallel with the current decode step.
-//
-// Contract guarantees:
-// - the prefetch set never contains experts that the router did not
-//   eventually pick within the observation window;
-// - the prefetch outcome (hit / miss) is observable through
-//   `LastPrefetchHits` and `LastPrefetchAttempts` for telemetry;
-// - the predictor is deterministic for a given input sequence.
-
-class SpeculativePrefetch {
- public:
-  void Observe(const std::string& previousExpert, const std::string& nextExpert);
-  std::vector<std::string> Predict(const std::string& previousExpert,
-                                   std::size_t topK) const;
-  void RecordOutcome(const std::vector<std::string>& predicted,
-                     const std::string& observed);
-
-  std::size_t LastPrefetchAttempts() const { return lastAttempts_; }
-  std::size_t LastPrefetchHits() const { return lastHits_; }
-  float HitRatio() const;
-
- private:
-  std::unordered_map<std::string, std::unordered_map<std::string, std::size_t>>
-      transitions_;
-  std::size_t lastAttempts_ = 0;
-  std::size_t lastHits_ = 0;
-  std::size_t totalAttempts_ = 0;
-  std::size_t totalHits_ = 0;
+struct SpeculativePrefetchPlan {
+  std::string family;
+  std::vector<std::size_t> prefetchedExperts;
+  std::vector<std::string> prefetchedKeys;
 };
 
-}  // namespace us4
+struct SpeculativePrefetchTelemetry {
+  std::size_t prefetchedCount = 0;
+  std::size_t hitCount = 0;
+  std::size_t missCount = 0;
+  double hitRatio = 0.0;
+  bool wrongExpertLeakPrevented = true;
+  std::vector<std::size_t> executableExperts;
+};
+
+class SpeculativePrefetch {
+public:
+  explicit SpeculativePrefetch(std::size_t breadth = 3U);
+
+  SpeculativePrefetchPlan BuildPlan(std::string_view family,
+                                    const RouterDecision &prediction) const;
+  std::vector<std::size_t>
+  ExecutableExperts(const SpeculativePrefetchPlan &plan,
+                    const RouterDecision &actual) const;
+  SpeculativePrefetchTelemetry Reconcile(const SpeculativePrefetchPlan &plan,
+                                         const RouterDecision &actual) const;
+
+private:
+  std::size_t breadth_;
+};
+
+} // namespace us4

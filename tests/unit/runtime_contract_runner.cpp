@@ -13,6 +13,10 @@
 #include "adapters/llama/llama_adapter.h"
 #include "adapters/llama/llama_config.h"
 #include "adapters/qwen/qwen_adapter.h"
+#include "ane/ane_backend.h"
+#include "ane/layer_offloader.h"
+#include "cache/multimodal_cache.h"
+#include "cache/sparsity_aware_cache.h"
 #include "core/backend_selector.h"
 #include "core/gqa_attention.h"
 #include "core/model_asset.h"
@@ -34,11 +38,16 @@
 #include "mlx/mlx_bridge.h"
 #include "moe/expert_pager.h"
 #include "moe/router.h"
+#include "moe/speculative_prefetch.h"
 #include "neon/dequant_int4.h"
 #include "neon/dequant_int8.h"
 #include "neon/kernel_profile.h"
 #include "neon/neon_attention.h"
 #include "neon/neon_matmul.h"
+#include "scheduler/continuous_batcher.h"
+#include "scheduler/session_pool.h"
+#include "speculative/eagle3_decoder.h"
+#include "speculative/peagle_decoder.h"
 #include "sprint_01_contract_placeholders.h"
 
 namespace {
@@ -194,6 +203,16 @@ int main() {
                  "fallback should pick neon on arm64");
     ok &= Expect(fallbackSelection.fellBack,
                  "requested unavailable backend should mark fallback");
+
+    probe.chip = "Apple M5";
+    probe.hasAne = true;
+    probe.supportsCoreMl = true;
+    const us4::BackendSelection aneSelection =
+        us4::SelectBackend(probe, us4::RuntimeMode::kFull, llama);
+    ok &= Expect(aneSelection.selected == us4::BackendType::kAne,
+                 "m5 full mode should prefer ane");
+    ok &= Expect(aneSelection.reason == "auto-ane",
+                 "ane auto-selection reason should stay explicit");
   }
 
   {
@@ -221,6 +240,13 @@ int main() {
                  "llama manifest should expose rope theta metadata");
     ok &= Expect(asset.metadata.contains("rope_scale"),
                  "llama manifest should expose rope scale metadata");
+    ok &= Expect(!asset.draftModelPath.empty() &&
+                     asset.draftModelPath.filename() == "draft-llama.gguf",
+                 "llama manifest should surface draft model path");
+    ok &= Expect(
+        asset.draftModelFormat == us4::ModelFormat::kGguf &&
+            asset.sharedTokenizer,
+        "llama manifest should surface draft format and shared tokenizer");
     ok &= Expect(config.hiddenSize == 8U && config.queryHeads == 2U &&
                      config.kvHeads == 1U && config.headDim == 4U,
                  "llama config should resolve head topology from manifest");
@@ -247,6 +273,32 @@ int main() {
     ok &= Expect(std::abs(normalized.ropeTheta - 10000.0F) <= 1e-6F &&
                      std::abs(normalized.ropeScale - 1.0F) <= 1e-6F,
                  "llama config should clamp invalid rope values to defaults");
+  }
+
+  {
+    const std::array<std::filesystem::path, 4> kMoeAssets = {
+        RepoRoot() / "tests" / "fixtures" / "models" / "deepseek-v2-lite" /
+            "toy-deepseek.safetensors",
+        RepoRoot() / "tests" / "fixtures" / "models" / "glm-5.1" /
+            "toy-glm.safetensors",
+        RepoRoot() / "tests" / "fixtures" / "models" / "kimi-k2-instruct" /
+            "toy-kimi.safetensors",
+        RepoRoot() / "tests" / "fixtures" / "models" / "minimax-m2" /
+            "toy-minimax.safetensors",
+    };
+    for (const std::filesystem::path &inputPath : kMoeAssets) {
+      us4::ModelAsset asset;
+      std::string error;
+      ok &=
+          Expect(us4::LoadModelAsset(inputPath, asset, &error),
+                 "moe binary assets should inherit sibling manifest metadata");
+      ok &= Expect(asset.moeLazyLoad,
+                   "moe loader contract should preserve lazy-load flag");
+      ok &= Expect(asset.moeActiveExperts == 2U,
+                   "moe loader contract should preserve active expert count");
+      ok &= Expect(asset.expertShardPaths.size() == 2U,
+                   "moe loader contract should preserve expert shard list");
+    }
   }
 
   {
@@ -370,6 +422,57 @@ int main() {
           !pool.Active(),
           "noop autorelease scope should remain inactive off apple hosts");
     }
+
+    us4::HardwareProbeResult aneProbe = probe;
+    aneProbe.chip = "Apple M5";
+    aneProbe.hasAne = true;
+    aneProbe.supportsCoreMl = true;
+    aneProbe.recommendedMode = us4::RuntimeMode::kFull;
+    us4::RuntimeContext aneContext(aneProbe);
+    ok &= Expect(aneContext.aneBackend().Available(),
+                 "ane backend should be available on m5 probe");
+    ok &= Expect(aneContext.aneBackend().Compile(
+                     {.kind = us4::AneModelKind::kAttentionMlp,
+                      .family = "llama",
+                      .layerName = "decoder.block.0.mlp",
+                      .tokenCount = 8U,
+                      .usesSharedTokenizer = true,
+                      .staticShapePreferred = true}),
+                 "ane backend should record compile intent");
+    ok &= Expect(
+        aneContext.aneBackend().LastCompiledModel().has_value() &&
+            aneContext.aneBackend().LastCompiledModel()->supportsPrediction,
+        "ane backend should keep compiled model prediction intent");
+    ok &= Expect(aneContext.aneBackend().Predict(3U, 1U),
+                 "ane backend should record predict intent");
+    ok &= Expect(aneContext.aneBackend().PredictionCount() == 1U,
+                 "ane backend should count predictions");
+    const us4::OffloadDecision eligibleLayer =
+        aneContext.layerOffloader().Decide(
+            {.family = "llama",
+             .layerName = "decoder.block.0.mlp.up",
+             .layerType = us4::OffloadLayerType::kMlpUpProjection,
+             .mode = us4::RuntimeMode::kFull,
+             .tokenCount = 8U,
+             .hiddenSize = 4096U,
+             .weightDType = us4::DType::kFloat16,
+             .staticShape = true});
+    ok &= Expect(eligibleLayer.eligible && !eligibleLayer.fallbackToMetal &&
+                     eligibleLayer.backend == "ane",
+                 "ane layer offloader should accept static mlp projections");
+    const us4::OffloadDecision fallbackLayer =
+        aneContext.layerOffloader().Decide(
+            {.family = "deepseek",
+             .layerName = "router.0",
+             .layerType = us4::OffloadLayerType::kRouter,
+             .mode = us4::RuntimeMode::kFull,
+             .tokenCount = 8U,
+             .hiddenSize = 4096U,
+             .weightDType = us4::DType::kFloat16,
+             .staticShape = true});
+    ok &= Expect(!fallbackLayer.eligible && fallbackLayer.fallbackToMetal &&
+                     fallbackLayer.reason == "ane-router-cpu",
+                 "ane layer offloader should keep router layers off ANE");
   }
 
   {
@@ -466,11 +569,23 @@ int main() {
 
   {
     us4::Router router;
-    const auto topk = router.TopK({0.1F, 0.8F, 0.4F, 0.7F}, 2);
-    ok &= Expect(topk.size() == 2U,
+    const us4::RouterDecision decision =
+        router.RouteTopK({0.1F, 0.8F, 0.4F, 0.7F}, 2);
+    ok &= Expect(decision.selected.size() == 2U,
                  "router should clamp top-k to requested size");
-    ok &=
-        Expect(topk[0].expert == 1U, "router should sort highest score first");
+    ok &= Expect(decision.selected[0].expert == 1U,
+                 "router should sort highest score first");
+    ok &= Expect(decision.selected[0].logit == 0.8F,
+                 "router should preserve raw logit in telemetry");
+    ok &= Expect(decision.entropy > 0.0F,
+                 "router should expose positive routing entropy");
+    ok &= Expect(decision.loadBalance > 0.0F && decision.loadBalance <= 1.0F,
+                 "router should expose normalized load balance");
+    ok &= Expect(decision.selectedMass > 0.0F && decision.selectedMass <= 1.0F,
+                 "router should expose selected probability mass");
+    ok &= Expect(router.LastDecision().has_value() &&
+                     router.LastDecision()->totalExperts == 4U,
+                 "router should retain the last routing decision");
 
     us4::ExpertPager pager(2);
     pager.Touch("expert-a");
@@ -481,6 +596,16 @@ int main() {
                  "expert pager should enforce resident limit");
     ok &= Expect(pager.IsResident("expert-a"),
                  "expert pager should keep hot expert resident");
+    ok &= Expect(pager.LoadCount() == 3U,
+                 "expert pager should count visible loads");
+    ok &= Expect(pager.ReuseCount() == 1U,
+                 "expert pager should count visible reuse");
+    ok &= Expect(pager.EvictionCount() == 1U,
+                 "expert pager should count visible evictions");
+    const us4::ExpertPagerSnapshot pagerSnapshot = pager.Snapshot();
+    ok &= Expect(pagerSnapshot.residentCount == 2U &&
+                     pagerSnapshot.residents.size() == 2U,
+                 "expert pager snapshot should expose resident state");
   }
 
   {
@@ -636,6 +761,169 @@ int main() {
                  "ternary generation should surface int4 dequant path");
     ok &= Expect(ternaryResult.neonKernelFlavor == "scalar-bridge",
                  "ternary generation should surface scalar-bridge neon flavor");
+  }
+
+  {
+    const us4::IUS4V6Adapter *deepseek =
+        us4::FindAdapterByModel("deepseek-v2-lite");
+    ok &= Expect(deepseek != nullptr,
+                 "registry should find deepseek moe adapter by model");
+    us4::RuntimeContext moeContext(MakeProbe());
+    deepseek->ConfigureRuntime(moeContext);
+    const us4::GenerationResult deepseekResult =
+        deepseek->Generate({.prompt = "hi", .maxTokens = 2}, moeContext);
+    ok &= Expect(deepseekResult.family == "deepseek",
+                 "deepseek generation should preserve moe family");
+    ok &= Expect(deepseekResult.moeSelectedExperts == 2U,
+                 "deepseek generation should expose selected expert count");
+    ok &= Expect(deepseekResult.moeRouterEntropy > 0.0F,
+                 "deepseek generation should expose router entropy");
+    ok &= Expect(deepseekResult.moeLoadBalance > 0.0F &&
+                     deepseekResult.moeLoadBalance <= 1.0F,
+                 "deepseek generation should expose load balance score");
+    ok &= Expect(deepseekResult.moeSelectedMass > 0.0F &&
+                     deepseekResult.moeSelectedMass <= 1.0F,
+                 "deepseek generation should expose selected expert mass");
+    ok &= Expect(deepseekResult.moePagerLoads == 2U,
+                 "deepseek generation should expose pager loads");
+    ok &= Expect(deepseekResult.moePagerEvictions == 0U,
+                 "deepseek generation should expose pager evictions");
+    ok &= Expect(deepseekResult.moePagerReuses == 0U,
+                 "deepseek generation should expose pager reuse");
+    ok &= Expect(deepseekResult.moeResidentExperts == 2U,
+                 "deepseek generation should expose resident expert count");
+    ok &= Expect(deepseekResult.text.find("moe-route") != std::string::npos,
+                 "deepseek generation should surface routed expert signature");
+
+    const us4::GenerationResult repeatedDeepseek =
+        deepseek->Generate({.prompt = "hi", .maxTokens = 2}, moeContext);
+    ok &= Expect(repeatedDeepseek.moePagerLoads == 2U,
+                 "deepseek repeat should not add extra loads for same experts");
+    ok &= Expect(repeatedDeepseek.moePagerReuses >= 2U,
+                 "deepseek repeat should surface pager reuse");
+  }
+
+  {
+    const us4::IUS4V6Adapter *glm = us4::FindAdapterByModel("glm-5.1");
+    ok &= Expect(glm != nullptr, "glm adapter should stay registered");
+    if (glm != nullptr) {
+      us4::RuntimeContext moeContext(MakeProbe());
+      glm->ConfigureRuntime(moeContext);
+      const us4::GenerationResult glmResult = glm->Generate(
+          {.prompt = "tool reason vision", .maxTokens = 2}, moeContext);
+      ok &= Expect(glmResult.family == "glm",
+                   "glm generation should preserve moe family");
+      ok &= Expect(glmResult.moeSelectedExperts == 2U,
+                   "glm generation should expose selected expert count");
+      ok &= Expect(glmResult.moeRouterEntropy > 0.0F,
+                   "glm generation should expose router entropy");
+      ok &= Expect(glmResult.moeLoadBalance > 0.0F &&
+                       glmResult.moeLoadBalance <= 1.0F,
+                   "glm generation should expose load balance score");
+      ok &= Expect(glmResult.moeSelectedMass > 0.0F &&
+                       glmResult.moeSelectedMass <= 1.0F,
+                   "glm generation should expose selected expert mass");
+      ok &= Expect(glmResult.moePagerLoads == 2U,
+                   "glm generation should expose pager loads");
+      ok &= Expect(glmResult.moePagerEvictions == 0U,
+                   "glm generation should expose pager evictions");
+      ok &= Expect(glmResult.moePagerReuses == 0U,
+                   "glm generation should expose pager reuse");
+      ok &= Expect(glmResult.moeResidentExperts == 2U,
+                   "glm generation should expose resident expert count");
+      ok &= Expect(glmResult.text.find("glm-route") != std::string::npos,
+                   "glm generation should surface routed expert signature");
+
+      const us4::GenerationResult repeatedGlm = glm->Generate(
+          {.prompt = "tool reason vision", .maxTokens = 2}, moeContext);
+      ok &= Expect(repeatedGlm.moePagerLoads == 2U,
+                   "glm repeat should not add extra loads for same experts");
+      ok &= Expect(repeatedGlm.moePagerReuses >= 2U,
+                   "glm repeat should surface pager reuse");
+    }
+  }
+
+  {
+    const us4::IUS4V6Adapter *kimi =
+        us4::FindAdapterByModel("kimi-k2-instruct");
+    ok &= Expect(kimi != nullptr, "kimi adapter should stay registered");
+    if (kimi != nullptr) {
+      us4::RuntimeContext moeContext(MakeProbe());
+      kimi->ConfigureRuntime(moeContext);
+      const us4::GenerationResult kimiResult = kimi->Generate(
+          {.prompt = "smart context", .maxTokens = 2}, moeContext);
+      ok &= Expect(kimiResult.family == "kimi",
+                   "kimi generation should preserve moe family");
+      ok &= Expect(kimiResult.moeSelectedExperts == 2U,
+                   "kimi generation should expose selected expert count");
+      ok &= Expect(kimiResult.moeRouterEntropy > 0.0F,
+                   "kimi generation should expose router entropy");
+      ok &= Expect(kimiResult.moeLoadBalance > 0.0F &&
+                       kimiResult.moeLoadBalance <= 1.0F,
+                   "kimi generation should expose load balance score");
+      ok &= Expect(kimiResult.moeSelectedMass > 0.0F &&
+                       kimiResult.moeSelectedMass <= 1.0F,
+                   "kimi generation should expose selected expert mass");
+      ok &= Expect(kimiResult.moePagerLoads == 2U,
+                   "kimi generation should expose pager loads");
+      ok &= Expect(kimiResult.moePagerEvictions == 0U,
+                   "kimi generation should expose pager evictions");
+      ok &= Expect(kimiResult.moePagerReuses == 0U,
+                   "kimi generation should expose pager reuse");
+      ok &= Expect(kimiResult.moeResidentExperts == 2U,
+                   "kimi generation should expose resident expert count");
+      ok &= Expect(kimiResult.text.find("kimi-route") != std::string::npos,
+                   "kimi generation should surface routed expert signature");
+
+      const us4::GenerationResult repeatedKimi = kimi->Generate(
+          {.prompt = "smart context", .maxTokens = 2}, moeContext);
+      ok &= Expect(repeatedKimi.moePagerLoads == 2U,
+                   "kimi repeat should not add extra loads for same experts");
+      ok &= Expect(repeatedKimi.moePagerReuses >= 2U,
+                   "kimi repeat should surface pager reuse");
+    }
+  }
+
+  {
+    const us4::IUS4V6Adapter *minimax = us4::FindAdapterByModel("minimax-m2");
+    ok &= Expect(minimax != nullptr, "minimax adapter should stay registered");
+    if (minimax != nullptr) {
+      us4::RuntimeContext moeContext(MakeProbe());
+      minimax->ConfigureRuntime(moeContext);
+      const us4::GenerationResult minimaxResult = minimax->Generate(
+          {.prompt = "image audio fusion", .maxTokens = 2}, moeContext);
+      ok &= Expect(minimaxResult.family == "minimax",
+                   "minimax generation should preserve moe family");
+      ok &= Expect(minimaxResult.moeSelectedExperts == 2U,
+                   "minimax generation should expose selected expert count");
+      ok &= Expect(minimaxResult.moeRouterEntropy > 0.0F,
+                   "minimax generation should expose router entropy");
+      ok &= Expect(minimaxResult.moeLoadBalance > 0.0F &&
+                       minimaxResult.moeLoadBalance <= 1.0F,
+                   "minimax generation should expose load balance score");
+      ok &= Expect(minimaxResult.moeSelectedMass > 0.0F &&
+                       minimaxResult.moeSelectedMass <= 1.0F,
+                   "minimax generation should expose selected expert mass");
+      ok &= Expect(minimaxResult.moePagerLoads == 2U,
+                   "minimax generation should expose pager loads");
+      ok &= Expect(minimaxResult.moePagerEvictions == 0U,
+                   "minimax generation should expose pager evictions");
+      ok &= Expect(minimaxResult.moePagerReuses == 0U,
+                   "minimax generation should expose pager reuse");
+      ok &= Expect(minimaxResult.moeResidentExperts == 2U,
+                   "minimax generation should expose resident expert count");
+      ok &=
+          Expect(minimaxResult.text.find("minimax-route") != std::string::npos,
+                 "minimax generation should surface routed expert signature");
+
+      const us4::GenerationResult repeatedMiniMax = minimax->Generate(
+          {.prompt = "image audio fusion", .maxTokens = 2}, moeContext);
+      ok &=
+          Expect(repeatedMiniMax.moePagerLoads == 2U,
+                 "minimax repeat should not add extra loads for same experts");
+      ok &= Expect(repeatedMiniMax.moePagerReuses >= 2U,
+                   "minimax repeat should surface pager reuse");
+    }
   }
 
   {
@@ -971,6 +1259,249 @@ int main() {
     const float *int4Values = int4Output.DataAsFloat32();
     ok &= Expect(int4Values != nullptr && int4Values[7] == -2.0F,
                  "neon int4 dequant should preserve tail values");
+  }
+
+  {
+    const us4::ContinuousBatcher singleBatcher(6U);
+    const us4::BatchDecision singleDecision =
+        singleBatcher.Schedule({{"solo", 9U, 1U, 0U}});
+    ok &=
+        Expect(singleDecision.singleSessionPassthrough,
+               "continuous batcher should preserve single-session passthrough");
+    ok &= Expect(
+        singleDecision.totalGrantedTokens == 6U &&
+            singleDecision.activeSessions == 1U &&
+            singleDecision.slices.size() == 1U,
+        "continuous batcher should cap single-session grant by batch size");
+    ok &=
+        Expect(singleDecision.slices.front().sessionId == "solo" &&
+                   singleDecision.slices.front().grantedTokens == 6U &&
+                   singleDecision.slices.front().roundsVisited == 1U,
+               "continuous batcher should keep passthrough attribution stable");
+
+    const us4::ContinuousBatcher fairBatcher(4U);
+    const us4::BatchDecision fairDecision =
+        fairBatcher.Schedule({{"alpha", 3U, 1U, 0U}, {"beta", 3U, 1U, 1U}});
+    ok &= Expect(!fairDecision.singleSessionPassthrough,
+                 "continuous batcher should disable passthrough for "
+                 "multi-session scheduling");
+    ok &= Expect(
+        fairDecision.totalGrantedTokens == 4U &&
+            fairDecision.activeSessions == 2U &&
+            fairDecision.fairnessRounds == 2U,
+        "continuous batcher should distribute full batch budget in two rounds");
+    ok &= Expect(fairDecision.slices.size() == 2U &&
+                     fairDecision.slices[0].sessionId == "alpha" &&
+                     fairDecision.slices[0].grantedTokens == 2U &&
+                     fairDecision.slices[1].sessionId == "beta" &&
+                     fairDecision.slices[1].grantedTokens == 2U,
+                 "continuous batcher should alternate equal sessions fairly");
+
+    const us4::ContinuousBatcher weightedBatcher(6U);
+    const us4::BatchDecision weightedDecision = weightedBatcher.Schedule(
+        {{"heavy", 8U, 2U, 0U}, {"light", 8U, 1U, 1U}});
+    ok &= Expect(weightedDecision.slices.size() == 2U &&
+                     weightedDecision.slices[0].sessionId == "heavy" &&
+                     weightedDecision.slices[0].grantedTokens == 4U &&
+                     weightedDecision.slices[1].sessionId == "light" &&
+                     weightedDecision.slices[1].grantedTokens == 2U,
+                 "continuous batcher should honor fairness weight without "
+                 "starving peers");
+    ok &=
+        Expect(weightedDecision.slices[0].roundsVisited == 2U &&
+                   weightedDecision.slices[1].roundsVisited == 2U,
+               "continuous batcher should surface rounds visited per session");
+  }
+
+  {
+    const us4::Eagle3Decoder decoder(3U, 4U);
+    const us4::Eagle3DraftTree tree =
+        decoder.BuildTree({{4, 5, 6, 7}, {4, 5, 42, 8}, {1, 2, 3, 4}});
+    const us4::Eagle3VerificationResult result =
+        decoder.Verify({4, 5, 42, 9}, tree);
+    ok &= Expect(tree.branches.size() == 3U,
+                 "eagle3 decoder should preserve configured branch breadth");
+    ok &= Expect(
+        result.chosenBranchIndex == 1U && result.acceptedDepth == 3U &&
+            result.rejectedBranches == 2U,
+        "eagle3 decoder should pick the branch with the longest shared prefix");
+    ok &= Expect(
+        result.matchesAuthoritativePath &&
+            result.committedTokens == std::vector<int>({4, 5, 42, 9}),
+        "eagle3 decoder should remain equivalent to the authoritative path");
+  }
+
+  {
+    const us4::PEagleDecoder decoder(4U);
+    const us4::PEagleDraft acceptedDraft = decoder.Draft({7, 8, 9, 10, 11});
+    const us4::PEagleVerificationResult acceptedResult =
+        decoder.Verify({7, 8, 9, 10, 12}, acceptedDraft);
+    ok &= Expect(acceptedDraft.tokens.size() == 4U,
+                 "peagle decoder should clamp draft breadth");
+    ok &= Expect(acceptedResult.acceptedCount == 4U &&
+                     acceptedResult.rejectedCount == 0U &&
+                     acceptedResult.allAccepted,
+                 "peagle decoder should keep fully accepted drafts explicit");
+    ok &= Expect(acceptedResult.matchesAuthoritativePath,
+                 "peagle decoder should preserve authoritative equivalence "
+                 "when accepted");
+
+    const us4::PEagleDraft mismatchDraft = decoder.Draft({4, 5, 6, 7});
+    const us4::PEagleVerificationResult mismatchResult =
+        decoder.Verify({4, 5, 42, 8}, mismatchDraft);
+    ok &= Expect(
+        mismatchResult.acceptedCount == 2U &&
+            mismatchResult.rejectedCount == 2U &&
+            mismatchResult.fallbackToken.has_value() &&
+            *mismatchResult.fallbackToken == 42,
+        "peagle decoder should commit accepted prefix plus fallback token");
+    ok &= Expect(
+        mismatchResult.matchesAuthoritativePath &&
+            mismatchResult.committedTokens == std::vector<int>({4, 5, 42}),
+        "peagle decoder should stay equivalent to the authoritative path");
+  }
+
+  {
+    us4::SessionPool pool;
+    const std::string alphaKv = pool.NamespacedKvKey("alpha", "prompt");
+    const std::string betaKv = pool.NamespacedKvKey("beta", "prompt");
+    const std::string alphaPrefix =
+        pool.NamespacedPrefixKey("alpha", "hello world");
+    const std::string betaPrefix =
+        pool.NamespacedPrefixKey("beta", "hello world");
+    pool.RecordPromptPrefix("alpha", "hello world");
+    pool.RecordPromptPrefix("beta", "hello world");
+    const auto alpha = pool.Lookup("alpha");
+    const auto beta = pool.Lookup("beta");
+
+    ok &= Expect(alpha.has_value() && beta.has_value(),
+                 "session pool should retain acquired sessions");
+    ok &= Expect(alphaKv == "session::alpha::kv::prompt" &&
+                     betaKv == "session::beta::kv::prompt",
+                 "session pool should namespace kv keys per session");
+    ok &= Expect(alphaPrefix != betaPrefix,
+                 "session pool should isolate prompt prefixes across sessions");
+    ok &= Expect(alpha->lastPromptPrefix == "hello world" &&
+                     beta->lastPromptPrefix == "hello world",
+                 "session pool should retain prompt ownership per session");
+    ok &= Expect(pool.ActiveSessionCount() == 2U,
+                 "session pool should report active session count");
+    ok &= Expect(pool.Release("alpha") && !pool.Lookup("alpha").has_value() &&
+                     pool.Lookup("beta").has_value(),
+                 "session pool release should not leak other sessions");
+  }
+
+  {
+    us4::Router router;
+    const us4::RouterDecision prediction =
+        router.RouteTopK({1.2F, 1.0F, 0.8F, 0.4F}, 3);
+    const us4::RouterDecision actual =
+        router.RouteTopK({1.1F, 0.2F, 0.9F, 0.8F}, 2);
+    const us4::SpeculativePrefetch prefetch(3);
+    const us4::SpeculativePrefetchPlan plan =
+        prefetch.BuildPlan("glm", prediction);
+    const us4::SpeculativePrefetchTelemetry telemetry =
+        prefetch.Reconcile(plan, actual);
+
+    ok &= Expect(plan.prefetchedExperts.size() == 3U,
+                 "speculative prefetch should keep top-3 prediction breadth");
+    ok &= Expect(plan.prefetchedKeys.front() == "glm-expert-0",
+                 "speculative prefetch should keep family-scoped keys");
+    ok &= Expect(telemetry.prefetchedCount == 3U && telemetry.hitCount == 2U &&
+                     telemetry.missCount == 1U,
+                 "speculative prefetch should expose hit and miss counts");
+    ok &= Expect(std::abs(telemetry.hitRatio - (2.0 / 3.0)) <= 1e-9,
+                 "speculative prefetch should expose stable hit ratio");
+    ok &= Expect(telemetry.wrongExpertLeakPrevented,
+                 "speculative prefetch should forbid wrong-expert leakage");
+    ok &= Expect(
+        telemetry.executableExperts.size() == 2U &&
+            telemetry.executableExperts[0] == actual.selected[0].expert &&
+            telemetry.executableExperts[1] == actual.selected[1].expert,
+        "speculative prefetch should execute only actual route experts");
+  }
+
+  {
+    us4::Router router;
+    us4::SparsityAwareCache cache;
+    const us4::RouterDecision routing =
+        router.RouteTopK({1.4F, 1.1F, 0.3F, 0.2F}, 2);
+    const us4::SparsityCacheSnapshot first = cache.Touch("glm", routing);
+    const us4::SparsityCacheSnapshot second = cache.Touch("glm", routing);
+    const us4::SparsityCacheSnapshot third = cache.Touch("minimax", routing);
+
+    ok &= Expect(!first.lastLookupHit,
+                 "first sparsity cache lookup should miss for a fresh route");
+    ok &= Expect(
+        second.lastLookupHit,
+        "second sparsity cache lookup should hit for the same family pattern");
+    ok &= Expect(second.hitCount == 1U,
+                 "sparsity cache should count one hit after a repeated route");
+    ok &= Expect(second.missCount == 1U,
+                 "sparsity cache should preserve the first miss");
+    ok &= Expect(
+        std::abs(second.hitRatio - 0.5) <= 1e-9,
+        "sparsity cache hit ratio should reflect hit over total lookups");
+    ok &= Expect(third.entryCount == 2U,
+                 "family-scoped sparsity cache entries should not collide");
+    ok &= Expect(
+        second.lastKey != third.lastKey,
+        "different families should produce different sparsity cache keys");
+  }
+
+  {
+    us4::MultimodalCache cache;
+    const us4::MultimodalCacheSnapshot first = cache.Touch(
+        "minimax",
+        {{.modality = "text", .tokens = {"image", "audio", "fusion"}},
+         {.modality = "image", .tokens = {"image"}},
+         {.modality = "audio", .tokens = {"audio"}}});
+    const us4::MultimodalCacheSnapshot second = cache.Touch(
+        "minimax",
+        {{.modality = "text", .tokens = {"image", "audio", "fusion"}},
+         {.modality = "image", .tokens = {"image"}},
+         {.modality = "audio", .tokens = {"audio"}}});
+    const us4::MultimodalCacheSnapshot third = cache.Touch(
+        "minimax",
+        {{.modality = "text", .tokens = {"logic", "wide", "context"}},
+         {.modality = "audio", .tokens = {"audio"}}});
+
+    ok &= Expect(first.entryCount == 3U,
+                 "multimodal cache should create one entry per modality state");
+    ok &= Expect(first.lastTouchMisses == 3U && first.lastTouchHits == 0U,
+                 "first multimodal cache touch should miss for each modality");
+    ok &= Expect(
+        second.lastTouchHits == 3U,
+        "second multimodal cache touch should hit every repeated modality");
+    ok &= Expect(
+        std::abs(second.hitRatio - 0.5) <= 1e-9,
+        "multimodal cache hit ratio should reflect repeated modality reuse");
+    ok &= Expect(third.entryCount == 4U,
+                 "new text state should add a new multimodal cache entry");
+  }
+
+  {
+    const us4::IUS4V6Adapter *adapter =
+        us4::FindAdapterByModel("deepseek-v2-lite");
+    us4::RuntimeContext context(MakeProbe());
+    adapter->ConfigureRuntime(context);
+    const us4::GenerationResult result = adapter->Generate(
+        {.prompt = "code logic runtime", .maxTokens = 3}, context);
+
+    ok &= Expect(result.moePrefetchPrefetched == 3U,
+                 "moe generation should surface speculative prefetch breadth");
+    ok &= Expect(result.moePrefetchHits == 2U && result.moePrefetchMisses == 1U,
+                 "moe generation should surface speculative prefetch hit and "
+                 "miss counts");
+    ok &= Expect(
+        std::abs(result.moePrefetchHitRatio - (2.0 / 3.0)) <= 1e-9,
+        "moe generation should surface stable speculative prefetch hit ratio");
+    ok &=
+        Expect(result.moePrefetchWrongExpertLeakPrevented,
+               "moe generation should confirm wrong-expert leakage protection");
+    ok &= Expect(
+        result.moeSparsityCacheHitRatio == 0.0,
+        "first moe generation should expose zero sparsity cache hit ratio");
   }
 
   return ok ? EXIT_SUCCESS : EXIT_FAILURE;

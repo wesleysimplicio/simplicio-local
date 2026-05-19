@@ -1,4 +1,7 @@
 add_library(us4_runtime_core
+  ane/ane_backend.cpp
+  ane/layer_offloader.cpp
+  ane/mixed_dispatch.cpp
   core/backend_selector.cpp
   core/runtime_mode.cpp
   core/hardware_probe.cpp
@@ -16,12 +19,14 @@ add_library(us4_runtime_core
   adapters/deepseek/deepseek_moe_adapter.cpp
   adapters/qwen/qwen_adapter.cpp
   adapters/gemma/gemma_adapter.cpp
+  adapters/glm/glm_moe_adapter.cpp
   adapters/kimi/kimi_moe_adapter.cpp
-  adapters/glm/glm_adapter.cpp
   adapters/llama/llama_config.cpp
   adapters/llama/llama_adapter.cpp
-  adapters/minimax/minimax_adapter.cpp
+  adapters/minimax/minimax_moe_adapter.cpp
   adapters/ternary/ternary_adapter.cpp
+  cache/multimodal_cache.cpp
+  cache/sparsity_aware_cache.cpp
   kv/eviction_policy.cpp
   kv/kv_pager.cpp
   kv/prefix_cache.cpp
@@ -35,17 +40,6 @@ add_library(us4_runtime_core
   metal/kernel_library.cpp
   mlx/dense_plan.cpp
   mlx/mlx_bridge.cpp
-  ane/ane_backend.cpp
-  ane/layer_offloader.cpp
-  ane/mixed_dispatch.cpp
-  cache/multimodal_cache.cpp
-  cache/sparsity_aware_cache.cpp
-  scheduler/continuous_batcher.cpp
-  scheduler/session_pool.cpp
-  speculative/draft_model_loader.cpp
-  speculative/eagle3_decoder.cpp
-  speculative/peagle_decoder.cpp
-  speculative/speculative_telemetry.cpp
   moe/expert_pager.cpp
   moe/moe_telemetry.cpp
   moe/router.cpp
@@ -59,6 +53,12 @@ add_library(us4_runtime_core
   neon/neon_attention.cpp
   neon/kernel_profile.cpp
   neon/neon_matmul.cpp
+  scheduler/continuous_batcher.cpp
+  scheduler/session_pool.cpp
+  speculative/draft_model_loader.cpp
+  speculative/eagle3_decoder.cpp
+  speculative/peagle_decoder.cpp
+  speculative/speculative_telemetry.cpp
   telemetry/telemetry_types.cpp
   telemetry/telemetry_sink.cpp
   tuning/auto_tuner.cpp

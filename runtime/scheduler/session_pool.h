@@ -4,31 +4,32 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
-#include <vector>
 
 namespace us4 {
 
-// SessionPool keeps per-session KV state under namespaces that never leak.
-// The pool is intentionally minimal; it owns the lifecycle plus the
-// namespace string so adapters can hand off the right context to KvPager.
-
-struct SessionContext {
+struct SessionState {
   std::string sessionId;
   std::string kvNamespace;
-  std::vector<float> rollingContext;
+  std::size_t generation = 0U;
+  std::string lastPromptPrefix;
 };
 
 class SessionPool {
- public:
-  SessionContext& GetOrCreate(const std::string& sessionId);
-  std::optional<SessionContext> Snapshot(const std::string& sessionId) const;
-  void AppendRollingContext(const std::string& sessionId,
-                            const std::vector<float>& tokens);
-  void Drop(const std::string& sessionId);
-  std::size_t Size() const;
+public:
+  SessionState &Acquire(std::string sessionId);
+  bool Release(const std::string &sessionId);
+  std::optional<SessionState> Lookup(const std::string &sessionId) const;
+  std::string NamespacedKvKey(const std::string &sessionId,
+                              const std::string &logicalKey);
+  std::string NamespacedPrefixKey(const std::string &sessionId,
+                                  const std::string &prefix);
+  void RecordPromptPrefix(const std::string &sessionId, std::string prefix);
+  std::size_t ActiveSessionCount() const;
 
- private:
-  std::unordered_map<std::string, SessionContext> sessions_;
+private:
+  static std::string BuildKvNamespace(const std::string &sessionId);
+
+  std::unordered_map<std::string, SessionState> sessions_;
 };
 
-}  // namespace us4
+} // namespace us4

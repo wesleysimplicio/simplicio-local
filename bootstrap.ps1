@@ -370,7 +370,7 @@ $meta = [ordered]@{
   project_mode = $ProjectMode
   projects = $Projects
   bootstrapped_at = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-  starter_version = "0.1.23"
+  starter_version = "0.1.44"
   existing_instruction_files = $ExistingInstructionFiles
   init_must_ask = @()
   init_must_infer = @("team","domain","vision_oneliner","personas_beyond_dev")
@@ -572,7 +572,7 @@ Recommended next steps:
   3) Review .specs/product/VISION.md, DOMAIN.md, architecture/DESIGN.md.
   4) git add -A && git commit -m "chore: bootstrap agentic starter"
 
-Docs: https://github.com/wesleysimplicio/agentic-starter
+Docs: https://github.com/wesleysimplicio/llm-project-mapper
 "@ | Write-Host
   }
 }
