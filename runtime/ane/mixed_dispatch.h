@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "ane/ane_backend.h"
@@ -26,9 +27,17 @@ struct MixedDispatchStage {
   std::string reason = "metal-default";
 };
 
+struct MixedDispatchStep {
+  std::string layerName;
+  std::string backend;
+};
+
 struct MixedDispatchPlan {
   std::string family;
   std::vector<MixedDispatchStage> stages;
+  std::vector<MixedDispatchStep> steps;
+  std::size_t aneSteps = 0;
+  std::size_t metalSteps = 0;
 };
 
 struct MixedDispatchTelemetry {
@@ -40,6 +49,7 @@ struct MixedDispatchTelemetry {
 };
 
 std::string_view ToString(DispatchBackend backend);
+MixedDispatchPlan BuildMixedDispatchPlan(const LayerOffloadPlan &offload);
 
 class MixedDispatchCoordinator {
 public:

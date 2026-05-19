@@ -30,7 +30,26 @@ struct ThermalDecision {
   std::string reason = "thermal-unavailable";
 };
 
+enum class ThermalState {
+  kNominal,
+  kFair,
+  kSerious,
+  kCritical,
+};
+
+struct ThermalReading {
+  ThermalState state = ThermalState::kNominal;
+  float celsius = 0.0F;
+  std::string source = "synthetic";
+};
+
+struct ThermalDowngradeDecision {
+  bool requiresDowngrade = false;
+  std::string reason;
+};
+
 std::string_view ToString(ThermalPressureLevel level);
+ThermalDowngradeDecision DecideThermalDowngrade(const ThermalReading &reading);
 
 class ThermalMonitor {
 public:

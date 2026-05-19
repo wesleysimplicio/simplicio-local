@@ -55,6 +55,15 @@ MixedDispatchPlan MixedDispatchCoordinator::BuildPlan(
         .hiddenSize = hiddenSize,
         .reason = preferAne ? "ane-layer-eligible" : "metal-fallback",
     });
+    plan.steps.push_back({.layerName = layerName,
+                          .backend = std::string(
+                              preferAne ? ToString(DispatchBackend::kAne)
+                                        : ToString(DispatchBackend::kMetal))});
+    if (preferAne) {
+      ++plan.aneSteps;
+    } else {
+      ++plan.metalSteps;
+    }
   }
 
   return plan;
@@ -106,6 +115,19 @@ MixedDispatchTelemetry MixedDispatchCoordinator::Execute(
     telemetry.strategy = "metal-only";
   }
   return telemetry;
+}
+
+MixedDispatchPlan BuildMixedDispatchPlan(const LayerOffloadPlan &offload) {
+  MixedDispatchPlan plan;
+  for (const auto &layer : offload.aneLayers) {
+    plan.steps.push_back({layer, "ane"});
+    ++plan.aneSteps;
+  }
+  for (const auto &layer : offload.metalLayers) {
+    plan.steps.push_back({layer, "metal"});
+    ++plan.metalSteps;
+  }
+  return plan;
 }
 
 } // namespace us4
