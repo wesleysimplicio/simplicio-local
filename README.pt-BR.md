@@ -3,7 +3,7 @@
 > Universal State Runtime para inferencia LLM local em Apple Silicon.
 > pt-BR. EN version: [README.md](README.md).
 
-![us4-v6-simplicio-apple](us4-v6-simplicio-apple.PNG)
+![Banner de divulgacao US4 V6 Apple Edition](assets/us4-v6-apple-edition-promo.png)
 
 ## O que este repo eh
 

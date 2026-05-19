@@ -13,6 +13,7 @@
     "INIT.md",
     "_BOOTSTRAP.md",
     "README.md",
+    "assets/",
     ".agents/",
     ".claude/",
     ".codex/",

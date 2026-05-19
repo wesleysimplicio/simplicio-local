@@ -3,7 +3,7 @@
 > Universal State Runtime for local LLM inference on Apple Silicon.
 > EN. Versao pt-BR: [README.pt-BR.md](README.pt-BR.md).
 
-![us4-v6-simplicio-apple](us4-v6-simplicio-apple.PNG)
+![US4 V6 Apple Edition promotional banner](assets/us4-v6-apple-edition-promo.png)
 
 ## What this repo is
 
