@@ -508,6 +508,77 @@ test.describe("Native CLI sprint 02 contract", () => {
     }
   });
 
+  test("run makes explicit ane fallback observable on non-eligible hosts",
+       async ({}, testInfo) => {
+         const fixturePath = path.join(
+             repoRoot,
+             "tests",
+             "fixtures",
+             "models",
+             "qwen-0.5b",
+             "model.us4manifest",
+         );
+
+         const {stdout, stderr} = await execFileAsync(
+             nativeCliPath!,
+             [
+               "run",
+               "--model-path",
+               fixturePath,
+               "--backend",
+               "ane",
+               "--prompt",
+               "hi",
+               "--max-tokens",
+               "4",
+               "--json",
+             ],
+             {
+               cwd : repoRoot,
+               env : {
+                 ...process.env,
+                 NO_COLOR : "1",
+               },
+             },
+         );
+
+         await testInfo.attach("stdout-native-ane-fallback", {
+           body : stdout.trim() || "(empty)",
+           contentType : "text/plain",
+         });
+         await testInfo.attach("stderr-native-ane-fallback", {
+           body : stderr.trim() || "(empty)",
+           contentType : "text/plain",
+         });
+
+         expect(stderr.trim()).toBe("");
+         const payload = JSON.parse(stdout) as Record<string, unknown>;
+         expect(payload).toMatchObject({
+           model : "qwen-0.5b-fixture",
+           backend_reason : expect.any(String),
+           fallback : expect.any(Boolean),
+           mixed_dispatch_strategy : expect.any(String),
+           mixed_dispatch_ane_stages : expect.any(Number),
+           ane_compiled_layers : expect.any(Number),
+         });
+
+         if (payload.backend === "ane") {
+           expect(payload).toMatchObject({
+             backend_reason : "requested",
+             fallback : false,
+           });
+           expect(payload.mixed_dispatch_strategy).not.toBe("disabled");
+         } else {
+           expect(payload).toMatchObject({
+             backend_reason : "requested-backend-unavailable",
+             fallback : true,
+             mixed_dispatch_strategy : "disabled",
+             mixed_dispatch_ane_stages : 0,
+             ane_compiled_layers : 0,
+           });
+         }
+       });
+
   test("run can resolve model from manifest without explicit --model",
        async ({}, testInfo) => {
          const fixturePath = path.join(

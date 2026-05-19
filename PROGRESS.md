@@ -389,6 +389,29 @@ Validation:
 Next:
 Fechar issue #68 e seguir para T11.6.
 
+### Checkpoint 12
+
+Status: in_progress
+
+Task:
+T11.6 - Harden ane graceful fallback
+
+Result:
+Sprint 11 foi sincronizada para marcar T11.6 como concluida e o Playwright
+ganhou cobertura explicita para `--backend ane` em host nao elegivel. O teste
+exige `requested-backend-unavailable`, `fallback=true` e
+`mixed_dispatch_strategy=disabled` quando ANE nao esta disponivel.
+
+Validation:
+`npm run lint`; `npm test -- --coverage`; `npm run pack:dry`;
+`cmake --build build --config Release`;
+`ctest --test-dir build --output-on-failure -C Release`;
+`npx playwright test --reporter=list,html tests/e2e/us4-cli.spec.ts`;
+`build\\runtime\\benchmarks\\dense_baseline.exe`
+
+Next:
+Fechar issue #69 e seguir para Sprint 12.
+
 ## Validation History
 
 | Command | Result | Notes |

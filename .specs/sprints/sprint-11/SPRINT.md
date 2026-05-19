@@ -19,7 +19,7 @@ Thermal/throttle aware.
 - [x] T11.3 - Mixed dispatch coordinator (Metal hot path + ANE static layers)
 - [x] T11.4 - `runtime/tuning/ThermalMonitor` (read `IOPMrootDomain`/`powermetrics`, downgrade dispatch)
 - [x] T11.5 - Bench Llama/Qwen em ANE + Metal vs Metal-only
-- [ ] T11.6 - Fallback graceful em chips < M5
+- [x] T11.6 - Fallback graceful em chips < M5
 
 ## Test plan
 - Unit: layer offloader picks valid layers; thermal monitor reads signal.
