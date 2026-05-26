@@ -1,61 +1,90 @@
 #include <gtest/gtest.h>
 
+#include <vector>
+
 #include "cache/multimodal_cache.h"
 #include "cache/sparsity_aware_cache.h"
-#include "moe/speculative_prefetch.h"
+#include "moe/router.h"
 
-TEST(MoeAdvancedContractTest, SpeculativePrefetchPredictsMostFrequent) {
-  us4::SpeculativePrefetch predictor;
-  predictor.Observe("expert-0", "expert-1");
-  predictor.Observe("expert-0", "expert-1");
-  predictor.Observe("expert-0", "expert-2");
+namespace {
 
-  const auto predicted = predictor.Predict("expert-0", 1U);
-  ASSERT_EQ(predicted.size(), 1U);
-  EXPECT_EQ(predicted[0], "expert-1");
+std::vector<us4::ModalityTokenState> ImageAudioState() {
+  return {
+      {"image", {"img-a", "img-b"}},
+      {"audio", {"aud-a"}},
+  };
 }
 
-TEST(MoeAdvancedContractTest, SpeculativePrefetchExposesHitRatio) {
-  us4::SpeculativePrefetch predictor;
-  predictor.Observe("expert-0", "expert-1");
-  predictor.Observe("expert-0", "expert-1");
+} // namespace
 
-  auto predicted = predictor.Predict("expert-0", 2U);
-  predictor.RecordOutcome(predicted, "expert-1");
-  EXPECT_EQ(predictor.LastPrefetchAttempts(), predicted.size());
-  EXPECT_GE(predictor.LastPrefetchHits(), 1U);
-  EXPECT_GT(predictor.HitRatio(), 0.0F);
-}
-
-TEST(MoeAdvancedContractTest, SparsityCacheHitMissAndEviction) {
-  us4::SparsityAwareCache cache(2);
-  cache.Store("a", {1.0F, 2.0F});
-  cache.Store("b", {3.0F});
-  EXPECT_EQ(cache.EntryCount(), 2U);
-  EXPECT_TRUE(cache.Lookup("a").has_value());
-  EXPECT_FALSE(cache.Lookup("missing").has_value());
-
-  cache.Store("c", {4.0F, 5.0F});
-  EXPECT_EQ(cache.EntryCount(), 2U);
-}
-
-TEST(MoeAdvancedContractTest, MultimodalCacheIsolatesByModality) {
+TEST(MoeAdvancedContractTest, MultimodalCacheTracksEntriesPerModality) {
   us4::MultimodalCache cache;
-  us4::MultimodalCacheKey imageKey{"asset-1", us4::MultimodalModality::kImage, 0};
-  us4::MultimodalCacheKey audioKey{"asset-1", us4::MultimodalModality::kAudio, 0};
 
-  cache.Store(imageKey, {0.1F, 0.2F});
-  cache.Store(audioKey, {0.9F});
+  const us4::MultimodalCacheSnapshot snapshot =
+      cache.Touch("minimax", ImageAudioState());
 
-  ASSERT_TRUE(cache.Lookup(imageKey).has_value());
-  EXPECT_FLOAT_EQ(cache.Lookup(imageKey)->at(0), 0.1F);
-  ASSERT_TRUE(cache.Lookup(audioKey).has_value());
-  EXPECT_FLOAT_EQ(cache.Lookup(audioKey)->at(0), 0.9F);
+  EXPECT_EQ(snapshot.entryCount, 2U);
+  EXPECT_EQ(snapshot.activeModalities, 2U);
+  EXPECT_EQ(snapshot.lastTouchHits, 0U);
+  EXPECT_EQ(snapshot.lastTouchMisses, 2U);
+  EXPECT_EQ(snapshot.missCount, 2U);
+  EXPECT_EQ(cache.EntryCount(), 2U);
+  EXPECT_EQ(snapshot.lastModalities,
+            (std::vector<std::string>{"image", "audio"}));
 }
 
-TEST(MoeAdvancedContractTest, MultimodalCacheReportsMissForUnknownKey) {
+TEST(MoeAdvancedContractTest, MultimodalCacheCountsRepeatTouchAsHit) {
   us4::MultimodalCache cache;
-  us4::MultimodalCacheKey key{"asset-x", us4::MultimodalModality::kImage, 0};
-  EXPECT_FALSE(cache.Lookup(key).has_value());
-  EXPECT_EQ(cache.MissCount(), 1U);
+
+  cache.Touch("minimax", ImageAudioState());
+  const us4::MultimodalCacheSnapshot second =
+      cache.Touch("minimax", ImageAudioState());
+
+  EXPECT_EQ(second.entryCount, 2U);
+  EXPECT_EQ(second.lastTouchHits, 2U);
+  EXPECT_EQ(second.lastTouchMisses, 0U);
+  EXPECT_EQ(second.hitCount, 2U);
+  EXPECT_GT(second.hitRatio, 0.0);
+}
+
+TEST(MoeAdvancedContractTest, MultimodalCacheIsolatesAcrossFamilies) {
+  us4::MultimodalCache cache;
+
+  cache.Touch("minimax", ImageAudioState());
+  const us4::MultimodalCacheSnapshot other =
+      cache.Touch("gemma", ImageAudioState());
+
+  EXPECT_EQ(other.entryCount, 4U);
+  EXPECT_EQ(other.lastTouchHits, 0U);
+  EXPECT_EQ(other.lastTouchMisses, 2U);
+}
+
+TEST(MoeAdvancedContractTest, SparsityCacheReusesEntryForIdenticalRouting) {
+  us4::Router router;
+  us4::SparsityAwareCache cache;
+  const us4::RouterDecision routing =
+      router.RouteTopK({1.3F, 0.8F, 0.6F, 0.1F}, 2);
+
+  const us4::SparsityCacheSnapshot first = cache.Touch("glm", routing);
+  const us4::SparsityCacheSnapshot second = cache.Touch("glm", routing);
+
+  EXPECT_FALSE(first.lastLookupHit);
+  EXPECT_TRUE(second.lastLookupHit);
+  EXPECT_EQ(cache.EntryCount(), 1U);
+  ASSERT_TRUE(cache.Lookup("glm", routing).has_value());
+  EXPECT_EQ(cache.Lookup("glm", routing)->experts.size(), 2U);
+}
+
+TEST(MoeAdvancedContractTest, SparsityCacheKeepsFamiliesPartitioned) {
+  us4::Router router;
+  us4::SparsityAwareCache cache;
+  const us4::RouterDecision routing =
+      router.RouteTopK({1.4F, 0.9F, 0.7F, 0.2F}, 2);
+
+  cache.Touch("deepseek", routing);
+  const us4::SparsityCacheSnapshot otherFamily = cache.Touch("kimi", routing);
+
+  EXPECT_FALSE(otherFamily.lastLookupHit);
+  EXPECT_EQ(otherFamily.entryCount, 2U);
+  EXPECT_FALSE(cache.Lookup("qwen", routing).has_value());
 }

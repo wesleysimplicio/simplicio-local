@@ -25,3 +25,5 @@ target_include_directories(matrix_runner
     ${CMAKE_SOURCE_DIR}/runtime
     ${CMAKE_BINARY_DIR}/generated
 )
+
+add_subdirectory(correctness)

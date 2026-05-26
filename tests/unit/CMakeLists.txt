@@ -34,6 +34,14 @@ set(us4_runtime_contract_test_sources
   tensor_contract_test.cpp
   scalar_kernels_contract_test.cpp
   adapter_generation_contract_test.cpp
+  memory_contract_test.cpp
+  kv_cold_store_summarizer_contract_test.cpp
+  speculative_loader_contract_test.cpp
+  mlx_bridge_contract_test.cpp
+  metal_device_kernel_contract_test.cpp
+  kernel_numerics_contract_test.cpp
+  error_paths_contract_test.cpp
+  runtime_context_contract_test.cpp
 )
 
 add_executable(us4_runtime_smoke_test
@@ -67,13 +75,14 @@ target_include_directories(us4_runtime_contract_runner
 
 add_test(NAME us4_runtime_contract_runner COMMAND us4_runtime_contract_runner)
 
-find_package(GTest CONFIG QUIET)
-
-if(NOT GTest_FOUND)
-  find_package(GTest QUIET)
+if(NOT TARGET GTest::gtest_main)
+  find_package(GTest CONFIG QUIET)
+  if(NOT GTest_FOUND)
+    find_package(GTest QUIET)
+  endif()
 endif()
 
-if(GTest_FOUND)
+if(TARGET GTest::gtest_main)
   include(GoogleTest)
 
   add_executable(us4_runtime_contract_tests

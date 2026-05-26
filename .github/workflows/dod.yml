@@ -160,6 +160,9 @@ jobs:
             | tee dod-artifacts/runtime-native/ctest-inventory.log
           grep -q 'us4_runtime_smoke_test' dod-artifacts/runtime-native/ctest-inventory.log
           grep -q 'us4_runtime_contract_runner' dod-artifacts/runtime-native/ctest-inventory.log
+          # The GoogleTest contract suite must actually be discovered (it is the
+          # bulk of coverage); fail loudly if GTest provisioning regressed.
+          grep -q 'AdapterGenerationContractTest' dod-artifacts/runtime-native/ctest-inventory.log
 
       - name: Run runtime regression suite
         shell: bash
@@ -168,6 +171,17 @@ jobs:
           ctest --test-dir build --output-on-failure \
             | tee dod-artifacts/runtime-native/ctest.log
 
+      - name: Run runtime coverage gate (>=80% lines)
+        shell: bash
+        run: |
+          set -euo pipefail
+          CC=clang CXX=clang++ ./scripts/coverage.sh 80 build-coverage \
+            | tee dod-artifacts/runtime-native/coverage.log
+          cp -f build-coverage/coverage-report/summary.txt \
+            dod-artifacts/runtime-native/coverage-summary.txt || true
+          cp -f build-coverage/coverage-report/coverage.lcov \
+            dod-artifacts/runtime-native/coverage.lcov || true
+
       - name: Run native benchmark gate
         shell: bash
         run: |
@@ -175,9 +189,18 @@ jobs:
           ./build/runtime/benchmarks/dense_baseline \
             | tee dod-artifacts/runtime-native/dense_baseline.log
           grep -q '^benchmark=dense_baseline$' dod-artifacts/runtime-native/dense_baseline.log
-          grep -q '^case=dense-default$' dod-artifacts/runtime-native/dense_baseline.log
-          grep -q '^case=lowbit-int8$' dod-artifacts/runtime-native/dense_baseline.log
-          grep -q '^case=lowbit-int4$' dod-artifacts/runtime-native/dense_baseline.log
+          grep -q '^case=dense-default/auto$' dod-artifacts/runtime-native/dense_baseline.log
+          grep -q '^compare_case=lowbit-int8$' dod-artifacts/runtime-native/dense_baseline.log
+          grep -q '^compare_case=lowbit-int4$' dod-artifacts/runtime-native/dense_baseline.log
+
+      - name: Run native correctness gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./build/runtime/benchmarks/correctness/correctness_check \
+            | tee dod-artifacts/runtime-native/correctness.log
+          grep -q '^benchmark=correctness$' dod-artifacts/runtime-native/correctness.log
+          grep -q '^correctness_status=pass$' dod-artifacts/runtime-native/correctness.log
 
       - name: Run direct native CLI contract checks
         shell: bash

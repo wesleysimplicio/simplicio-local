@@ -325,9 +325,12 @@ jobs:
           ./build/runtime/benchmarks/dense_baseline \
             | tee ci-artifacts/runtime-native/dense_baseline.log
           grep -q '^benchmark=dense_baseline$' ci-artifacts/runtime-native/dense_baseline.log
-          grep -q '^case=dense-default$' ci-artifacts/runtime-native/dense_baseline.log
-          grep -q '^case=lowbit-int8$' ci-artifacts/runtime-native/dense_baseline.log
-          grep -q '^case=lowbit-int4$' ci-artifacts/runtime-native/dense_baseline.log
+          grep -q '^case=dense-default/auto$' ci-artifacts/runtime-native/dense_baseline.log
+          grep -q '^compare_case=lowbit-int8$' ci-artifacts/runtime-native/dense_baseline.log
+          grep -q '^compare_case=lowbit-int4$' ci-artifacts/runtime-native/dense_baseline.log
+          ./build/runtime/benchmarks/correctness/correctness_check \
+            | tee ci-artifacts/runtime-native/correctness.log
+          grep -q '^correctness_status=pass$' ci-artifacts/runtime-native/correctness.log
 
       - name: Install Playwright browsers
         if: ${{ hashFiles('package.json', 'playwright.config.ts') != '' && (hashFiles('tests/e2e/**/*.spec.ts') != '' || hashFiles('tests/e2e/**/*.spec.js') != '' || hashFiles('tests/e2e/**/*.test.ts') != '' || hashFiles('tests/e2e/**/*.test.js') != '') }}

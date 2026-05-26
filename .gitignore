@@ -6,6 +6,7 @@ bower_components/
 # Build / dist
 dist/
 build/
+build-*/
 out/
 .next/
 .nuxt/
@@ -61,3 +62,4 @@ Thumbs.db
 *.tgz
 *.tar.gz
 .pnpm-store/
+cov-raw/
