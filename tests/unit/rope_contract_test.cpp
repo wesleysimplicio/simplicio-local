@@ -65,8 +65,7 @@ TEST(RopeContractTest, PreservesPerPairNormAcrossScalingModes) {
   constexpr std::size_t kRows = 2U;
   constexpr std::size_t kCols = 4U;
   const std::vector<float> input = {
-      1.0F,   0.0F,   0.5F,   -0.25F,
-      -0.75F, 0.125F, 0.875F, -0.5F,
+      1.0F, 0.0F, 0.5F, -0.25F, -0.75F, 0.125F, 0.875F, -0.5F,
   };
   constexpr std::array<us4::RopeScalingType, 3> kModes = {
       us4::RopeScalingType::kLinear,
@@ -117,8 +116,8 @@ TEST(RopeContractTest, DynamicScalingDiffersFromLinearForScaleAboveOne) {
 
   float maxDelta = 0.0F;
   for (std::size_t index = 0; index < kCols; ++index) {
-    maxDelta = std::max(maxDelta,
-                        std::fabs(linearData[index] - dynamicData[index]));
+    maxDelta =
+        std::max(maxDelta, std::fabs(linearData[index] - dynamicData[index]));
   }
   EXPECT_GT(maxDelta, 1e-3F);
 }

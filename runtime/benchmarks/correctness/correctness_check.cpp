@@ -64,8 +64,8 @@ bool emitMatmulCase(std::size_t m, std::size_t k, std::size_t n,
   const float *cand = candidate.DataAsFloat32();
   double maxAbsDiff = 0.0;
   for (std::size_t i = 0; i < m * n; ++i) {
-    maxAbsDiff = std::max(maxAbsDiff,
-                          std::fabs(static_cast<double>(cand[i] - ref[i])));
+    maxAbsDiff =
+        std::max(maxAbsDiff, std::fabs(static_cast<double>(cand[i] - ref[i])));
   }
 
   const bool pass = maxAbsDiff <= kMatmulTolerance;

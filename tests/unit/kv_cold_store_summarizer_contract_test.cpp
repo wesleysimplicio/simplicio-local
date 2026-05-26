@@ -72,7 +72,8 @@ TEST(SummarizerContractTest, SummarizeEmptyReturnsEmpty) {
 TEST(SummarizerContractTest, SummarizeRowsAveragesEachColumn) {
   const us4::Summarizer summarizer;
   // Two rows of width 3: [[1,2,3],[3,4,5]] -> column means [2,3,4].
-  const auto summary = summarizer.SummarizeRows({1.0F, 2.0F, 3.0F, 3.0F, 4.0F, 5.0F}, 3U);
+  const auto summary =
+      summarizer.SummarizeRows({1.0F, 2.0F, 3.0F, 3.0F, 4.0F, 5.0F}, 3U);
 
   ASSERT_EQ(summary.size(), 3U);
   EXPECT_FLOAT_EQ(summary[0], 2.0F);

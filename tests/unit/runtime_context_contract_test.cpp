@@ -24,7 +24,8 @@ us4::HardwareProbeResult NominalProbe() {
 
 } // namespace
 
-TEST(RuntimeContextContractTest, ConstructionAdoptsRecommendedModeUnderNominalThermal) {
+TEST(RuntimeContextContractTest,
+     ConstructionAdoptsRecommendedModeUnderNominalThermal) {
   us4::RuntimeContext context(NominalProbe());
 
   EXPECT_EQ(context.mode(), us4::RuntimeMode::kBalancedPlus);

@@ -4,13 +4,12 @@
 #include "speculative/speculative_telemetry.h"
 
 TEST(DraftModelLoaderContractTest, ParsesCompleteManifest) {
-  const std::string body =
-      "# draft companion for llama\n"
-      "family=llama\n"
-      "model_id=llama-3.1-8b-draft\n"
-      "tokenizer_hash=abc123\n"
-      "file=draft-llama.gguf\n"
-      "weight_format=gguf\n";
+  const std::string body = "# draft companion for llama\n"
+                           "family=llama\n"
+                           "model_id=llama-3.1-8b-draft\n"
+                           "tokenizer_hash=abc123\n"
+                           "file=draft-llama.gguf\n"
+                           "weight_format=gguf\n";
 
   const auto descriptor = us4::ParseDraftModelManifestBody(body);
 
@@ -23,26 +22,25 @@ TEST(DraftModelLoaderContractTest, ParsesCompleteManifest) {
 }
 
 TEST(DraftModelLoaderContractTest, RejectsManifestMissingRequiredField) {
-  // Missing tokenizer_hash -- the verifier cannot trust draft tokens without it.
-  const std::string body =
-      "family=llama\n"
-      "model_id=llama-3.1-8b-draft\n"
-      "file=draft-llama.gguf\n"
-      "weight_format=gguf\n";
+  // Missing tokenizer_hash -- the verifier cannot trust draft tokens without
+  // it.
+  const std::string body = "family=llama\n"
+                           "model_id=llama-3.1-8b-draft\n"
+                           "file=draft-llama.gguf\n"
+                           "weight_format=gguf\n";
 
   EXPECT_FALSE(us4::ParseDraftModelManifestBody(body).has_value());
 }
 
 TEST(DraftModelLoaderContractTest, IgnoresCommentsAndBlankLinesAndUnknownKeys) {
-  const std::string body =
-      "\n"
-      "  # comment\n"
-      "family = llama \n"
-      "unknown_key=whatever\n"
-      "model_id=draft\n"
-      "tokenizer_hash=h\n"
-      "file=f.gguf\n"
-      "weight_format=gguf\n";
+  const std::string body = "\n"
+                           "  # comment\n"
+                           "family = llama \n"
+                           "unknown_key=whatever\n"
+                           "model_id=draft\n"
+                           "tokenizer_hash=h\n"
+                           "file=f.gguf\n"
+                           "weight_format=gguf\n";
 
   const auto descriptor = us4::ParseDraftModelManifestBody(body);
   ASSERT_TRUE(descriptor.has_value());
