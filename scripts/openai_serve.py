@@ -1,35 +1,69 @@
 """US4 V6 Apple Edition - local OpenAI-compatible server.
 
-Runs two MLX backends behind a single HTTP endpoint so any OpenAI client
-(simplicio-cli, langchain, raw curl, etc.) can hit one base URL:
+Runs a chat backend (MLX or Ollama) and an embeddings backend behind a single
+HTTP endpoint so any OpenAI client (simplicio-cli, langchain, raw curl, etc.)
+can hit one base URL:
 
-    /v1/chat/completions    -> Qwen2.5-Coder via mlx-lm (subprocess)
-    /v1/completions         -> Qwen2.5-Coder via mlx-lm (subprocess, proxied)
+    /v1/chat/completions    -> chat backend (mlx-lm subprocess OR ollama proxy)
+    /v1/completions         -> chat backend (proxied)
     /v1/models              -> aggregated list (chat + embedding)
     /v1/embeddings          -> EmbeddingGemma via mlx-embeddings (in-process)
     /health                 -> liveness probe
 
-Design intent: stdlib only (no FastAPI, no uvicorn). One file. The chat path
-is delegated to the official `mlx_lm.server` shipped with mlx-lm >= 0.31.0,
-which already speaks OpenAI shape; we boot it as a child process on
-PORT + 1 and reverse-proxy. The embeddings path is implemented locally
-because mlx-embeddings does not ship a server.
+Design intent: stdlib only (no FastAPI, no uvicorn). One file.
+
+Chat backend selection (`US4_SERVE_CHAT_BACKEND`):
+
+  - `mlx` (default): delegates to the official `mlx_lm.server` shipped with
+    mlx-lm >= 0.31.0. We boot it as a child process on PORT + 1 and reverse-
+    proxy /v1/chat/completions and /v1/completions to it.
+  - `ollama`: assumes a running Ollama daemon (default 127.0.0.1:11434) and
+    reverse-proxies the same routes to its native OpenAI-compat endpoint at
+    `/v1/...`. No subprocess is spawned.
+  - any other value: treated as a generic OpenAI-compatible HTTP upstream;
+    set `US4_SERVE_CHAT_UPSTREAM` to the base URL (no trailing /v1).
+
+The embeddings path is always served locally by mlx-embeddings because it
+does not ship a server.
 
 Environment knobs (all optional):
 
-    US4_SERVE_HOST          default 127.0.0.1
-    US4_SERVE_PORT          default 8080
-    US4_SERVE_CHAT_MODEL    default mlx-community/Qwen2.5-Coder-7B-Instruct-4bit
-    US4_SERVE_EMBED_MODEL   default mlx-community/embeddinggemma-300m-bf16
-    US4_SERVE_DISABLE_CHAT  truthy -> skip mlx-lm subprocess
-    US4_SERVE_DISABLE_EMBED truthy -> skip embeddings handler
-    US4_SERVE_LOG_LEVEL     default INFO
+    US4_SERVE_HOST            default 127.0.0.1
+    US4_SERVE_PORT            default 8080
+    US4_SERVE_CHAT_BACKEND    default mlx; valid: mlx, ollama, custom
+    US4_SERVE_CHAT_UPSTREAM   override upstream base URL (e.g.
+                              http://127.0.0.1:11434). Defaults derived from
+                              the selected backend.
+    US4_SERVE_CHAT_MODEL      default mlx-community/Qwen2.5-Coder-7B-Instruct-4bit
+                              (or `qwen2.5-coder:14b` when backend=ollama).
+    US4_SERVE_EMBED_MODEL     default mlx-community/embeddinggemma-300m-bf16
+    US4_SERVE_DISABLE_CHAT    truthy -> skip chat backend entirely
+    US4_SERVE_DISABLE_EMBED   truthy -> skip embeddings handler
+    US4_SERVE_LOG_LEVEL       default INFO
+
+    RAM-tuning passthroughs (forwarded to mlx_lm.server when backend=mlx;
+    silently ignored for backend=ollama or custom upstreams):
+
+    US4_SERVE_PROMPT_CACHE_BYTES  cap KV cache memory (e.g. 536870912 = 512 MiB).
+                                  Validated as a positive integer at startup;
+                                  non-numeric values are logged and skipped.
+    US4_SERVE_MLX_EXTRA_ARGS      raw extra args appended to the mlx_lm.server
+                                  command line (shell-style split). Escape
+                                  hatch for any flag not exposed individually
+                                  (e.g. "--max-tokens 256 --prefill-step-size 512").
+                                  Tokens starting with --host, --port, or
+                                  --cors* (and their values when in
+                                  "--flag VALUE" form) are stripped before
+                                  forwarding to prevent accidental override of
+                                  the loopback bind. Network binding stays
+                                  fixed at 127.0.0.1 (or US4_SERVE_HOST,
+                                  loopback-validated).
 
 Exit codes:
 
     0  graceful shutdown
     1  fatal startup error
-    2  mlx-lm not installed and chat not disabled
+    2  mlx-lm not installed and chat backend=mlx and chat not disabled
     3  mlx-embeddings not installed and embeddings not disabled
 """
 
@@ -40,6 +74,7 @@ import ipaddress
 import json
 import logging
 import os
+import shlex
 import signal
 import socket
 import subprocess
@@ -53,8 +88,11 @@ from typing import Any, Optional
 
 LOG = logging.getLogger("us4.serve")
 
-DEFAULT_CHAT_MODEL = "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit"
+DEFAULT_CHAT_MODEL_MLX = "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit"
+DEFAULT_CHAT_MODEL_OLLAMA = "qwen2.5-coder:14b"
 DEFAULT_EMBED_MODEL = "mlx-community/embeddinggemma-300m-bf16"
+DEFAULT_OLLAMA_UPSTREAM = "http://127.0.0.1:11434"
+SUPPORTED_CHAT_BACKENDS = ("mlx", "ollama", "custom")
 MAX_BODY_BYTES = 8 * 1024 * 1024
 UPSTREAM_TIMEOUT_S = 120
 
@@ -72,11 +110,34 @@ def _truthy(value: Optional[str]) -> bool:
 class Settings:
     host: str = os.environ.get("US4_SERVE_HOST", "127.0.0.1")
     port: int = int(os.environ.get("US4_SERVE_PORT", "8080"))
-    chat_model: str = os.environ.get("US4_SERVE_CHAT_MODEL", DEFAULT_CHAT_MODEL)
+    chat_backend: str = os.environ.get(
+        "US4_SERVE_CHAT_BACKEND", "mlx"
+    ).strip().lower() or "mlx"
+    chat_upstream_override: str = os.environ.get(
+        "US4_SERVE_CHAT_UPSTREAM", ""
+    ).strip()
     embed_model: str = os.environ.get("US4_SERVE_EMBED_MODEL", DEFAULT_EMBED_MODEL)
     disable_chat: bool = _truthy(os.environ.get("US4_SERVE_DISABLE_CHAT"))
     disable_embed: bool = _truthy(os.environ.get("US4_SERVE_DISABLE_EMBED"))
     log_level: str = os.environ.get("US4_SERVE_LOG_LEVEL", "INFO").upper()
+    # RAM-tuning knobs passed straight through to mlx_lm.server when
+    # `chat_backend == "mlx"`. Empty values are skipped so the upstream
+    # uses its own defaults.
+    prompt_cache_bytes: str = os.environ.get(
+        "US4_SERVE_PROMPT_CACHE_BYTES", ""
+    ).strip()
+    mlx_extra_args: str = os.environ.get(
+        "US4_SERVE_MLX_EXTRA_ARGS", ""
+    ).strip()
+
+    @property
+    def chat_model(self) -> str:
+        explicit = os.environ.get("US4_SERVE_CHAT_MODEL")
+        if explicit:
+            return explicit
+        if self.chat_backend == "ollama":
+            return DEFAULT_CHAT_MODEL_OLLAMA
+        return DEFAULT_CHAT_MODEL_MLX
 
     @property
     def upstream_port(self) -> int:
@@ -84,7 +145,26 @@ class Settings:
 
     @property
     def upstream_url(self) -> str:
+        if self.chat_upstream_override:
+            return self.chat_upstream_override.rstrip("/")
+        if self.chat_backend == "ollama":
+            return DEFAULT_OLLAMA_UPSTREAM
+        # mlx and unknown backends without override: spawn-and-proxy on +1
         return f"http://127.0.0.1:{self.upstream_port}"
+
+    @property
+    def upstream_health_url(self) -> str:
+        # mlx_lm.server exposes /health; Ollama exposes /api/tags as a cheap
+        # liveness check (/health is not standardized there).
+        if self.chat_backend == "ollama":
+            return f"{self.upstream_url}/api/tags"
+        return f"{self.upstream_url}/health"
+
+    @property
+    def spawns_chat_subprocess(self) -> bool:
+        # Only the mlx backend boots a child process; ollama and `custom`
+        # expect an already-running upstream.
+        return (not self.disable_chat) and self.chat_backend == "mlx"
 
 
 SETTINGS = Settings()
@@ -322,7 +402,14 @@ class Us4Handler(BaseHTTPRequestHandler):
 
 def _spawn_upstream() -> Optional[subprocess.Popen]:
     if SETTINGS.disable_chat:
-        LOG.info("chat backend disabled; skipping mlx-lm subprocess")
+        LOG.info("chat backend disabled; skipping subprocess")
+        return None
+    if SETTINGS.chat_backend != "mlx":
+        LOG.info(
+            "chat backend=%s; expecting already-running upstream at %s",
+            SETTINGS.chat_backend,
+            SETTINGS.upstream_url,
+        )
         return None
     try:
         import mlx_lm  # noqa: F401
@@ -343,6 +430,70 @@ def _spawn_upstream() -> Optional[subprocess.Popen]:
         "--log-level",
         SETTINGS.log_level,
     ]
+    # Optional RAM-tuning passthroughs. These are appended only when set so
+    # the default behaviour stays identical for callers that do not opt in.
+    if SETTINGS.prompt_cache_bytes:
+        if SETTINGS.prompt_cache_bytes.isdigit():
+            cmd.extend(["--prompt-cache-bytes", SETTINGS.prompt_cache_bytes])
+        else:
+            LOG.error(
+                "ignoring US4_SERVE_PROMPT_CACHE_BYTES=%r: expected a positive"
+                " integer number of bytes (e.g. 268435456 for 256 MiB)",
+                SETTINGS.prompt_cache_bytes,
+            )
+    if SETTINGS.mlx_extra_args:
+        try:
+            extra = shlex.split(SETTINGS.mlx_extra_args)
+        except ValueError as exc:
+            LOG.error(
+                "invalid US4_SERVE_MLX_EXTRA_ARGS (%s); ignoring: %s",
+                SETTINGS.mlx_extra_args,
+                exc,
+            )
+        else:
+            # Reject network-binding flags. mlx_lm.server uses argparse, which
+            # honours the *last* occurrence of a flag, so a user copy-pasting
+            # the recipe from the README onto a cloud VM with --host 0.0.0.0
+            # in MLX_EXTRA_ARGS would silently expose the unauthenticated LLM
+            # endpoint to the network. Same applies to --port and --cors* —
+            # serve-shape is fixed by the facade, not by the upstream.
+            #
+            # The loop peeks one token ahead so the *value* that follows a
+            # blocked flag in `--flag VALUE` form is dropped together with
+            # the flag itself; otherwise the orphan value would land as a
+            # positional argument and crash upstream argparse.
+            blocked_prefixes = ("--host", "--port", "--cors")
+            safe: list[str] = []
+            rejected: list[str] = []
+            i = 0
+            while i < len(extra):
+                token = extra[i]
+                # Case-insensitive match so --HOST / --Port variants cannot
+                # smuggle past the filter even if the upstream argparse later
+                # gains case-folded flags.
+                if token.lower().startswith(blocked_prefixes):
+                    rejected.append(token)
+                    has_inline_value = "=" in token
+                    next_token = extra[i + 1] if i + 1 < len(extra) else None
+                    if (
+                        not has_inline_value
+                        and next_token is not None
+                        and not next_token.startswith("-")
+                    ):
+                        rejected.append(next_token)
+                        i += 2
+                        continue
+                    i += 1
+                    continue
+                safe.append(token)
+                i += 1
+            if rejected:
+                LOG.error(
+                    "ignoring blocked tokens in US4_SERVE_MLX_EXTRA_ARGS"
+                    " (network binding is fixed to 127.0.0.1 by us4-v6): %s",
+                    " ".join(rejected),
+                )
+            cmd.extend(safe)
     LOG.info("spawning mlx-lm chat backend on 127.0.0.1:%d", SETTINGS.upstream_port)
     proc = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr, close_fds=True)
     atexit.register(_terminate_proc, proc)
@@ -364,16 +515,20 @@ def _wait_upstream_ready(timeout_s: float = 120.0) -> bool:
     if SETTINGS.disable_chat:
         return True
     deadline = time.monotonic() + timeout_s
-    health_url = f"{SETTINGS.upstream_url}/health"
+    health_url = SETTINGS.upstream_health_url
+    label = SETTINGS.chat_backend
     while time.monotonic() < deadline:
         try:
             with urllib.request.urlopen(health_url, timeout=2) as resp:
-                if resp.status == 200:
-                    LOG.info("mlx-lm backend ready")
+                if 200 <= resp.status < 300:
+                    LOG.info("%s chat backend ready at %s", label, SETTINGS.upstream_url)
                     return True
         except (urllib.error.URLError, ConnectionError, socket.timeout, TimeoutError):
             time.sleep(1.0)
-    LOG.warning("mlx-lm backend did not become ready in %.0fs", timeout_s)
+    LOG.warning(
+        "%s chat backend did not become ready at %s within %.0fs",
+        label, health_url, timeout_s,
+    )
     return False
 
 
@@ -417,11 +572,22 @@ def _warn_if_non_loopback(host: str) -> None:
 
 def main() -> int:
     logging.basicConfig(level=SETTINGS.log_level, format="%(asctime)s %(name)s %(levelname)s %(message)s")
+    if SETTINGS.chat_backend not in SUPPORTED_CHAT_BACKENDS:
+        LOG.warning(
+            "unknown chat backend %r; treating as custom upstream. Valid: %s",
+            SETTINGS.chat_backend,
+            ", ".join(SUPPORTED_CHAT_BACKENDS),
+        )
+    chat_descr = (
+        "off"
+        if SETTINGS.disable_chat
+        else f"{SETTINGS.chat_backend}:{SETTINGS.chat_model} via {SETTINGS.upstream_url}"
+    )
     LOG.info(
         "us4 serve starting (host=%s port=%d chat=%s embed=%s)",
         SETTINGS.host,
         SETTINGS.port,
-        "off" if SETTINGS.disable_chat else SETTINGS.chat_model,
+        chat_descr,
         "off" if SETTINGS.disable_embed else SETTINGS.embed_model,
     )
     _warn_if_non_loopback(SETTINGS.host)

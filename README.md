@@ -176,6 +176,8 @@ The server reads configuration from environment variables (no CLI flags):
 | `US4_SERVE_DISABLE_CHAT` | unset | set `1` to disable chat backend |
 | `US4_SERVE_DISABLE_EMBED` | unset | set `1` to disable embeddings backend |
 | `US4_SERVE_LOG_LEVEL` | `INFO` | `DEBUG` / `INFO` / `WARNING` / `ERROR` |
+| `US4_SERVE_PROMPT_CACHE_BYTES` | unset | cap KV/prompt cache bytes on the `mlx_lm.server` child (e.g. `268435456` = 256 MiB). Only honoured when `CHAT_BACKEND=mlx`. |
+| `US4_SERVE_MLX_EXTRA_ARGS` | unset | extra argv appended to `mlx_lm.server` (shell-style split). Escape hatch for any flag not exposed individually, e.g. `"--max-tokens 256 --prefill-step-size 512"`. Only honoured when `CHAT_BACKEND=mlx`. |
 
 Example: pick a smaller 3B chat model on a memory-constrained M1 8 GB:
 
@@ -224,6 +226,49 @@ This mode is what you want when:
 Add `US4_SERVE_DISABLE_EMBED=1` to skip the MLX embeddings backend entirely
 if you only need chat — this saves the 300 MB embedding model load and a
 chunk of resident RAM on small machines.
+
+Example: native 7B chat on an M1 8 GB box with RAM-tuned MLX (3-bit quant +
+capped KV cache). This is the recipe to use when you want 7B-class quality
+on a small machine **without** falling back to the Ollama proxy:
+
+```bash
+US4_SERVE_CHAT_BACKEND=mlx \
+US4_SERVE_CHAT_MODEL=mlx-community/Qwen2.5-Coder-7B-Instruct-3bit \
+US4_SERVE_PROMPT_CACHE_BYTES=268435456 \
+US4_SERVE_DISABLE_EMBED=1 \
+.venv/bin/python scripts/openai_serve.py
+```
+
+Why this works on 8 GB:
+
+- 3-bit MLX weights land at ~3.1 GB on disk and roughly the same resident
+  in unified memory (vs ~4.5 GB for 4-bit, vs ~5.5 GB for Q4 GGUF in Ollama).
+- `US4_SERVE_PROMPT_CACHE_BYTES=268435456` caps the KV cache at 256 MiB so a
+  long prompt cannot balloon resident RAM past the safe envelope.
+- `US4_SERVE_DISABLE_EMBED=1` skips the 300 MB embedding model load.
+
+Measured on M1 8 GB with the recipe above:
+
+| Path | Model | Latency (80 tok, T=0) | Throughput |
+|---|---|---|---|
+| us4-v6 native MLX 3-bit | `Qwen2.5-Coder-7B-Instruct-3bit` | ~16 s | ~5 tok/s |
+| us4-v6 → Ollama proxy | `qwen2.5-coder:7b` (Q4_K_M GGUF) | ~22 s | ~3.5 tok/s |
+
+Native MLX is ~43 % faster on the same box because weights stay in unified
+memory and the KV cache cap prevents swap thrash. Use this mode when you
+want one binary, no daemon, and the smallest possible RAM footprint.
+
+Need an even tighter ceiling? Combine with `US4_SERVE_MLX_EXTRA_ARGS` to
+clamp generation and prefill chunking:
+
+```bash
+US4_SERVE_CHAT_BACKEND=mlx \
+US4_SERVE_CHAT_MODEL=mlx-community/Qwen2.5-Coder-7B-Instruct-3bit \
+US4_SERVE_PROMPT_CACHE_BYTES=134217728 \
+US4_SERVE_MLX_EXTRA_ARGS="--max-tokens 256 --prefill-step-size 512" \
+US4_SERVE_DISABLE_EMBED=1 \
+.venv/bin/python scripts/openai_serve.py
+```
 
 #### 6.2 C++ CLI wrapper (after `cmake --build`)
 
@@ -289,7 +334,7 @@ on small machines:
 
 | Machine | Comfortable chat model (Q4 MLX) | Tight ceiling |
 |---|---|---|
-| M1 / M2 8 GB | 0.5B–3B (`Qwen2.5-Coder-3B-Instruct-4bit`) | 7B Q4 (4.5 GB active, watch swap) |
+| M1 / M2 8 GB | 0.5B–3B (`Qwen2.5-Coder-3B-Instruct-4bit`) or 7B 3-bit MLX with KV cache cap (see recipe above) | 7B Q4 (4.5 GB active, watch swap) |
 | M1 / M2 / M3 16 GB | 7B Q4 (`Qwen2.5-Coder-7B-Instruct-4bit`) | 13B Q4 |
 | M-series Pro/Max 32 GB | 13B–14B Q4 | 32B Q4 |
 | M3/M4 Max 64 GB+ | 32B–70B Q4 | 70B Q5/Q6 |
@@ -310,6 +355,10 @@ prefer a 3B for sustained chat.
 | Beachball / swap thrashing on 7B chat | Machine RAM too small for chosen model | Drop to a 3B model (see hardware table in 6.5) |
 | `chat upstream unreachable: Connection refused` with `backend=ollama` | Ollama daemon not running | `ollama serve &` (or launch the Ollama.app), then verify with `curl http://127.0.0.1:11434/api/tags` |
 | Ollama returns `model "<id>" not found` | Model not pulled into Ollama | `ollama pull qwen2.5-coder:7b` (or whatever `US4_SERVE_CHAT_MODEL` points at) |
+| 7B chat OOM-kills the `mlx_lm.server` child on an 8 GB box | KV cache grew past safe envelope | Switch to the 3-bit quant + `US4_SERVE_PROMPT_CACHE_BYTES=268435456` recipe in 6.1, and add `US4_SERVE_DISABLE_EMBED=1` |
+| `invalid US4_SERVE_MLX_EXTRA_ARGS` in serve log | Shell-quoting broke during env-var expansion | Wrap the whole value in double quotes, e.g. `US4_SERVE_MLX_EXTRA_ARGS="--max-tokens 256"` |
+| `ignoring blocked tokens in US4_SERVE_MLX_EXTRA_ARGS` in serve log | You tried to override `--host`, `--port`, or `--cors*` via the escape hatch. Network binding is fixed to `127.0.0.1` by us4-v6 to prevent accidental exposure on shared/cloud hosts. | Drop those tokens. If you really need a different bind address, change `US4_SERVE_HOST` (still localhost-validated) instead of smuggling through extra args. |
+| `ignoring US4_SERVE_PROMPT_CACHE_BYTES=...: expected a positive integer` | Value is not numeric (e.g. `512m`, `256MB`) | Use a raw byte count: `268435456` for 256 MiB, `536870912` for 512 MiB |
 
 Full contract (endpoints, request/response shapes, env knobs, exit codes,
 security posture) lives in [`.specs/runtime/SERVE-OPENAI.md`](.specs/runtime/SERVE-OPENAI.md).

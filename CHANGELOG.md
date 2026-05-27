@@ -4,6 +4,53 @@ All notable changes to **US4 V6 Apple Edition** are recorded here. Format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the
 project adopts [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.4] - 2026-05-27
+
+### Added
+
+- `scripts/openai_serve.py` now forwards two new opt-in environment variables
+  straight to the `mlx_lm.server` child process:
+  - `US4_SERVE_PROMPT_CACHE_BYTES`: caps the KV/prompt cache (e.g.
+    `268435456` = 256 MiB). Stops a long prompt from ballooning resident RAM
+    past a safe envelope on memory-constrained boxes. Validated as a positive
+    integer at startup; non-numeric values (e.g. `512m`) are logged and
+    skipped rather than passed to the upstream as a cryptic argparse error.
+  - `US4_SERVE_MLX_EXTRA_ARGS`: shell-style raw argv appended to the
+    `mlx_lm.server` command line. Escape hatch for any flag not exposed as
+    a first-class env var (e.g. `"--max-tokens 256 --prefill-step-size 512"`).
+  Both are honoured only when `US4_SERVE_CHAT_BACKEND=mlx`; silently ignored
+  for `ollama` or custom upstreams. Defaults are unchanged (no flag passed
+  when the env var is empty), so existing deployments are not affected.
+
+### Security
+
+- `US4_SERVE_MLX_EXTRA_ARGS` now strips any token (and its value, when in
+  `--flag VALUE` form) matching `--host`, `--port`, or `--cors*` before the
+  tokens are appended to the `mlx_lm.server` argv. Rationale: Python
+  argparse honours the last occurrence of a flag, so a user copy-pasting
+  the README recipe onto a cloud VM or shared host could silently override
+  the hardcoded `--host 127.0.0.1` with `US4_SERVE_MLX_EXTRA_ARGS="--host
+  0.0.0.0"` and expose the unauthenticated local LLM endpoint to the
+  network. Rejected tokens are logged at ERROR level so misconfigurations
+  surface in the serve log instead of becoming a silent exposure. Network
+  binding remains fixed to `127.0.0.1` (or `US4_SERVE_HOST` when set, still
+  loopback-validated by `ipaddress.ip_address(...).is_loopback`).
+
+### Changed
+
+- `README.md` section 6.1 documents the new env vars in the configuration
+  table, adds a worked recipe for running a 7B-class model natively via MLX
+  on an M1 8 GB box (3-bit quant + 256 MiB KV cache cap +
+  `US4_SERVE_DISABLE_EMBED=1`), and ships a measured benchmark comparing
+  this path against the Ollama-proxy path. Result on M1 8 GB: native MLX
+  3-bit returns 80 tokens in ~16 s (~5 tok/s) versus ~22 s (~3.5 tok/s)
+  through the Ollama proxy — ~43 % faster while staying within the safe
+  RAM envelope. Section 6.5 hardware table notes that 7B 3-bit MLX is now
+  a viable comfortable target on 8 GB with the KV cache cap. Section 6.6
+  troubleshooting matrix grew two rows: 7B OOM-kill mitigation (switch to
+  3-bit + cap KV cache) and the `invalid US4_SERVE_MLX_EXTRA_ARGS` shell
+  quoting failure.
+
 ## [0.2.3] - 2026-05-27
 
 ### Changed
