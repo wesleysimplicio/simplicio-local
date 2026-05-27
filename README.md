@@ -133,28 +133,68 @@ Windows PowerShell:
 .\build\runtime\benchmarks\matrix_runner.exe
 ```
 
-### 6. Serve OpenAI-Compatible Endpoint (Optional)
+### 6. Serve OpenAI-Compatible Endpoint (Local LLM, Ollama-Compatible)
 
-`us4-cli serve` exposes a local OpenAI-compatible HTTP endpoint backed by MLX.
-Chat completions are served by `mlx_lm.server` (managed child process);
-embeddings are served in-process by `mlx-embeddings`. Single-file Python
-sidecar at `scripts/openai_serve.py`. No FastAPI, no uvicorn.
+US4 V6 ships an OpenAI-shape HTTP endpoint that drop-in replaces Ollama for
+any client expecting `/v1/chat/completions`, `/v1/completions`, `/v1/models`,
+or `/v1/embeddings`. Chat is served by `mlx_lm.server` (managed child
+process); embeddings are served in-process by `mlx-embeddings`. Single-file
+Python sidecar at `scripts/openai_serve.py`. No FastAPI, no uvicorn.
 
-Install the sidecar dependencies once:
+Two ways to run it: the **Python sidecar directly** (no C++ build required —
+fastest path, recommended for local LLM use) or the **C++ CLI wrapper**
+(`us4-cli serve`, identical contract once the native build exists).
+
+#### 6.1 Python sidecar (recommended — no C++ build)
+
+One-time setup. Use a project venv to avoid `externally-managed-environment`
+on Homebrew Python:
 
 ```bash
-pip install -r scripts/requirements-serve.txt
+python3 -m venv .venv
+.venv/bin/pip install -r scripts/requirements-serve.txt
 ```
 
-Run with defaults (chat + embeddings, port 8080, bind 127.0.0.1):
+Run with defaults (chat + embeddings, bind `127.0.0.1:8080`, child mlx-lm on
+`8081`). Always invoke the venv interpreter explicitly — `python3` from the
+system PATH will not see MLX:
+
+```bash
+.venv/bin/python scripts/openai_serve.py
+```
+
+The server reads configuration from environment variables (no CLI flags):
+
+| Env var | Default | Meaning |
+|---|---|---|
+| `US4_SERVE_HOST` | `127.0.0.1` | bind address |
+| `US4_SERVE_PORT` | `8080` | public port (mlx-lm child uses `PORT + 1`) |
+| `US4_SERVE_CHAT_MODEL` | `mlx-community/Qwen2.5-Coder-7B-Instruct-4bit` | chat model id (HuggingFace MLX repo) |
+| `US4_SERVE_EMBED_MODEL` | `mlx-community/embeddinggemma-300m-bf16` | embedding model id |
+| `US4_SERVE_DISABLE_CHAT` | unset | set `1` to disable chat backend |
+| `US4_SERVE_DISABLE_EMBED` | unset | set `1` to disable embeddings backend |
+| `US4_SERVE_LOG_LEVEL` | `INFO` | `DEBUG` / `INFO` / `WARNING` / `ERROR` |
+
+Example: pick a smaller 3B chat model on a memory-constrained M1 8 GB:
+
+```bash
+US4_SERVE_CHAT_MODEL=mlx-community/Qwen2.5-Coder-3B-Instruct-4bit \
+US4_SERVE_PORT=8080 \
+.venv/bin/python scripts/openai_serve.py
+```
+
+First start downloads model weights from HuggingFace into
+`~/.cache/huggingface/` (7B 4-bit MLX ≈ 4 GB, 3B 4-bit ≈ 1.7 GB). Subsequent
+starts reuse the cache.
+
+#### 6.2 C++ CLI wrapper (after `cmake --build`)
+
+Identical contract; `us4-cli serve` shells out to the same Python sidecar
+with CLI flag → env var translation:
 
 ```bash
 ./build/apps/us4-cli serve
-```
 
-Override models or disable a backend:
-
-```bash
 ./build/apps/us4-cli serve \
   --chat-model mlx-community/Qwen2.5-Coder-7B-Instruct-4bit \
   --embed-model mlx-community/embeddinggemma-300m-bf16
@@ -163,24 +203,73 @@ Override models or disable a backend:
 ./build/apps/us4-cli serve --no-embed --port 8088
 ```
 
-Smoke once it is up:
+#### 6.3 Smoke test the endpoint
+
+Once the server logs `us4 serve starting (host=127.0.0.1 port=8080 ...)`:
 
 ```bash
+# liveness + model registry
 curl -s http://127.0.0.1:8080/health
 curl -s http://127.0.0.1:8080/v1/models
+
+# chat (replaces `ollama run <model>` style usage)
+curl -s http://127.0.0.1:8080/v1/chat/completions \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "model":"qwen2.5-coder-7b",
+    "messages":[{"role":"user","content":"fizzbuzz in python"}]
+  }'
+
+# embeddings (replaces `ollama embed`)
 curl -s http://127.0.0.1:8080/v1/embeddings \
   -H 'Content-Type: application/json' \
   -d '{"input":"vector me"}'
 ```
 
-Point any OpenAI-shape client at the local endpoint via env var. Example for
-`simplicio-cli`:
+#### 6.4 Point any OpenAI-shape client at the local endpoint
+
+```bash
+export OPENAI_BASE_URL=http://127.0.0.1:8080/v1
+export OPENAI_API_KEY=anything
+# any OpenAI SDK / langchain / litellm / continue.dev now hits us4-v6 locally
+```
+
+`simplicio-cli` consumes the same env vars:
 
 ```bash
 export SIMPLICIO_BASE_URL=http://127.0.0.1:8080/v1
 export OPENAI_API_KEY=anything
-simplicio "explain this diff"
+simplicio task "explain this diff" --stack generic --target README.md
 ```
+
+#### 6.5 Hardware sizing on Apple Silicon
+
+The us4-v6 MLX path is unified-memory aware: 4-bit MLX weights occupy real
+RAM only once and are shared between CPU and GPU without copies. Compared
+to GGUF/Ollama on the same Apple Silicon machine, RAM headroom is meaningful
+on small machines:
+
+| Machine | Comfortable chat model (Q4 MLX) | Tight ceiling |
+|---|---|---|
+| M1 / M2 8 GB | 0.5B–3B (`Qwen2.5-Coder-3B-Instruct-4bit`) | 7B Q4 (4.5 GB active, watch swap) |
+| M1 / M2 / M3 16 GB | 7B Q4 (`Qwen2.5-Coder-7B-Instruct-4bit`) | 13B Q4 |
+| M-series Pro/Max 32 GB | 13B–14B Q4 | 32B Q4 |
+| M3/M4 Max 64 GB+ | 32B–70B Q4 | 70B Q5/Q6 |
+
+Override `US4_SERVE_CHAT_MODEL` to match the box you are on. Pulling a 7B
+model on an 8 GB machine is feasible but expect macOS to swap under load —
+prefer a 3B for sustained chat.
+
+#### 6.6 Troubleshooting
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `mlx-embeddings is not installed` | Running `python3` from system PATH, not the venv | Use `.venv/bin/python scripts/openai_serve.py` |
+| `error: externally-managed-environment` on `pip install` | Homebrew Python blocks system installs | Use the venv: `python3 -m venv .venv && .venv/bin/pip install -r scripts/requirements-serve.txt` |
+| `OSError: [Errno 48] Address already in use` | Previous serve still bound to `8080` / `8081` | `lsof -nP -iTCP:8080,8081 -sTCP:LISTEN`, then `kill <pid>` |
+| `command not found: ./build/us4-cli` | Native binary not built | Either `cmake --build build` first, or use the Python sidecar (section 6.1) |
+| `--model ollama/...` flag ignored | Sidecar reads env vars only, no argparse | Set `US4_SERVE_CHAT_MODEL=...` instead |
+| Beachball / swap thrashing on 7B chat | Machine RAM too small for chosen model | Drop to a 3B model (see hardware table in 6.5) |
 
 Full contract (endpoints, request/response shapes, env knobs, exit codes,
 security posture) lives in [`.specs/runtime/SERVE-OPENAI.md`](.specs/runtime/SERVE-OPENAI.md).

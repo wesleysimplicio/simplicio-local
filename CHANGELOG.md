@@ -4,6 +4,23 @@ All notable changes to **US4 V6 Apple Edition** are recorded here. Format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the
 project adopts [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2026-05-27
+
+### Changed
+
+- Expanded `README.md` section 6 ("Serve OpenAI-Compatible Endpoint") into a
+  full local-LLM guide framed as an Ollama-compatible drop-in. New
+  subsections cover: Python sidecar path (no C++ build required, with venv
+  setup avoiding `externally-managed-environment`), C++ CLI wrapper path,
+  smoke-test curl recipes for `/v1/chat/completions` and `/v1/embeddings`,
+  pointing arbitrary OpenAI-shape clients at the local endpoint, an Apple
+  Silicon hardware sizing table (M1 8 GB to M4 Max 64 GB+), and a
+  troubleshooting matrix for the most common first-run failures
+  (`mlx-embeddings is not installed`, `externally-managed-environment`,
+  `Address already in use`, missing native binary, ignored `--model` flag,
+  swap thrashing on undersized RAM). Documents that the sidecar is
+  configured via environment variables (`US4_SERVE_*`) and not CLI flags.
+
 ## [0.2.1] - 2026-05-27
 
 ### Fixed
