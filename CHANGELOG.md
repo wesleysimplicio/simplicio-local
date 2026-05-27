@@ -4,6 +4,27 @@ All notable changes to **US4 V6 Apple Edition** are recorded here. Format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the
 project adopts [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] - 2026-05-27
+
+### Changed
+
+- `README.md` section 6.1 now documents the `US4_SERVE_CHAT_BACKEND=ollama`
+  mode end-to-end. New content: the `US4_SERVE_CHAT_BACKEND` and
+  `US4_SERVE_CHAT_UPSTREAM` env vars added to the configuration table; a
+  worked example wiring us4-v6 as a front for an already-running Ollama
+  daemon (`ollama serve` + `ollama pull qwen2.5-coder:7b` + us4-v6 with
+  `CHAT_BACKEND=ollama`); an ASCII wire diagram showing chat going to
+  Ollama on `11434` and embeddings staying in-process via mlx-embeddings;
+  a list of the three situations where this mode beats the MLX path
+  (Ollama-based model management, single OpenAI-shape facade in front of
+  Ollama shared with other tools, machine that cannot host both an MLX
+  child and Ollama). Section 6.6 troubleshooting matrix grew two rows
+  covering the most likely failures in Ollama mode (`chat upstream
+  unreachable: Connection refused`, `model "<id>" not found`). Validated
+  with `qwen2.5-coder:7b` on an M1 8 GB box: chat round-trip through
+  us4-v6 -> Ollama returned a 78-token FizzBuzz response in ~22 s wall
+  (~3.5 tok/s), confirming the proxy path works under tight RAM.
+
 ## [0.2.2] - 2026-05-27
 
 ### Changed

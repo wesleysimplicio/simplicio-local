@@ -169,7 +169,9 @@ The server reads configuration from environment variables (no CLI flags):
 |---|---|---|
 | `US4_SERVE_HOST` | `127.0.0.1` | bind address |
 | `US4_SERVE_PORT` | `8080` | public port (mlx-lm child uses `PORT + 1`) |
-| `US4_SERVE_CHAT_MODEL` | `mlx-community/Qwen2.5-Coder-7B-Instruct-4bit` | chat model id (HuggingFace MLX repo) |
+| `US4_SERVE_CHAT_BACKEND` | `mlx` | chat upstream selector — `mlx`, `ollama`, or custom |
+| `US4_SERVE_CHAT_UPSTREAM` | unset | override upstream base URL (e.g. `http://127.0.0.1:11434`) |
+| `US4_SERVE_CHAT_MODEL` | `mlx-community/Qwen2.5-Coder-7B-Instruct-4bit` (or `qwen2.5-coder:14b` when backend=ollama) | chat model id |
 | `US4_SERVE_EMBED_MODEL` | `mlx-community/embeddinggemma-300m-bf16` | embedding model id |
 | `US4_SERVE_DISABLE_CHAT` | unset | set `1` to disable chat backend |
 | `US4_SERVE_DISABLE_EMBED` | unset | set `1` to disable embeddings backend |
@@ -186,6 +188,42 @@ US4_SERVE_PORT=8080 \
 First start downloads model weights from HuggingFace into
 `~/.cache/huggingface/` (7B 4-bit MLX ≈ 4 GB, 3B 4-bit ≈ 1.7 GB). Subsequent
 starts reuse the cache.
+
+Example: front an already-running Ollama daemon (chat goes through Ollama,
+embeddings stay MLX-local). Useful when you want to reuse models already
+pulled into Ollama without re-downloading the MLX variant from HuggingFace:
+
+```bash
+# 1) make sure Ollama is up and the model is pulled
+ollama serve &                        # or launch the Ollama.app
+ollama pull qwen2.5-coder:7b
+
+# 2) point us4-v6 at the Ollama daemon as its chat upstream
+US4_SERVE_CHAT_BACKEND=ollama \
+US4_SERVE_CHAT_MODEL=qwen2.5-coder:7b \
+.venv/bin/python scripts/openai_serve.py
+```
+
+Wire diagram in this mode:
+
+```text
+client ─► 127.0.0.1:8080 (us4-v6 OpenAI shape)
+              ├─► /v1/chat/completions  ──► 127.0.0.1:11434 (Ollama)
+              └─► /v1/embeddings         ──► in-process mlx-embeddings
+```
+
+This mode is what you want when:
+
+- you already use Ollama for model management (`ollama pull`, `ollama list`,
+  `ollama rm`) and only need the OpenAI-shape facade in front;
+- you want one model server (Ollama) shared with other tools (Open WebUI,
+  Cursor, Continue, etc.) but a *single endpoint* to point clients at;
+- you are validating us4-v6 contract behaviour but the target machine cannot
+  load both Ollama and an MLX child at once.
+
+Add `US4_SERVE_DISABLE_EMBED=1` to skip the MLX embeddings backend entirely
+if you only need chat — this saves the 300 MB embedding model load and a
+chunk of resident RAM on small machines.
 
 #### 6.2 C++ CLI wrapper (after `cmake --build`)
 
@@ -270,6 +308,8 @@ prefer a 3B for sustained chat.
 | `command not found: ./build/us4-cli` | Native binary not built | Either `cmake --build build` first, or use the Python sidecar (section 6.1) |
 | `--model ollama/...` flag ignored | Sidecar reads env vars only, no argparse | Set `US4_SERVE_CHAT_MODEL=...` instead |
 | Beachball / swap thrashing on 7B chat | Machine RAM too small for chosen model | Drop to a 3B model (see hardware table in 6.5) |
+| `chat upstream unreachable: Connection refused` with `backend=ollama` | Ollama daemon not running | `ollama serve &` (or launch the Ollama.app), then verify with `curl http://127.0.0.1:11434/api/tags` |
+| Ollama returns `model "<id>" not found` | Model not pulled into Ollama | `ollama pull qwen2.5-coder:7b` (or whatever `US4_SERVE_CHAT_MODEL` points at) |
 
 Full contract (endpoints, request/response shapes, env knobs, exit codes,
 security posture) lives in [`.specs/runtime/SERVE-OPENAI.md`](.specs/runtime/SERVE-OPENAI.md).
