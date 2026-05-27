@@ -30,6 +30,12 @@ lerna-debug.log*
 .env.*
 !.env.example
 
+# Python venv / cache (serve sidecar)
+.venv/
+venv/
+__pycache__/
+*.pyc
+
 # Test artifacts
 test-results/
 playwright-report/
