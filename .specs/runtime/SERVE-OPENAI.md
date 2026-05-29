@@ -59,6 +59,8 @@
 
 ```
 us4-cli serve [--host <addr>] [--port <n>]
+              [--chat-backend <mlx|ollama|custom>]
+              [--chat-upstream <url>]
               [--chat-model <id>] [--embed-model <id>]
               [--no-chat] [--no-embed]
 ```
@@ -69,6 +71,8 @@ us4-cli serve [--host <addr>] [--port <n>]
 |---|---|---|---|
 | `--host <addr>` | `US4_SERVE_HOST` | `127.0.0.1` | Bind address. Use `0.0.0.0` para expor na LAN. |
 | `--port <n>` | `US4_SERVE_PORT` | `8080` | Porta publica. O upstream `mlx_lm.server` sobe em `PORT+1`. |
+| `--chat-backend <mlx\|ollama\|custom>` | `US4_SERVE_CHAT_BACKEND` | `mlx` | Seletor do upstream de chat. |
+| `--chat-upstream <url>` | `US4_SERVE_CHAT_UPSTREAM` | unset | Override do upstream de chat, por exemplo `http://127.0.0.1:11434` para Ollama. |
 | `--chat-model <id>` | `US4_SERVE_CHAT_MODEL` | `mlx-community/Qwen2.5-Coder-7B-Instruct-4bit` | Modelo de chat (Hugging Face id). |
 | `--embed-model <id>` | `US4_SERVE_EMBED_MODEL` | `mlx-community/embeddinggemma-300m-bf16` | Modelo de embeddings. |
 | `--no-chat` | `US4_SERVE_DISABLE_CHAT=1` | off | Desabilita chat (nao sobe `mlx_lm.server`). |

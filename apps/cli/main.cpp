@@ -117,6 +117,8 @@ void PrintHelp() {
                "<scalar|neon|mlx|metal|ane>] --prompt <text> [--max-tokens N] "
                "[--json]\n"
             << "  us4-cli serve [--host <addr>] [--port <n>] "
+               "[--chat-backend <mlx|ollama|custom>] "
+               "[--chat-upstream <url>] "
                "[--chat-model <id>] [--embed-model <id>] "
                "[--no-chat] [--no-embed]\n";
 }
@@ -133,6 +135,8 @@ int SetServeEnv(const char *name, const std::string &value) {
 
 int RunServeCommand(const std::optional<std::string> &host,
                     const std::optional<std::string> &port,
+                    const std::optional<std::string> &chatBackend,
+                    const std::optional<std::string> &chatUpstream,
                     const std::optional<std::string> &chatModel,
                     const std::optional<std::string> &embedModel,
                     const bool disableChat, const bool disableEmbed) {
@@ -140,6 +144,14 @@ int RunServeCommand(const std::optional<std::string> &host,
     return 1;
   }
   if (port.has_value() && SetServeEnv("US4_SERVE_PORT", *port) != 0) {
+    return 1;
+  }
+  if (chatBackend.has_value() &&
+      SetServeEnv("US4_SERVE_CHAT_BACKEND", *chatBackend) != 0) {
+    return 1;
+  }
+  if (chatUpstream.has_value() &&
+      SetServeEnv("US4_SERVE_CHAT_UPSTREAM", *chatUpstream) != 0) {
     return 1;
   }
   if (chatModel.has_value() &&
@@ -583,6 +595,8 @@ int main(int argc, char **argv) {
   std::optional<std::string> promptValue;
   std::optional<std::string> serveHost;
   std::optional<std::string> servePort;
+  std::optional<std::string> serveChatBackend;
+  std::optional<std::string> serveChatUpstream;
   std::optional<std::string> serveChatModel;
   std::optional<std::string> serveEmbedModel;
   std::size_t maxTokens = 16;
@@ -599,6 +613,10 @@ int main(int argc, char **argv) {
       serveHost = argv[++index];
     } else if (arg == "--port" && index + 1 < argc) {
       servePort = argv[++index];
+    } else if (arg == "--chat-backend" && index + 1 < argc) {
+      serveChatBackend = argv[++index];
+    } else if (arg == "--chat-upstream" && index + 1 < argc) {
+      serveChatUpstream = argv[++index];
     } else if (arg == "--chat-model" && index + 1 < argc) {
       serveChatModel = argv[++index];
     } else if (arg == "--embed-model" && index + 1 < argc) {
@@ -654,9 +672,9 @@ int main(int argc, char **argv) {
   }
 
   if (serveCommand) {
-    return RunServeCommand(serveHost, servePort, serveChatModel,
-                           serveEmbedModel, serveDisableChat,
-                           serveDisableEmbed);
+    return RunServeCommand(serveHost, servePort, serveChatBackend,
+                           serveChatUpstream, serveChatModel, serveEmbedModel,
+                           serveDisableChat, serveDisableEmbed);
   }
 
   const us4::HardwareProbeResult probe = us4::HardwareProbe::Detect();

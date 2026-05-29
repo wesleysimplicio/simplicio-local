@@ -4,6 +4,17 @@ All notable changes to **US4 V6 Apple Edition** are recorded here. Format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the
 project adopts [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.5] - 2026-05-29
+
+### Added
+
+- `us4-cli serve` now exposes `--chat-backend <mlx|ollama|custom>` and
+  `--chat-upstream <url>` as first-class flags, mapping them to
+  `US4_SERVE_CHAT_BACKEND` and `US4_SERVE_CHAT_UPSTREAM` before the Python
+  sidecar is executed. This keeps the C++ wrapper aligned with the documented
+  Ollama/custom-upstream serve modes, so users no longer need to export env
+  vars manually for those two common knobs.
+
 ## [0.2.4] - 2026-05-27
 
 ### Added

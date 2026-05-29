@@ -163,7 +163,8 @@ system PATH will not see MLX:
 .venv/bin/python scripts/openai_serve.py
 ```
 
-The server reads configuration from environment variables (no CLI flags):
+When running the Python sidecar directly, configure it with environment
+variables:
 
 | Env var | Default | Meaning |
 |---|---|---|
@@ -281,6 +282,11 @@ with CLI flag → env var translation:
 ./build/apps/us4-cli serve \
   --chat-model mlx-community/Qwen2.5-Coder-7B-Instruct-4bit \
   --embed-model mlx-community/embeddinggemma-300m-bf16
+
+./build/apps/us4-cli serve \
+  --chat-backend ollama \
+  --chat-upstream http://127.0.0.1:11434 \
+  --chat-model qwen2.5-coder:7b
 
 ./build/apps/us4-cli serve --no-chat            # embeddings only
 ./build/apps/us4-cli serve --no-embed --port 8088
