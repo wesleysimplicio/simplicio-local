@@ -25,6 +25,13 @@
 
 Apple Silicon पर local LLM inference के लिए Universal State Runtime: MLX, Metal, NEON, ANE pathing और practical CLI.
 
+## प्रोजेक्ट DNA
+
+यह localized पेज fast path रखता है। पूरा restored technical guide root README में है ताकि project की original voice और operating detail बनी रहे।
+
+- Full restored guide: [../README.md](../README.md)
+- Local project note: us4-v6-simplicio-apple is the desktop packaging edge of the ecosystem: native launchers, bootstrap scripts, CMake/package metadata, and the Apple-facing path for a local Simplicio experience. The refreshed README now keeps the global polish while preserving the practical installation and build notes from the earlier guide.
+
 ## त्वरित शुरुआत
 
 ```bash

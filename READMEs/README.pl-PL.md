@@ -25,6 +25,13 @@
 
 Universal State Runtime do lokalnej inferencji LLM na Apple Silicon: MLX, Metal, NEON, ścieżka ANE i praktyczne CLI.
 
+## DNA projektu
+
+Ta zlokalizowana strona zachowuje szybka sciezke. Pelny odtworzony przewodnik techniczny znajduje sie w glownym README, aby zachowac pierwotny glos i szczegoly operacyjne projektu.
+
+- Full restored guide: [../README.md](../README.md)
+- Local project note: us4-v6-simplicio-apple is the desktop packaging edge of the ecosystem: native launchers, bootstrap scripts, CMake/package metadata, and the Apple-facing path for a local Simplicio experience. The refreshed README now keeps the global polish while preserving the practical installation and build notes from the earlier guide.
+
 ## Szybki start
 
 ```bash

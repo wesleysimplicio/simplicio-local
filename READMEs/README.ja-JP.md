@@ -25,6 +25,13 @@
 
 Apple Silicon 上のローカル LLM 推論向け Universal State Runtime です: MLX、Metal、NEON、ANE パス、実用 CLI。
 
+## プロジェクトのDNA
+
+このローカライズ版は最短導線を保ちます。復元された詳細ガイドはルート README にあり、プロジェクト本来の声と運用情報を残します。
+
+- Full restored guide: [../README.md](../README.md)
+- Local project note: us4-v6-simplicio-apple is the desktop packaging edge of the ecosystem: native launchers, bootstrap scripts, CMake/package metadata, and the Apple-facing path for a local Simplicio experience. The refreshed README now keeps the global polish while preserving the practical installation and build notes from the earlier guide.
+
 ## クイックスタート
 
 ```bash

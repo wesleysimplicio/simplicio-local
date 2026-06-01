@@ -25,6 +25,13 @@
 
 面向 Apple Silicon 本地 LLM 推理的 Universal State Runtime：MLX、Metal、NEON、ANE 路径和实用 CLI。
 
+## 项目 DNA
+
+此本地化页面保留快速路径。恢复后的完整技术指南位于根 README 中，用来保留项目原本的表达和运行细节。
+
+- Full restored guide: [../README.md](../README.md)
+- Local project note: us4-v6-simplicio-apple is the desktop packaging edge of the ecosystem: native launchers, bootstrap scripts, CMake/package metadata, and the Apple-facing path for a local Simplicio experience. The refreshed README now keeps the global polish while preserving the practical installation and build notes from the earlier guide.
+
 ## 快速开始
 
 ```bash

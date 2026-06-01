@@ -18,13 +18,15 @@ This README pattern was built after reviewing:
 3. Trust badges: GitHub stars, package version where applicable, language/runtime, license.
 4. Language selector with the full Simplicio language set.
 5. Real visual asset or chart, not decorative filler.
-6. Quick Start before long architecture reference.
-7. What it does, expressed as outcomes instead of internal implementation first.
-8. Proof and validation: benchmarks, tests, mapper artifacts, smoke flow, or known blocker.
-9. Simplicio ecosystem graph.
-10. Documentation links.
-11. Star History chart.
-12. License / production note.
+6. Project DNA: a short project-specific narrative that explains why this repo exists and what makes it real.
+7. Quick Start before long architecture reference.
+8. What it does, expressed as outcomes instead of internal implementation first.
+9. Proof and validation: benchmarks, tests, mapper artifacts, smoke flow, or known blocker.
+10. Simplicio ecosystem graph.
+11. Documentation links.
+12. Original project guide / Project DNA archive: restore the strongest pre-existing README material instead of replacing it.
+13. Star History chart.
+14. License / production note.
 
 ## Required Languages
 
@@ -54,6 +56,8 @@ This README pattern was built after reviewing:
 
 ## Maintenance Rules
 
+- A globalization pass must add discovery value without deleting the repo-specific operating manual. Keep benchmarks, setup notes, domain details, architecture explanations, screenshots, caveats, and reproduction commands unless they are false.
+- Treat the centered hero, badges, language selector and Star History as the front door; treat the restored guide as the workshop. Both layers are required.
 - Keep commands copy-pasteable and do not translate command flags.
 - Keep the first paragraph localized in every language; deep reference docs may remain in English until a release needs full translation.
 - Update this file whenever the README structure changes.

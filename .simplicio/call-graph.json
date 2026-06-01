@@ -1,7 +1,7 @@
 {
   "schema": "simplicio.call-graph/v1",
   "version": 1,
-  "generated_at": "2026-06-01T04:44:30.062Z",
+  "generated_at": "2026-06-01T05:04:22.266Z",
   "source_symbol_index": ".simplicio/symbol-index.json",
   "edges": [
     {

@@ -1,7 +1,7 @@
 {
   "schema": "simplicio.architecture-inventory/v1",
   "version": 1,
-  "generated_at": "2026-06-01T04:44:30.062Z",
+  "generated_at": "2026-06-01T05:04:22.266Z",
   "root": "/Users/wesleysimplicio/Projetos/ai/us4-v6-simplicio-apple",
   "source_project_map": ".simplicio/project-map.json",
   "source_symbol_index": ".simplicio/symbol-index.json",

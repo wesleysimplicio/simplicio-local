@@ -98,3 +98,10 @@ delivery loop"]
 ## Lesen
 
 See the repository license and distribution notes before production use.
+
+## DNA projek
+
+Halaman setempat ini mengekalkan laluan pantas. Panduan teknikal penuh yang dipulihkan berada dalam README utama supaya suara asal dan butiran operasi projek kekal hidup.
+
+- Full restored guide: [../README.md](../README.md)
+- Local project note: us4-v6-simplicio-apple is the desktop packaging edge of the ecosystem: native launchers, bootstrap scripts, CMake/package metadata, and the Apple-facing path for a local Simplicio experience. The refreshed README now keeps the global polish while preserving the practical installation and build notes from the earlier guide.

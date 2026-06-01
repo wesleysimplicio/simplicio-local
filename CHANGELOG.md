@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.10] - 2026-06-01
+
+### Changed
+
+- Restored the original Apple/local runtime README guide below the new multilingual landing page.
+- Added Project DNA notes to localized READMEs and updated the shared standard to preserve practical install/build notes during README refreshes.
+- Bump starter package metadata `0.1.52` -> `0.1.53` and project runtime version `0.2.9` -> `0.2.10`.
+
 ## [0.2.9] - 2026-06-01
 
 ### Changed
