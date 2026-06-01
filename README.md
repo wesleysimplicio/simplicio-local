@@ -172,7 +172,7 @@ variables:
 | `US4_SERVE_PORT` | `8080` | public port (mlx-lm child uses `PORT + 1`) |
 | `US4_SERVE_CHAT_BACKEND` | `mlx` | chat upstream selector — `mlx`, `ollama`, or custom |
 | `US4_SERVE_CHAT_UPSTREAM` | unset | override upstream base URL (e.g. `http://127.0.0.1:11434`) |
-| `US4_SERVE_CHAT_MODEL` | `mlx-community/Qwen2.5-Coder-7B-Instruct-4bit` (or `qwen2.5-coder:14b` when backend=ollama) | chat model id |
+| `US4_SERVE_CHAT_MODEL` | `mlx-community/Qwen2.5-Coder-7B-Instruct-4bit` (or `openbmb/minicpm5:latest` when backend=ollama) | chat model id |
 | `US4_SERVE_EMBED_MODEL` | `mlx-community/embeddinggemma-300m-bf16` | embedding model id |
 | `US4_SERVE_DISABLE_CHAT` | unset | set `1` to disable chat backend |
 | `US4_SERVE_DISABLE_EMBED` | unset | set `1` to disable embeddings backend |
@@ -199,11 +199,11 @@ pulled into Ollama without re-downloading the MLX variant from HuggingFace:
 ```bash
 # 1) make sure Ollama is up and the model is pulled
 ollama serve &                        # or launch the Ollama.app
-ollama pull qwen2.5-coder:7b
+ollama pull openbmb/minicpm5:latest
 
 # 2) point us4-v6 at the Ollama daemon as its chat upstream
 US4_SERVE_CHAT_BACKEND=ollama \
-US4_SERVE_CHAT_MODEL=qwen2.5-coder:7b \
+US4_SERVE_CHAT_MODEL=openbmb/minicpm5:latest \
 .venv/bin/python scripts/openai_serve.py
 ```
 
@@ -253,7 +253,7 @@ Measured on M1 8 GB with the recipe above:
 | Path | Model | Latency (80 tok, T=0) | Throughput |
 |---|---|---|---|
 | us4-v6 native MLX 3-bit | `Qwen2.5-Coder-7B-Instruct-3bit` | ~16 s | ~5 tok/s |
-| us4-v6 → Ollama proxy | `qwen2.5-coder:7b` (Q4_K_M GGUF) | ~22 s | ~3.5 tok/s |
+| us4-v6 → Ollama proxy | `openbmb/minicpm5:latest` | not remeasured | not remeasured |
 
 Native MLX is ~43 % faster on the same box because weights stay in unified
 memory and the KV cache cap prevents swap thrash. Use this mode when you
@@ -286,7 +286,7 @@ with CLI flag → env var translation:
 ./build/apps/us4-cli serve \
   --chat-backend ollama \
   --chat-upstream http://127.0.0.1:11434 \
-  --chat-model qwen2.5-coder:7b
+  --chat-model openbmb/minicpm5:latest
 
 ./build/apps/us4-cli serve --no-chat            # embeddings only
 ./build/apps/us4-cli serve --no-embed --port 8088
@@ -305,7 +305,7 @@ curl -s http://127.0.0.1:8080/v1/models
 curl -s http://127.0.0.1:8080/v1/chat/completions \
   -H 'Content-Type: application/json' \
   -d '{
-    "model":"qwen2.5-coder-7b",
+    "model":"openbmb/minicpm5:latest",
     "messages":[{"role":"user","content":"fizzbuzz in python"}]
   }'
 
@@ -360,7 +360,7 @@ prefer a 3B for sustained chat.
 | `--model ollama/...` flag ignored | Sidecar reads env vars only, no argparse | Set `US4_SERVE_CHAT_MODEL=...` instead |
 | Beachball / swap thrashing on 7B chat | Machine RAM too small for chosen model | Drop to a 3B model (see hardware table in 6.5) |
 | `chat upstream unreachable: Connection refused` with `backend=ollama` | Ollama daemon not running | `ollama serve &` (or launch the Ollama.app), then verify with `curl http://127.0.0.1:11434/api/tags` |
-| Ollama returns `model "<id>" not found` | Model not pulled into Ollama | `ollama pull qwen2.5-coder:7b` (or whatever `US4_SERVE_CHAT_MODEL` points at) |
+| Ollama returns `model "<id>" not found` | Model not pulled into Ollama | `ollama pull openbmb/minicpm5:latest` (or whatever `US4_SERVE_CHAT_MODEL` points at) |
 | 7B chat OOM-kills the `mlx_lm.server` child on an 8 GB box | KV cache grew past safe envelope | Switch to the 3-bit quant + `US4_SERVE_PROMPT_CACHE_BYTES=268435456` recipe in 6.1, and add `US4_SERVE_DISABLE_EMBED=1` |
 | `invalid US4_SERVE_MLX_EXTRA_ARGS` in serve log | Shell-quoting broke during env-var expansion | Wrap the whole value in double quotes, e.g. `US4_SERVE_MLX_EXTRA_ARGS="--max-tokens 256"` |
 | `ignoring blocked tokens in US4_SERVE_MLX_EXTRA_ARGS` in serve log | You tried to override `--host`, `--port`, or `--cors*` via the escape hatch. Network binding is fixed to `127.0.0.1` by us4-v6 to prevent accidental exposure on shared/cloud hosts. | Drop those tokens. If you really need a different bind address, change `US4_SERVE_HOST` (still localhost-validated) instead of smuggling through extra args. |

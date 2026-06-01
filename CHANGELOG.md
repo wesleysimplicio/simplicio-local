@@ -4,6 +4,16 @@ All notable changes to **US4 V6 Apple Edition** are recorded here. Format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the
 project adopts [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.8] - 2026-06-01
+
+### Changed
+
+- Ollama chat backend default now uses `openbmb/minicpm5:latest`, matching the
+  Simplicio local LLM standard.
+- Updated Ollama-mode README recipes and troubleshooting to pull and route the
+  MiniCPM5 model by default.
+- Bump project runtime version `0.2.7` -> `0.2.8`.
+
 ## [0.2.7] - 2026-05-31
 
 ### Changed

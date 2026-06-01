@@ -35,7 +35,7 @@ Environment knobs (all optional):
                               http://127.0.0.1:11434). Defaults derived from
                               the selected backend.
     US4_SERVE_CHAT_MODEL      default mlx-community/Qwen2.5-Coder-7B-Instruct-4bit
-                              (or `qwen2.5-coder:14b` when backend=ollama).
+                              (or `openbmb/minicpm5:latest` when backend=ollama).
     US4_SERVE_EMBED_MODEL     default mlx-community/embeddinggemma-300m-bf16
     US4_SERVE_DISABLE_CHAT    truthy -> skip chat backend entirely
     US4_SERVE_DISABLE_EMBED   truthy -> skip embeddings handler
@@ -89,7 +89,7 @@ from typing import Any, Optional
 LOG = logging.getLogger("us4.serve")
 
 DEFAULT_CHAT_MODEL_MLX = "mlx-community/Qwen2.5-Coder-7B-Instruct-4bit"
-DEFAULT_CHAT_MODEL_OLLAMA = "qwen2.5-coder:14b"
+DEFAULT_CHAT_MODEL_OLLAMA = "openbmb/minicpm5:latest"
 DEFAULT_EMBED_MODEL = "mlx-community/embeddinggemma-300m-bf16"
 DEFAULT_OLLAMA_UPSTREAM = "http://127.0.0.1:11434"
 SUPPORTED_CHAT_BACKENDS = ("mlx", "ollama", "custom")

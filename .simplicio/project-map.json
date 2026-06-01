@@ -1,20 +1,32 @@
 {
   "schema": "simplicio.project-map/v1",
   "version": 1,
-  "generated_at": "2026-05-30T20:28:56.069Z",
-  "update_mode": "full",
+  "generated_at": "2026-06-01T03:16:24.050Z",
+  "update_mode": "incremental",
   "product": {
-    "name": "us4-v6-simplicio-apple",
-    "stack": "node",
+    "name": "@wesleysimplicio/llm-project-mapper",
+    "stack": "commonjs",
     "project_mode": "root"
   },
   "files": [
     {
-      "path": "_BOOTSTRAP.md",
+      "path": ".DS_Store",
+      "language": "text",
+      "size_bytes": 6148,
+      "last_modified": "2026-05-27T05:18:41.062Z",
+      "file_hash": "2965e797a577a7ae323473d236777ef88d378481c5cdf3e35d25cd0646957278",
+      "git_status": "clean",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.12
+    },
+    {
+      "path": ".agents/README.md",
       "language": "markdown",
-      "size_bytes": 2103,
-      "last_modified": "2026-05-27T03:22:58.045Z",
-      "file_hash": "ab9ac3d37fbb997e330db2c1c22b1caba43e7a9040a9a1ab0db3eef4f4d7f0de",
+      "size_bytes": 3480,
+      "last_modified": "2026-05-27T03:22:58.027Z",
+      "file_hash": "3fc3bb35ad1983275fb658e923567ee825068830b2e3ed3b095b71d56bc7bada",
       "git_status": "clean",
       "roles": [],
       "imports": [],
@@ -58,18 +70,6 @@
       "importance": 0.12
     },
     {
-      "path": ".agents/README.md",
-      "language": "markdown",
-      "size_bytes": 3480,
-      "last_modified": "2026-05-27T03:22:58.027Z",
-      "file_hash": "3fc3bb35ad1983275fb658e923567ee825068830b2e3ed3b095b71d56bc7bada",
-      "git_status": "clean",
-      "roles": [],
-      "imports": [],
-      "exports": [],
-      "importance": 0.12
-    },
-    {
       "path": ".agents/reviewer.agent.md",
       "language": "markdown",
       "size_bytes": 4211,
@@ -100,7 +100,7 @@
       "language": "powershell",
       "size_bytes": 1067,
       "last_modified": "2026-05-27T03:22:58.028Z",
-      "file_hash": "b35d43aa930881562e1a90731713dca1dfb97bffa49d13e1ff99d50b2d3b59a9",
+      "file_hash": "40eebc69d8c44b9d81661a1d51510d89c37f39d9ee62d4949ed57bebafe51243",
       "git_status": "clean",
       "roles": [],
       "imports": [],
@@ -124,7 +124,7 @@
       "language": "powershell",
       "size_bytes": 1175,
       "last_modified": "2026-05-27T03:22:58.028Z",
-      "file_hash": "460f9ccb2fcda1ec7efe740f45f97f93c5e5e89359d90103085a81b391266dc0",
+      "file_hash": "2b6c7bc43e4a19991b27eae5844071d75c09b1f497b6ce43dd0ab352875ad826",
       "git_status": "clean",
       "roles": [],
       "imports": [],
@@ -210,7 +210,7 @@
       "language": "powershell",
       "size_bytes": 1067,
       "last_modified": "2026-05-27T03:22:58.029Z",
-      "file_hash": "b35d43aa930881562e1a90731713dca1dfb97bffa49d13e1ff99d50b2d3b59a9",
+      "file_hash": "40eebc69d8c44b9d81661a1d51510d89c37f39d9ee62d4949ed57bebafe51243",
       "git_status": "clean",
       "roles": [],
       "imports": [],
@@ -234,7 +234,7 @@
       "language": "powershell",
       "size_bytes": 1175,
       "last_modified": "2026-05-27T03:22:58.029Z",
-      "file_hash": "460f9ccb2fcda1ec7efe740f45f97f93c5e5e89359d90103085a81b391266dc0",
+      "file_hash": "2b6c7bc43e4a19991b27eae5844071d75c09b1f497b6ce43dd0ab352875ad826",
       "git_status": "clean",
       "roles": [],
       "imports": [],
@@ -266,18 +266,6 @@
       "importance": 0.12
     },
     {
-      "path": ".DS_Store",
-      "language": "text",
-      "size_bytes": 6148,
-      "last_modified": "2026-05-27T05:18:41.062Z",
-      "file_hash": "2965e797a577a7ae323473d236777ef88d378481c5cdf3e35d25cd0646957278",
-      "git_status": "clean",
-      "roles": [],
-      "imports": [],
-      "exports": [],
-      "importance": 0.12
-    },
-    {
       "path": ".gitattributes",
       "language": "text",
       "size_bytes": 1648,
@@ -295,6 +283,42 @@
       "size_bytes": 19,
       "last_modified": "2026-05-27T03:22:58.030Z",
       "file_hash": "92ec0744a28967e8b4d132dd259fd428aff8e4406aa6a5c13d336cfdf2c55cb8",
+      "git_status": "clean",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.12
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/bug.md",
+      "language": "markdown",
+      "size_bytes": 1786,
+      "last_modified": "2026-05-27T03:22:58.030Z",
+      "file_hash": "3be023dbefc0062af774949946ef8cf59e122b73d5d41bbba45d0d84751657f6",
+      "git_status": "clean",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.12
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/feature.md",
+      "language": "markdown",
+      "size_bytes": 1686,
+      "last_modified": "2026-05-27T03:22:58.030Z",
+      "file_hash": "68f31941467f7322699d13b8947d0b9239b9050fba9460df410adfe857a25992",
+      "git_status": "clean",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.12
+    },
+    {
+      "path": ".github/PULL_REQUEST_TEMPLATE.md",
+      "language": "markdown",
+      "size_bytes": 2209,
+      "last_modified": "2026-05-27T03:22:58.030Z",
+      "file_hash": "a00b5059ebdab28826809a0e5397c4d5c6eaf4cf0547b357c0671a6c909a4bd5",
       "git_status": "clean",
       "roles": [],
       "imports": [],
@@ -376,42 +400,6 @@
       "importance": 0.12
     },
     {
-      "path": ".github/ISSUE_TEMPLATE/bug.md",
-      "language": "markdown",
-      "size_bytes": 1786,
-      "last_modified": "2026-05-27T03:22:58.030Z",
-      "file_hash": "3be023dbefc0062af774949946ef8cf59e122b73d5d41bbba45d0d84751657f6",
-      "git_status": "clean",
-      "roles": [],
-      "imports": [],
-      "exports": [],
-      "importance": 0.12
-    },
-    {
-      "path": ".github/ISSUE_TEMPLATE/feature.md",
-      "language": "markdown",
-      "size_bytes": 1686,
-      "last_modified": "2026-05-27T03:22:58.030Z",
-      "file_hash": "68f31941467f7322699d13b8947d0b9239b9050fba9460df410adfe857a25992",
-      "git_status": "clean",
-      "roles": [],
-      "imports": [],
-      "exports": [],
-      "importance": 0.12
-    },
-    {
-      "path": ".github/PULL_REQUEST_TEMPLATE.md",
-      "language": "markdown",
-      "size_bytes": 2209,
-      "last_modified": "2026-05-27T03:22:58.030Z",
-      "file_hash": "a00b5059ebdab28826809a0e5397c4d5c6eaf4cf0547b357c0671a6c909a4bd5",
-      "git_status": "clean",
-      "roles": [],
-      "imports": [],
-      "exports": [],
-      "importance": 0.12
-    },
-    {
       "path": ".github/workflows/ci.yml",
       "language": "yaml",
       "size_bytes": 14505,
@@ -460,59 +448,11 @@
       "importance": 0.12
     },
     {
-      "path": ".pytest_cache/.gitignore",
-      "language": "text",
-      "size_bytes": 37,
-      "last_modified": "2026-05-29T21:28:36.455Z",
-      "file_hash": "3ed731b65d06150c138e2dadb0be0697550888a6b47eb8c45ecc9adba8b8e9bd",
-      "git_status": "clean",
-      "roles": [],
-      "imports": [],
-      "exports": [],
-      "importance": 0.12
-    },
-    {
-      "path": ".pytest_cache/README.md",
+      "path": ".skills/README.md",
       "language": "markdown",
-      "size_bytes": 302,
-      "last_modified": "2026-05-29T21:28:36.455Z",
-      "file_hash": "73fd6fccdd802c419a6b2d983d6c3173b7da97558ac4b589edec2dfe443db9ad",
-      "git_status": "clean",
-      "roles": [],
-      "imports": [],
-      "exports": [],
-      "importance": 0.12
-    },
-    {
-      "path": ".pytest_cache/v/cache/nodeids",
-      "language": "text",
-      "size_bytes": 2,
-      "last_modified": "2026-05-30T20:28:02.393Z",
-      "file_hash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
-      "git_status": "clean",
-      "roles": [],
-      "imports": [],
-      "exports": [],
-      "importance": 0.12
-    },
-    {
-      "path": ".ruff_cache/.gitignore",
-      "language": "text",
-      "size_bytes": 35,
-      "last_modified": "2026-05-27T03:54:10.122Z",
-      "file_hash": "9e3a60f1e6ec4ae60215c11d54b171392745ec25e9dded433d5bd921363af316",
-      "git_status": "clean",
-      "roles": [],
-      "imports": [],
-      "exports": [],
-      "importance": 0.12
-    },
-    {
-      "path": ".ruff_cache/0.15.12/10953000304710497579",
-      "language": "text",
-      "size_bytes": 103,
-      "last_modified": "2026-05-27T04:06:47.198Z",
-      "file_hash": "e1932940592748ecc4ffe351b04358e96e6899d85fb4a23a29ade22b50ab0923",
+      "size_bytes": 5467,
+      "last_modified": "2026-05-27T03:22:58.031Z",
+      "file_hash": "30209deb5358d534b61df3a36bfd2987dcb02a9c322a978b7247c7a4db6a6bdc",
       "git_status": "clean",
       "roles": [],
       "imports": [],
@@ -592,16 +532,18 @@
       "importance": 0.12
     },
     {
-      "path": ".skills/README.md",
+      "path": ".specs/README.md",
       "language": "markdown",
-      "size_bytes": 5467,
-      "last_modified": "2026-05-27T03:22:58.031Z",
-      "file_hash": "30209deb5358d534b61df3a36bfd2987dcb02a9c322a978b7247c7a4db6a6bdc",
+      "size_bytes": 1807,
+      "last_modified": "2026-05-27T03:22:58.032Z",
+      "file_hash": "9afb4779c3eb55fa4d36ff26134ba20b87afc229f97c809846868379a3cffe71",
       "git_status": "clean",
-      "roles": [],
+      "roles": [
+        "test"
+      ],
       "imports": [],
       "exports": [],
-      "importance": 0.12
+      "importance": 0.37
     },
     {
       "path": ".specs/architecture/ADR-001-mlx-primary-backend.md",
@@ -815,20 +757,6 @@
       "importance": 0.37
     },
     {
-      "path": ".specs/README.md",
-      "language": "markdown",
-      "size_bytes": 1807,
-      "last_modified": "2026-05-27T03:22:58.032Z",
-      "file_hash": "9afb4779c3eb55fa4d36ff26134ba20b87afc229f97c809846868379a3cffe71",
-      "git_status": "clean",
-      "roles": [
-        "test"
-      ],
-      "imports": [],
-      "exports": [],
-      "importance": 0.37
-    },
-    {
       "path": ".specs/runtime/CLI-CONTRACT.md",
       "language": "markdown",
       "size_bytes": 4076,
@@ -932,6 +860,20 @@
       "size_bytes": 1798,
       "last_modified": "2026-05-27T03:22:58.034Z",
       "file_hash": "23dc67a2b05a16ad0a8de1d6f31371febe6788bfd08e7d86e22c173feb2cb76a",
+      "git_status": "clean",
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "exports": [],
+      "importance": 0.37
+    },
+    {
+      "path": ".specs/sprints/TIMELINE.md",
+      "language": "markdown",
+      "size_bytes": 1815,
+      "last_modified": "2026-05-27T03:22:58.034Z",
+      "file_hash": "471ecf9d4091dd071291309f8715ba341cc2cffcd23a44a6ec9e8dc85ce7989d",
       "git_status": "clean",
       "roles": [
         "test"
@@ -2177,20 +2119,6 @@
       "importance": 0.37
     },
     {
-      "path": ".specs/sprints/TIMELINE.md",
-      "language": "markdown",
-      "size_bytes": 1815,
-      "last_modified": "2026-05-27T03:22:58.034Z",
-      "file_hash": "471ecf9d4091dd071291309f8715ba341cc2cffcd23a44a6ec9e8dc85ce7989d",
-      "git_status": "clean",
-      "roles": [
-        "test"
-      ],
-      "imports": [],
-      "exports": [],
-      "importance": 0.37
-    },
-    {
       "path": ".specs/workflow/CONTRIBUTING.md",
       "language": "markdown",
       "size_bytes": 1422,
@@ -2273,6 +2201,142 @@
       "importance": 0.12
     },
     {
+      "path": "CHANGELOG.md",
+      "language": "markdown",
+      "size_bytes": 9332,
+      "last_modified": "2026-06-01T03:08:21.641Z",
+      "file_hash": "ed23e16c9a575f6f5866c0d55863e6edf638b9d2dc75dcbbdd3930605d931523",
+      "git_status": "M",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.32
+    },
+    {
+      "path": "CLAUDE.md",
+      "language": "markdown",
+      "size_bytes": 13943,
+      "last_modified": "2026-05-27T03:22:58.044Z",
+      "file_hash": "a55784067bb70c668c6fbb451b15dd84a6407ec6e4c7a3ed3e7668628108f37d",
+      "git_status": "clean",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.12
+    },
+    {
+      "path": "CMakeLists.txt",
+      "language": "txt",
+      "size_bytes": 1100,
+      "last_modified": "2026-06-01T03:08:16.857Z",
+      "file_hash": "c5b86a1734cf97ec182a6a670e1c7bf13e68ba4229ac0eb94abe7d418c14600a",
+      "git_status": "M",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.32
+    },
+    {
+      "path": "GOAL_RESULT.md",
+      "language": "markdown",
+      "size_bytes": 2547,
+      "last_modified": "2026-05-27T03:22:58.044Z",
+      "file_hash": "fea0d5a5779a670f817092443a2991406c31f1002b91d5948582bc2ee53c000b",
+      "git_status": "clean",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.12
+    },
+    {
+      "path": "INIT.md",
+      "language": "markdown",
+      "size_bytes": 3259,
+      "last_modified": "2026-05-27T03:22:58.044Z",
+      "file_hash": "5de0c71e5d34eedca0d3a660f4d635e0fc06911a2daf392f68226ac863c95870",
+      "git_status": "clean",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.12
+    },
+    {
+      "path": "PRD.md",
+      "language": "markdown",
+      "size_bytes": 794,
+      "last_modified": "2026-05-27T03:22:58.044Z",
+      "file_hash": "04d99c00c6938903e61f87f239b7a283e921e1d73e0f4e96c9a86fd0a78fd707",
+      "git_status": "clean",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.12
+    },
+    {
+      "path": "PROGRESS.md",
+      "language": "markdown",
+      "size_bytes": 13497,
+      "last_modified": "2026-05-27T03:22:58.044Z",
+      "file_hash": "9653f802a161aa403b7fe52f6017be8ebab57f407d7de02e43acf5f13fa6eb91",
+      "git_status": "clean",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.12
+    },
+    {
+      "path": "README.md",
+      "language": "markdown",
+      "size_bytes": 18120,
+      "last_modified": "2026-06-01T03:07:58.022Z",
+      "file_hash": "abe5fc5e5afed8f4e0089f335f0043361e45754f1efa0223846ff1763b164663",
+      "git_status": "M",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.32
+    },
+    {
+      "path": "README.pt-BR.md",
+      "language": "markdown",
+      "size_bytes": 7095,
+      "last_modified": "2026-05-27T03:22:58.044Z",
+      "file_hash": "5c099a4f1d58a2d21d855593acfd69ffe61a7745a342e41fba383b4b492c8668",
+      "git_status": "clean",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.12
+    },
+    {
+      "path": "US4-V6-simplicio.md",
+      "language": "markdown",
+      "size_bytes": 19830,
+      "last_modified": "2026-05-27T03:22:58.045Z",
+      "file_hash": "a0514618850bb770ee776bbe21817aa951d274be0a8c896a19e4360d14484c94",
+      "git_status": "clean",
+      "roles": [],
+      "imports": [],
+      "exports": [
+        "IUS4V6Adapter",
+        "US4RuntimeMode",
+        "US4SpeculativeExpertPrefetcher"
+      ],
+      "importance": 0.2
+    },
+    {
+      "path": "_BOOTSTRAP.md",
+      "language": "markdown",
+      "size_bytes": 2103,
+      "last_modified": "2026-05-27T03:22:58.045Z",
+      "file_hash": "ab9ac3d37fbb997e330db2c1c22b1caba43e7a9040a9a1ab0db3eef4f4d7f0de",
+      "git_status": "clean",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.12
+    },
+    {
       "path": "apps/CMakeLists.txt",
       "language": "txt",
       "size_bytes": 276,
@@ -2318,8 +2382,10 @@
         "existsIn",
         "handleGitignore",
         "handleRuntimeFlags",
+        "handoff",
         "listDir",
         "looksBinary",
+        "main",
         "normalizeMemoryGiB",
         "printHelp",
         "printRuntimeText",
@@ -2327,6 +2393,7 @@
         "readSafe",
         "readTomlField",
         "readYamlField",
+        "requireCmd",
         "selectRuntimeMode",
         "substitute",
         "substituteInFile",
@@ -2339,8 +2406,8 @@
       "path": "bootstrap.ps1",
       "language": "powershell",
       "size_bytes": 21644,
-      "last_modified": "2026-05-30T20:27:34.495Z",
-      "file_hash": "0848c027f08fa13159fcd0c8f2b6e260b4ff7dcd44c30de8acb4d868c6037296",
+      "last_modified": "2026-05-31T12:13:05.154Z",
+      "file_hash": "6ff5056c2b859b2d504757e1a355738da3011585c4f95a2370568613a5c871c9",
       "git_status": "clean",
       "roles": [],
       "imports": [],
@@ -2360,68 +2427,8 @@
       "path": "bootstrap.sh",
       "language": "shell",
       "size_bytes": 22839,
-      "last_modified": "2026-05-30T20:27:34.494Z",
-      "file_hash": "50ef4a9561a5264746dddb28e8323b4f7e518404ca063bb72cee1d8a540182f3",
-      "git_status": "clean",
-      "roles": [],
-      "imports": [],
-      "exports": [],
-      "importance": 0.12
-    },
-    {
-      "path": "CHANGELOG.md",
-      "language": "markdown",
-      "size_bytes": 8760,
-      "last_modified": "2026-05-30T20:18:37.484Z",
-      "file_hash": "7ffdccdf631e12bc56543d8f56a3424156a53d3e28170cfc2c7d5df60af2172d",
-      "git_status": "clean",
-      "roles": [],
-      "imports": [],
-      "exports": [],
-      "importance": 0.12
-    },
-    {
-      "path": "CLAUDE.md",
-      "language": "markdown",
-      "size_bytes": 13943,
-      "last_modified": "2026-05-27T03:22:58.044Z",
-      "file_hash": "a55784067bb70c668c6fbb451b15dd84a6407ec6e4c7a3ed3e7668628108f37d",
-      "git_status": "clean",
-      "roles": [],
-      "imports": [],
-      "exports": [],
-      "importance": 0.12
-    },
-    {
-      "path": "CMakeLists.txt",
-      "language": "txt",
-      "size_bytes": 1100,
-      "last_modified": "2026-05-30T20:27:34.493Z",
-      "file_hash": "3824020abb95d070b568aaf73ca4b73e6e37237a917c250ffa995ed84a9e008e",
-      "git_status": "clean",
-      "roles": [],
-      "imports": [],
-      "exports": [],
-      "importance": 0.12
-    },
-    {
-      "path": "GOAL_RESULT.md",
-      "language": "markdown",
-      "size_bytes": 2547,
-      "last_modified": "2026-05-27T03:22:58.044Z",
-      "file_hash": "fea0d5a5779a670f817092443a2991406c31f1002b91d5948582bc2ee53c000b",
-      "git_status": "clean",
-      "roles": [],
-      "imports": [],
-      "exports": [],
-      "importance": 0.12
-    },
-    {
-      "path": "INIT.md",
-      "language": "markdown",
-      "size_bytes": 3259,
-      "last_modified": "2026-05-27T03:22:58.044Z",
-      "file_hash": "5de0c71e5d34eedca0d3a660f4d635e0fc06911a2daf392f68226ac863c95870",
+      "last_modified": "2026-05-31T12:13:05.154Z",
+      "file_hash": "a591a9b532f8a50fa71b2d1b25e8d9a1c6a82b8135ab12dd80b8fbbba931cc4d",
       "git_status": "clean",
       "roles": [],
       "imports": [],
@@ -2432,8 +2439,8 @@
       "path": "package-lock.json",
       "language": "json",
       "size_bytes": 2427,
-      "last_modified": "2026-05-30T20:18:43.760Z",
-      "file_hash": "9522a6628c974ceca68ba7ed889bd0eaf2a7e4cd8ef2157f7bf18152155ff06b",
+      "last_modified": "2026-05-31T12:13:05.153Z",
+      "file_hash": "09606861165b56d772f51975ff3d35bf75438ee29f457079093cfe722e0804e1",
       "git_status": "clean",
       "roles": [],
       "imports": [],
@@ -2444,8 +2451,8 @@
       "path": "package.json",
       "language": "json",
       "size_bytes": 1818,
-      "last_modified": "2026-05-30T20:18:37.485Z",
-      "file_hash": "8c1cb2446db97f689dc545cd192b681a718e6204050a3d8f581f24949a40810e",
+      "last_modified": "2026-05-31T12:13:05.152Z",
+      "file_hash": "ca7d31971ec372e05ee016cc948f499b656128e0dcac463291a634d42807ab5a",
       "git_status": "clean",
       "roles": [
         "config"
@@ -2471,11 +2478,11 @@
       "importance": 0.4
     },
     {
-      "path": "PRD.md",
-      "language": "markdown",
-      "size_bytes": 794,
-      "last_modified": "2026-05-27T03:22:58.044Z",
-      "file_hash": "04d99c00c6938903e61f87f239b7a283e921e1d73e0f4e96c9a86fd0a78fd707",
+      "path": "runtime/CMakeLists.txt",
+      "language": "txt",
+      "size_bytes": 2103,
+      "last_modified": "2026-05-27T03:22:58.052Z",
+      "file_hash": "60c5bf676199c1a95e6fb1a5b06e760a12a04f69fa0cba4a3f26630fc83586a6",
       "git_status": "clean",
       "roles": [],
       "imports": [],
@@ -2483,11 +2490,11 @@
       "importance": 0.12
     },
     {
-      "path": "PROGRESS.md",
+      "path": "runtime/README.md",
       "language": "markdown",
-      "size_bytes": 13497,
-      "last_modified": "2026-05-27T03:22:58.044Z",
-      "file_hash": "9653f802a161aa403b7fe52f6017be8ebab57f407d7de02e43acf5f13fa6eb91",
+      "size_bytes": 8709,
+      "last_modified": "2026-05-27T03:22:58.052Z",
+      "file_hash": "9f0ae19fcceb312bd8e498230d522a321d5f953910895bdb2267c2b2ca9da0bf",
       "git_status": "clean",
       "roles": [],
       "imports": [],
@@ -2495,23 +2502,11 @@
       "importance": 0.12
     },
     {
-      "path": "README.md",
+      "path": "runtime/STARTER-TO-RUNTIME.md",
       "language": "markdown",
-      "size_bytes": 18073,
-      "last_modified": "2026-05-29T21:27:30.769Z",
-      "file_hash": "b4201d246960972094249b5a48cba78c7422e3ac5f4aeced1c0d96ece2e43519",
-      "git_status": "clean",
-      "roles": [],
-      "imports": [],
-      "exports": [],
-      "importance": 0.12
-    },
-    {
-      "path": "README.pt-BR.md",
-      "language": "markdown",
-      "size_bytes": 7095,
-      "last_modified": "2026-05-27T03:22:58.044Z",
-      "file_hash": "5c099a4f1d58a2d21d855593acfd69ffe61a7745a342e41fba383b4b492c8668",
+      "size_bytes": 2075,
+      "last_modified": "2026-05-27T03:22:58.053Z",
+      "file_hash": "5d4272019b00ad72b6171a834ac9a7f894ae4856c628849c91e5961e01617e7d",
       "git_status": "clean",
       "roles": [],
       "imports": [],
@@ -2555,18 +2550,6 @@
       "importance": 0.12
     },
     {
-      "path": "runtime/benchmarks/correctness/CMakeLists.txt",
-      "language": "txt",
-      "size_bytes": 342,
-      "last_modified": "2026-05-27T03:22:58.057Z",
-      "file_hash": "29f7cd85d1bc1e13d1c900f6963b73457a5282d69bdc8f843d8ceb55309d32e4",
-      "git_status": "clean",
-      "roles": [],
-      "imports": [],
-      "exports": [],
-      "importance": 0.12
-    },
-    {
       "path": "runtime/benchmarks/README.md",
       "language": "markdown",
       "size_bytes": 2299,
@@ -2579,11 +2562,11 @@
       "importance": 0.12
     },
     {
-      "path": "runtime/cache/README.md",
-      "language": "markdown",
-      "size_bytes": 460,
-      "last_modified": "2026-05-27T03:22:58.058Z",
-      "file_hash": "15198095acc26e335eee5636a4172465468a0bdf396a8693b95782b545959c90",
+      "path": "runtime/benchmarks/correctness/CMakeLists.txt",
+      "language": "txt",
+      "size_bytes": 342,
+      "last_modified": "2026-05-27T03:22:58.057Z",
+      "file_hash": "29f7cd85d1bc1e13d1c900f6963b73457a5282d69bdc8f843d8ceb55309d32e4",
       "git_status": "clean",
       "roles": [],
       "imports": [],
@@ -2591,11 +2574,11 @@
       "importance": 0.12
     },
     {
-      "path": "runtime/CMakeLists.txt",
-      "language": "txt",
-      "size_bytes": 2103,
-      "last_modified": "2026-05-27T03:22:58.052Z",
-      "file_hash": "60c5bf676199c1a95e6fb1a5b06e760a12a04f69fa0cba4a3f26630fc83586a6",
+      "path": "runtime/cache/README.md",
+      "language": "markdown",
+      "size_bytes": 460,
+      "last_modified": "2026-05-27T03:22:58.058Z",
+      "file_hash": "15198095acc26e335eee5636a4172465468a0bdf396a8693b95782b545959c90",
       "git_status": "clean",
       "roles": [],
       "imports": [],
@@ -2687,18 +2670,6 @@
       "importance": 0.12
     },
     {
-      "path": "runtime/README.md",
-      "language": "markdown",
-      "size_bytes": 8709,
-      "last_modified": "2026-05-27T03:22:58.052Z",
-      "file_hash": "9f0ae19fcceb312bd8e498230d522a321d5f953910895bdb2267c2b2ca9da0bf",
-      "git_status": "clean",
-      "roles": [],
-      "imports": [],
-      "exports": [],
-      "importance": 0.12
-    },
-    {
       "path": "runtime/scheduler/README.md",
       "language": "markdown",
       "size_bytes": 567,
@@ -2716,18 +2687,6 @@
       "size_bytes": 755,
       "last_modified": "2026-05-27T03:22:58.068Z",
       "file_hash": "e9231a7fad4ff9f1bb2d31eda5f94dbd51e685a45e34ee9120933137c05894f8",
-      "git_status": "clean",
-      "roles": [],
-      "imports": [],
-      "exports": [],
-      "importance": 0.12
-    },
-    {
-      "path": "runtime/STARTER-TO-RUNTIME.md",
-      "language": "markdown",
-      "size_bytes": 2075,
-      "last_modified": "2026-05-27T03:22:58.053Z",
-      "file_hash": "5d4272019b00ad72b6171a834ac9a7f894ae4856c628849c91e5961e01617e7d",
       "git_status": "clean",
       "roles": [],
       "imports": [],
@@ -2761,10 +2720,10 @@
     {
       "path": "scripts/openai_serve.py",
       "language": "python",
-      "size_bytes": 24080,
-      "last_modified": "2026-05-27T06:00:53.568Z",
-      "file_hash": "54a1000793aaca8c9b15dd9de1676d8e2f4e5b3089547454f8f37da26bd637d4",
-      "git_status": "clean",
+      "size_bytes": 24092,
+      "last_modified": "2026-06-01T03:07:48.088Z",
+      "file_hash": "78b0b15e952e8ba2471dbea5ca6b8c7df4dd570c66d9eb26b632bff383da77d1",
+      "git_status": "M",
       "roles": [],
       "imports": [
         "__future__",
@@ -2819,14 +2778,14 @@
         "upstream_port",
         "upstream_url"
       ],
-      "importance": 0.28
+      "importance": 0.48
     },
     {
       "path": "scripts/requirements-serve.txt",
       "language": "txt",
       "size_bytes": 243,
-      "last_modified": "2026-05-27T04:24:14.306Z",
-      "file_hash": "40ee5886c9352c423550a2197e75f46e8fd936ea0f74cd6146817f8320647d79",
+      "last_modified": "2026-05-31T11:21:03.166Z",
+      "file_hash": "7923517a75561d5b8d62915060a01169060a60a83cfe79866d3ea9458c5a5524",
       "git_status": "clean",
       "roles": [],
       "imports": [],
@@ -3048,28 +3007,13 @@
       "imports": [],
       "exports": [],
       "importance": 0.37
-    },
-    {
-      "path": "US4-V6-simplicio.md",
-      "language": "markdown",
-      "size_bytes": 19830,
-      "last_modified": "2026-05-27T03:22:58.045Z",
-      "file_hash": "a0514618850bb770ee776bbe21817aa951d274be0a8c896a19e4360d14484c94",
-      "git_status": "clean",
-      "roles": [],
-      "imports": [],
-      "exports": [
-        "IUS4V6Adapter",
-        "US4RuntimeMode",
-        "US4SpeculativeExpertPrefetcher"
-      ],
-      "importance": 0.2
     }
   ],
   "entry_points": [
     "bin/cli.js"
   ],
   "test_files": [
+    ".specs/README.md",
     ".specs/architecture/ADR-001-mlx-primary-backend.md",
     ".specs/architecture/ADR-002-runtime-boundaries-and-adapter-contract.md",
     ".specs/architecture/ADR-003-backend-selection-strategy.md",
@@ -3085,7 +3029,6 @@
     ".specs/product/DOMAIN.md",
     ".specs/product/PERSONAS.md",
     ".specs/product/VISION.md",
-    ".specs/README.md",
     ".specs/runtime/CLI-CONTRACT.md",
     ".specs/runtime/CLI-POLISH.md",
     ".specs/runtime/HARDWARE-PROBE.md",
@@ -3094,6 +3037,7 @@
     ".specs/runtime/SERVE-OPENAI.md",
     ".specs/runtime/TELEMETRY.md",
     ".specs/sprints/BACKLOG.md",
+    ".specs/sprints/TIMELINE.md",
     ".specs/sprints/sprint-01/SPRINT.md",
     ".specs/sprints/sprint-01/T01.0-agentic-starter.task.md",
     ".specs/sprints/sprint-01/T01.1-runtime-scaffold.task.md",
@@ -3182,7 +3126,6 @@
     ".specs/sprints/sprint-12/T12.6-release-v1.task.md",
     ".specs/sprints/sprint-12/T12.7-migration-guide.task.md",
     ".specs/sprints/task-template.md",
-    ".specs/sprints/TIMELINE.md",
     ".specs/workflow/CONTRIBUTING.md",
     ".specs/workflow/MIGRATION.md",
     ".specs/workflow/RELEASE-V1.md",
@@ -3210,26 +3153,26 @@
     {
       "name": ".",
       "files": [
-        "_BOOTSTRAP.md",
         ".DS_Store",
         ".gitattributes",
         ".gitignore",
         "AGENTS.md",
-        "bootstrap.ps1",
-        "bootstrap.sh",
         "CHANGELOG.md",
         "CLAUDE.md",
         "CMakeLists.txt",
         "GOAL_RESULT.md",
         "INIT.md",
-        "package-lock.json",
-        "package.json",
-        "playwright.config.ts",
         "PRD.md",
         "PROGRESS.md",
         "README.md",
         "README.pt-BR.md",
-        "US4-V6-simplicio.md"
+        "US4-V6-simplicio.md",
+        "_BOOTSTRAP.md",
+        "bootstrap.ps1",
+        "bootstrap.sh",
+        "package-lock.json",
+        "package.json",
+        "playwright.config.ts"
       ],
       "roles": [
         "config"
@@ -3239,10 +3182,10 @@
     {
       "name": ".agents",
       "files": [
+        ".agents/README.md",
         ".agents/_template.agent.md",
         ".agents/architect.agent.md",
         ".agents/ralph-loop.agent.md",
-        ".agents/README.md",
         ".agents/reviewer.agent.md",
         ".agents/tdd.agent.md"
       ],
@@ -3285,15 +3228,15 @@
       "name": ".github",
       "files": [
         ".github/CODEOWNERS",
+        ".github/ISSUE_TEMPLATE/bug.md",
+        ".github/ISSUE_TEMPLATE/feature.md",
+        ".github/PULL_REQUEST_TEMPLATE.md",
         ".github/copilot-instructions.md",
         ".github/copilot/agents/_template.agent.md",
         ".github/copilot/agents/architect.agent.md",
         ".github/copilot/agents/ralph-loop.agent.md",
         ".github/copilot/agents/reviewer.agent.md",
         ".github/copilot/agents/tdd.agent.md",
-        ".github/ISSUE_TEMPLATE/bug.md",
-        ".github/ISSUE_TEMPLATE/feature.md",
-        ".github/PULL_REQUEST_TEMPLATE.md",
         ".github/workflows/ci.yml",
         ".github/workflows/dod.yml",
         ".github/workflows/scaffold-self-check.yml"
@@ -3304,34 +3247,15 @@
       "file_count": 13
     },
     {
-      "name": ".pytest_cache",
-      "files": [
-        ".pytest_cache/.gitignore",
-        ".pytest_cache/README.md",
-        ".pytest_cache/v/cache/nodeids"
-      ],
-      "roles": [],
-      "file_count": 3
-    },
-    {
-      "name": ".ruff_cache",
-      "files": [
-        ".ruff_cache/.gitignore",
-        ".ruff_cache/0.15.12/10953000304710497579"
-      ],
-      "roles": [],
-      "file_count": 2
-    },
-    {
       "name": ".skills",
       "files": [
+        ".skills/README.md",
         ".skills/_template/SKILL.md",
         ".skills/caveman/SKILL.md",
         ".skills/conventional-commits/SKILL.md",
         ".skills/everything-claude-code/SKILL.md",
         ".skills/playwright-e2e/SKILL.md",
-        ".skills/ralph-loop/SKILL.md",
-        ".skills/README.md"
+        ".skills/ralph-loop/SKILL.md"
       ],
       "roles": [],
       "file_count": 7
@@ -3339,6 +3263,7 @@
     {
       "name": ".specs",
       "files": [
+        ".specs/README.md",
         ".specs/architecture/ADR-001-mlx-primary-backend.md",
         ".specs/architecture/ADR-002-runtime-boundaries-and-adapter-contract.md",
         ".specs/architecture/ADR-003-backend-selection-strategy.md",
@@ -3354,7 +3279,6 @@
         ".specs/product/DOMAIN.md",
         ".specs/product/PERSONAS.md",
         ".specs/product/VISION.md",
-        ".specs/README.md",
         ".specs/runtime/CLI-CONTRACT.md",
         ".specs/runtime/CLI-POLISH.md",
         ".specs/runtime/HARDWARE-PROBE.md",
@@ -3388,13 +3312,15 @@
     {
       "name": "runtime",
       "files": [
+        "runtime/CMakeLists.txt",
+        "runtime/README.md",
+        "runtime/STARTER-TO-RUNTIME.md",
         "runtime/adapters/README.md",
         "runtime/ane/README.md",
         "runtime/benchmarks/CMakeLists.txt",
-        "runtime/benchmarks/correctness/CMakeLists.txt",
         "runtime/benchmarks/README.md",
+        "runtime/benchmarks/correctness/CMakeLists.txt",
         "runtime/cache/README.md",
-        "runtime/CMakeLists.txt",
         "runtime/cpu/README.md",
         "runtime/kv/README.md",
         "runtime/memory/README.md",
@@ -3402,10 +3328,8 @@
         "runtime/mlx/README.md",
         "runtime/moe/README.md",
         "runtime/neon/README.md",
-        "runtime/README.md",
         "runtime/scheduler/README.md",
         "runtime/speculative/README.md",
-        "runtime/STARTER-TO-RUNTIME.md",
         "runtime/tuning/README.md"
       ],
       "roles": [],
@@ -3460,7 +3384,7 @@
     },
     {
       "name": "readme",
-      "score": 23
+      "score": 22
     },
     {
       "name": "cli",
@@ -3593,8 +3517,30 @@
       "@playwright/test"
     ]
   },
-  "recent_changes": [],
-  "changed_files": [],
+  "recent_changes": [
+    {
+      "path": "CHANGELOG.md",
+      "status": "M"
+    },
+    {
+      "path": "CMakeLists.txt",
+      "status": "M"
+    },
+    {
+      "path": "README.md",
+      "status": "M"
+    },
+    {
+      "path": "scripts/openai_serve.py",
+      "status": "M"
+    }
+  ],
+  "changed_files": [
+    "CHANGELOG.md",
+    "CMakeLists.txt",
+    "README.md",
+    "scripts/openai_serve.py"
+  ],
   "integration": {
     "dev_cli_mapper": "read .simplicio/project-map.json, then use .simplicio/precedent-index.json for task-specific examples",
     "contract": "SIMPLICIO_INTEGRATION.md"
