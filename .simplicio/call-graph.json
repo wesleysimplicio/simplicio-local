@@ -1,0 +1,724 @@
+{
+  "schema": "simplicio.call-graph/v1",
+  "version": 1,
+  "generated_at": "2026-06-01T04:44:30.062Z",
+  "source_symbol_index": ".simplicio/symbol-index.json",
+  "edges": [
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::handleGitignore",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::ask",
+      "line": 663,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::buildProbe",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::buildProbe",
+      "line": 320,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::chooseCli",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::chooseCli",
+      "line": 814,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::commandExists",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::commandExists",
+      "line": 476,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::copyTemplate",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::copyTemplate",
+      "line": 606,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::copyToClipboard",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::copyToClipboard",
+      "line": 832,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::detectAneEligibility",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::detectAneEligibility",
+      "line": 315,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::detectExistingInstructionFiles",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::detectExistingInstructionFiles",
+      "line": 594,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::detectProductName",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::detectProductName",
+      "line": 536,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::detectProjectMode",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::detectProjectMode",
+      "line": 570,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::detectProjects",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::detectProjects",
+      "line": 578,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::detectStack",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::detectStack",
+      "line": 501,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::copyTemplate",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::err",
+      "line": 644,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::execHandoff",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::execHandoff",
+      "line": 849,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::existsIn",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::existsIn",
+      "line": 464,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::handleGitignore",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::handleGitignore",
+      "line": 651,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::handleRuntimeFlags",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::handleRuntimeFlags",
+      "line": 373,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::printHelp",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::handoff",
+      "line": 423,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::listDir",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::listDir",
+      "line": 468,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::printRuntimeText",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::log",
+      "line": 370,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::looksBinary",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::looksBinary",
+      "line": 706,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::main",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::main",
+      "line": 967,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::normalizeMemoryGiB",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::normalizeMemoryGiB",
+      "line": 301,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::printHelp",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::printHelp",
+      "line": 405,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::printRuntimeText",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::printRuntimeText",
+      "line": 355,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::readJsonField",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::readJsonField",
+      "line": 483,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::readSafe",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::readSafe",
+      "line": 456,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::readTomlField",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::readTomlField",
+      "line": 489,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::readYamlField",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::readYamlField",
+      "line": 495,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::requireCmd",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::requireCmd",
+      "line": 858,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::selectRuntimeMode",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::selectRuntimeMode",
+      "line": 305,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::stamp",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::stamp",
+      "line": 757,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::substitute",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::substitute",
+      "line": 747,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::substituteInFile",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::substituteInFile",
+      "line": 711,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::walk",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::walk",
+      "line": 731,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::writeMeta",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::writeMeta",
+      "line": 777,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::main",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::main",
+      "line": 967,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::main",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::main",
+      "line": 573,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_init_embeddings",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::EmbeddingsBackend",
+      "line": 545,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::spawns_chat_subprocess",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::Settings",
+      "line": 170,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::Us4Handler",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::Us4Handler",
+      "line": 358,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::__init__",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::__init__",
+      "line": 176,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_build_models_payload",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_build_models_payload",
+      "line": 303,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::embed",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_extract_vectors",
+      "line": 222,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_handle_embeddings",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_handle_embeddings",
+      "line": 313,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_init_embeddings",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_init_embeddings",
+      "line": 535,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_install_signal_handlers",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_install_signal_handlers",
+      "line": 548,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_proxy_upstream",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_proxy_upstream",
+      "line": 256,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_sanitize_path",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_sanitize_path",
+      "line": 100,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_send_error",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_send_error",
+      "line": 252,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_send_json",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_send_json",
+      "line": 243,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_spawn_upstream",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_spawn_upstream",
+      "line": 403,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_terminate_proc",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_terminate_proc",
+      "line": 503,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_truthy",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_truthy",
+      "line": 104,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_wait_upstream_ready",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_wait_upstream_ready",
+      "line": 514,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_warn_if_non_loopback",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_warn_if_non_loopback",
+      "line": 558,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::do_GET",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::do_GET",
+      "line": 364,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::do_POST",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::do_POST",
+      "line": 374,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::embed",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::embed",
+      "line": 202,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::ensure_loaded",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::ensure_loaded",
+      "line": 182,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::log_message",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::log_message",
+      "line": 361,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::main",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::main",
+      "line": 573,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "test/cli.test.js",
+      "source_symbol": "test/cli.test.js::makeTempProject",
+      "target_file": "test/cli.test.js",
+      "target_symbol": "test/cli.test.js::makeTempProject",
+      "line": 22,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "test/cli.test.js",
+      "source_symbol": "test/cli.test.js::runCli",
+      "target_file": "test/cli.test.js",
+      "target_symbol": "test/cli.test.js::runCli",
+      "line": 14,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "test/cli.test.js",
+      "source_symbol": "test/cli.test.js::runCli",
+      "target_file": "tests/e2e/us4-cli.spec.ts",
+      "target_symbol": "tests/e2e/us4-cli.spec.ts::runCli",
+      "line": 14,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "test/run-tests.js",
+      "source_symbol": "test/run-tests.js::writeCoverageSummary",
+      "target_file": "test/run-tests.js",
+      "target_symbol": "test/run-tests.js::countCoveredLines",
+      "line": 71,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "test/run-tests.js",
+      "source_symbol": "test/run-tests.js::countCoveredLines",
+      "target_file": "test/run-tests.js",
+      "target_symbol": "test/run-tests.js::isCountedLine",
+      "line": 108,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "test/run-tests.js",
+      "source_symbol": "test/run-tests.js::writeCoverageSummary",
+      "target_file": "test/run-tests.js",
+      "target_symbol": "test/run-tests.js::makeSummary",
+      "line": 73,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "test/run-tests.js",
+      "source_symbol": "test/run-tests.js::countCoveredLines",
+      "target_file": "test/run-tests.js",
+      "target_symbol": "test/run-tests.js::nextTemplateLiteralState",
+      "line": 109,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "test/run-tests.js",
+      "source_symbol": null,
+      "target_file": "test/run-tests.js",
+      "target_symbol": "test/run-tests.js::writeCoverageSummary",
+      "line": 40,
+      "confidence": 0.48
+    },
+    {
+      "type": "calls",
+      "source_file": "tests/e2e/us4-cli-serve.spec.ts",
+      "source_symbol": "tests/e2e/us4-cli-serve.spec.ts::attach",
+      "target_file": "tests/e2e/us4-cli-serve.spec.ts",
+      "target_symbol": "tests/e2e/us4-cli-serve.spec.ts::attach",
+      "line": 79,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "tests/e2e/us4-cli-serve.spec.ts",
+      "source_symbol": "tests/e2e/us4-cli-serve.spec.ts::freePort",
+      "target_file": "tests/e2e/us4-cli-serve.spec.ts",
+      "target_symbol": "tests/e2e/us4-cli-serve.spec.ts::freePort",
+      "line": 18,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "tests/e2e/us4-cli-serve.spec.ts",
+      "source_symbol": "tests/e2e/us4-cli-serve.spec.ts::getJson",
+      "target_file": "tests/e2e/us4-cli-serve.spec.ts",
+      "target_symbol": "tests/e2e/us4-cli-serve.spec.ts::getJson",
+      "line": 51,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "tests/e2e/us4-cli-serve.spec.ts",
+      "source_symbol": "tests/e2e/us4-cli-serve.spec.ts::postJson",
+      "target_file": "tests/e2e/us4-cli-serve.spec.ts",
+      "target_symbol": "tests/e2e/us4-cli-serve.spec.ts::postJson",
+      "line": 63,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "tests/e2e/us4-cli-serve.spec.ts",
+      "source_symbol": "tests/e2e/us4-cli-serve.spec.ts::waitReady",
+      "target_file": "tests/e2e/us4-cli-serve.spec.ts",
+      "target_symbol": "tests/e2e/us4-cli-serve.spec.ts::waitReady",
+      "line": 35,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "tests/e2e/us4-cli.spec.ts",
+      "source_symbol": "tests/e2e/us4-cli.spec.ts::runCli",
+      "target_file": "test/cli.test.js",
+      "target_symbol": "test/cli.test.js::runCli",
+      "line": 18,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "tests/e2e/us4-cli.spec.ts",
+      "source_symbol": "tests/e2e/us4-cli.spec.ts::attachCommand",
+      "target_file": "tests/e2e/us4-cli-serve.spec.ts",
+      "target_symbol": "tests/e2e/us4-cli-serve.spec.ts::attach",
+      "line": 42,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "tests/e2e/us4-cli.spec.ts",
+      "source_symbol": "tests/e2e/us4-cli.spec.ts::attachCommand",
+      "target_file": "tests/e2e/us4-cli.spec.ts",
+      "target_symbol": "tests/e2e/us4-cli.spec.ts::attachCommand",
+      "line": 37,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "tests/e2e/us4-cli.spec.ts",
+      "source_symbol": "tests/e2e/us4-cli.spec.ts::runCli",
+      "target_file": "tests/e2e/us4-cli.spec.ts",
+      "target_symbol": "tests/e2e/us4-cli.spec.ts::runCli",
+      "line": 18,
+      "confidence": 0.58
+    }
+  ],
+  "counts": {
+    "edges": 79,
+    "imports": 0,
+    "calls": 79
+  }
+}

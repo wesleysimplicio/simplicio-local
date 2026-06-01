@@ -1,7 +1,7 @@
 {
   "schema": "simplicio.project-map/v1",
   "version": 1,
-  "generated_at": "2026-06-01T03:16:24.050Z",
+  "generated_at": "2026-06-01T04:44:30.062Z",
   "update_mode": "incremental",
   "product": {
     "name": "@wesleysimplicio/llm-project-mapper",
@@ -2203,9 +2203,9 @@
     {
       "path": "CHANGELOG.md",
       "language": "markdown",
-      "size_bytes": 9332,
-      "last_modified": "2026-06-01T03:08:21.641Z",
-      "file_hash": "ed23e16c9a575f6f5866c0d55863e6edf638b9d2dc75dcbbdd3930605d931523",
+      "size_bytes": 9689,
+      "last_modified": "2026-06-01T04:41:41.247Z",
+      "file_hash": "a7f72ff1c4a5ca4d1a223c8eba367303682d5dc071129906d87ff282c3ccebb2",
       "git_status": "M",
       "roles": [],
       "imports": [],
@@ -2228,8 +2228,8 @@
       "path": "CMakeLists.txt",
       "language": "txt",
       "size_bytes": 1100,
-      "last_modified": "2026-06-01T03:08:16.857Z",
-      "file_hash": "c5b86a1734cf97ec182a6a670e1c7bf13e68ba4229ac0eb94abe7d418c14600a",
+      "last_modified": "2026-06-01T04:41:41.245Z",
+      "file_hash": "8d711ec4b51a946300d1825948d260d2b07f0925e9c5fd52f3e715967c78ea2c",
       "git_status": "M",
       "roles": [],
       "imports": [],
@@ -2287,9 +2287,9 @@
     {
       "path": "README.md",
       "language": "markdown",
-      "size_bytes": 18120,
-      "last_modified": "2026-06-01T03:07:58.022Z",
-      "file_hash": "abe5fc5e5afed8f4e0089f335f0043361e45754f1efa0223846ff1763b164663",
+      "size_bytes": 4390,
+      "last_modified": "2026-06-01T04:42:25.449Z",
+      "file_hash": "a94e2b414efaf60de47c2c56f6c74e00d8e893b99ef6f23239cb54daf10deff3",
       "git_status": "M",
       "roles": [],
       "imports": [],
@@ -2299,14 +2299,194 @@
     {
       "path": "README.pt-BR.md",
       "language": "markdown",
-      "size_bytes": 7095,
-      "last_modified": "2026-05-27T03:22:58.044Z",
-      "file_hash": "5c099a4f1d58a2d21d855593acfd69ffe61a7745a342e41fba383b4b492c8668",
-      "git_status": "clean",
+      "size_bytes": 4439,
+      "last_modified": "2026-06-01T04:42:25.449Z",
+      "file_hash": "60f451ba04812234d77d866a9b559aedae4dadfaeaa27de251a0f1f0441fbdbe",
+      "git_status": "M",
       "roles": [],
       "imports": [],
       "exports": [],
-      "importance": 0.12
+      "importance": 0.32
+    },
+    {
+      "path": "READMEs/README.ar-SA.md",
+      "language": "markdown",
+      "size_bytes": 4485,
+      "last_modified": "2026-06-01T04:42:25.452Z",
+      "file_hash": "b13d90c87ce0dabfe616cf612fc35543be73ec1519031021af4f9fdf01381ce5",
+      "git_status": "??",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.32
+    },
+    {
+      "path": "READMEs/README.en.md",
+      "language": "markdown",
+      "size_bytes": 4293,
+      "last_modified": "2026-06-01T04:42:25.449Z",
+      "file_hash": "b96eebaba262bcdabe7e57655c6580384534aac2d0d5ec829f598425c90fde06",
+      "git_status": "??",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.32
+    },
+    {
+      "path": "READMEs/README.es-ES.md",
+      "language": "markdown",
+      "size_bytes": 4297,
+      "last_modified": "2026-06-01T04:42:25.449Z",
+      "file_hash": "1ce39b3ec5bdec49d6e57ba739b85b78b5c8bab81d050213150b224773d1cc85",
+      "git_status": "??",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.32
+    },
+    {
+      "path": "READMEs/README.fr-FR.md",
+      "language": "markdown",
+      "size_bytes": 4361,
+      "last_modified": "2026-06-01T04:42:25.450Z",
+      "file_hash": "833a08532c131684453b778c081afed886403d71323a919cc5fad33dfe2722c0",
+      "git_status": "??",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.32
+    },
+    {
+      "path": "READMEs/README.he-IL.md",
+      "language": "markdown",
+      "size_bytes": 4490,
+      "last_modified": "2026-06-01T04:42:25.452Z",
+      "file_hash": "6da8e8aaff1665dadea751e4dd238a1e97965ae6fc28cbc3a50304da9d370d80",
+      "git_status": "??",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.32
+    },
+    {
+      "path": "READMEs/README.hi-IN.md",
+      "language": "markdown",
+      "size_bytes": 4773,
+      "last_modified": "2026-06-01T04:42:25.451Z",
+      "file_hash": "a161d925be82eca3d46a57f811dd6b7fcb6af387be4edcc01edfb46dd2855e5c",
+      "git_status": "??",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.32
+    },
+    {
+      "path": "READMEs/README.id-ID.md",
+      "language": "markdown",
+      "size_bytes": 4304,
+      "last_modified": "2026-06-01T04:42:25.452Z",
+      "file_hash": "6030224c8c82f2af06748afa9e951cf99818bd582657266652d4fce775f76ea4",
+      "git_status": "??",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.32
+    },
+    {
+      "path": "READMEs/README.it-IT.md",
+      "language": "markdown",
+      "size_bytes": 4299,
+      "last_modified": "2026-06-01T04:42:25.450Z",
+      "file_hash": "c4554fa267d6b1b8fa43b3dcf122b5a3f5118501f3616beb437df101862b6a80",
+      "git_status": "??",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.32
+    },
+    {
+      "path": "READMEs/README.ja-JP.md",
+      "language": "markdown",
+      "size_bytes": 4432,
+      "last_modified": "2026-06-01T04:42:25.450Z",
+      "file_hash": "7c78b36417482222571d0dce21727481ec9fcec12bd63df220d73dcaa4b647f7",
+      "git_status": "??",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.32
+    },
+    {
+      "path": "READMEs/README.ko-KR.md",
+      "language": "markdown",
+      "size_bytes": 4330,
+      "last_modified": "2026-06-01T04:42:25.450Z",
+      "file_hash": "433cb48f3cdfacdd60c541a38c083e4801e34a5bd2856e2d4062067779be1690",
+      "git_status": "??",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.32
+    },
+    {
+      "path": "READMEs/README.ms-MY.md",
+      "language": "markdown",
+      "size_bytes": 4319,
+      "last_modified": "2026-06-01T04:42:25.452Z",
+      "file_hash": "cc4f46962ebbf6107aac27441e9dc9a1cf39eef1e66a7cafbe2413e61e5320a4",
+      "git_status": "??",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.32
+    },
+    {
+      "path": "READMEs/README.pl-PL.md",
+      "language": "markdown",
+      "size_bytes": 4291,
+      "last_modified": "2026-06-01T04:42:25.451Z",
+      "file_hash": "9755d194be3f84c61b5cf904bd2721b0df46671a749c0ec6913df59f6daa8950",
+      "git_status": "??",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.32
+    },
+    {
+      "path": "READMEs/README.pt-BR.md",
+      "language": "markdown",
+      "size_bytes": 4342,
+      "last_modified": "2026-06-01T04:42:25.449Z",
+      "file_hash": "1a732a2093a5e55884f674776627403f6ee1d65aed14de7de34c4027a6b3ef1f",
+      "git_status": "??",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.32
+    },
+    {
+      "path": "READMEs/README.ru-RU.md",
+      "language": "markdown",
+      "size_bytes": 4660,
+      "last_modified": "2026-06-01T04:42:25.451Z",
+      "file_hash": "7844d58eeaf313fe886902a5516302193b697d06fb611b9a9dfbcfeb0a752225",
+      "git_status": "??",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.32
+    },
+    {
+      "path": "READMEs/README.zh-CN.md",
+      "language": "markdown",
+      "size_bytes": 4232,
+      "last_modified": "2026-06-01T04:42:25.450Z",
+      "file_hash": "481d2fbde8f73201ce0d886344d0b0cb5cef731d2d69eafa1993190eaba50d5c",
+      "git_status": "??",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.32
     },
     {
       "path": "US4-V6-simplicio.md",
@@ -2406,9 +2586,9 @@
       "path": "bootstrap.ps1",
       "language": "powershell",
       "size_bytes": 21644,
-      "last_modified": "2026-05-31T12:13:05.154Z",
-      "file_hash": "6ff5056c2b859b2d504757e1a355738da3011585c4f95a2370568613a5c871c9",
-      "git_status": "clean",
+      "last_modified": "2026-06-01T04:41:41.246Z",
+      "file_hash": "e57a028aea07457d6e718f59cca3e82f93708628a362cc54fa6ea109037d6fed",
+      "git_status": "M",
       "roles": [],
       "imports": [],
       "exports": [
@@ -2421,45 +2601,57 @@
         "Require",
         "Substitute"
       ],
-      "importance": 0.2
+      "importance": 0.4
     },
     {
       "path": "bootstrap.sh",
       "language": "shell",
       "size_bytes": 22839,
-      "last_modified": "2026-05-31T12:13:05.154Z",
-      "file_hash": "a591a9b532f8a50fa71b2d1b25e8d9a1c6a82b8135ab12dd80b8fbbba931cc4d",
-      "git_status": "clean",
+      "last_modified": "2026-06-01T04:41:41.246Z",
+      "file_hash": "09d4f1b0768bc1ebbc10a148b518e1be93bd9e80b8bf5ab03bd1d99deca89703",
+      "git_status": "M",
       "roles": [],
       "imports": [],
       "exports": [],
-      "importance": 0.12
+      "importance": 0.32
+    },
+    {
+      "path": "docs/readme-globalization-standard.md",
+      "language": "markdown",
+      "size_bytes": 3128,
+      "last_modified": "2026-06-01T04:41:41.231Z",
+      "file_hash": "d1d3b5daa5bc18f4f1b0736f6a915c069b10b4894fc32efd142f8c0920ddbf76",
+      "git_status": "??",
+      "roles": [],
+      "imports": [],
+      "exports": [],
+      "importance": 0.32
     },
     {
       "path": "package-lock.json",
       "language": "json",
       "size_bytes": 2427,
-      "last_modified": "2026-05-31T12:13:05.153Z",
-      "file_hash": "09606861165b56d772f51975ff3d35bf75438ee29f457079093cfe722e0804e1",
-      "git_status": "clean",
+      "last_modified": "2026-06-01T04:41:41.245Z",
+      "file_hash": "2cb3b6ac34692f5f0b833162b4361a3ce2937083d0ff1f086578dc73f286fe8b",
+      "git_status": "M",
       "roles": [],
       "imports": [],
       "exports": [],
-      "importance": 0.12
+      "importance": 0.32
     },
     {
       "path": "package.json",
       "language": "json",
-      "size_bytes": 1818,
-      "last_modified": "2026-05-31T12:13:05.152Z",
-      "file_hash": "ca7d31971ec372e05ee016cc948f499b656128e0dcac463291a634d42807ab5a",
-      "git_status": "clean",
+      "size_bytes": 1847,
+      "last_modified": "2026-06-01T04:41:41.246Z",
+      "file_hash": "d38d4c9ed7f91012f3d83d2b9ee61b8c3b3fbb93bfa30864512e19d20ca65399",
+      "git_status": "M",
       "roles": [
         "config"
       ],
       "imports": [],
       "exports": [],
-      "importance": 0.32
+      "importance": 0.52
     },
     {
       "path": "playwright.config.ts",
@@ -2723,7 +2915,7 @@
       "size_bytes": 24092,
       "last_modified": "2026-06-01T03:07:48.088Z",
       "file_hash": "78b0b15e952e8ba2471dbea5ca6b8c7df4dd570c66d9eb26b632bff383da77d1",
-      "git_status": "M",
+      "git_status": "clean",
       "roles": [],
       "imports": [
         "__future__",
@@ -2778,7 +2970,7 @@
         "upstream_port",
         "upstream_url"
       ],
-      "importance": 0.48
+      "importance": 0.28
     },
     {
       "path": "scripts/requirements-serve.txt",
@@ -3292,6 +3484,28 @@
       "file_count": 118
     },
     {
+      "name": "READMEs",
+      "files": [
+        "READMEs/README.ar-SA.md",
+        "READMEs/README.en.md",
+        "READMEs/README.es-ES.md",
+        "READMEs/README.fr-FR.md",
+        "READMEs/README.he-IL.md",
+        "READMEs/README.hi-IN.md",
+        "READMEs/README.id-ID.md",
+        "READMEs/README.it-IT.md",
+        "READMEs/README.ja-JP.md",
+        "READMEs/README.ko-KR.md",
+        "READMEs/README.ms-MY.md",
+        "READMEs/README.pl-PL.md",
+        "READMEs/README.pt-BR.md",
+        "READMEs/README.ru-RU.md",
+        "READMEs/README.zh-CN.md"
+      ],
+      "roles": [],
+      "file_count": 15
+    },
+    {
       "name": "apps",
       "files": [
         "apps/CMakeLists.txt"
@@ -3307,6 +3521,14 @@
       "roles": [
         "entrypoint"
       ],
+      "file_count": 1
+    },
+    {
+      "name": "docs",
+      "files": [
+        "docs/readme-globalization-standard.md"
+      ],
+      "roles": [],
       "file_count": 1
     },
     {
@@ -3384,7 +3606,7 @@
     },
     {
       "name": "readme",
-      "score": 22
+      "score": 38
     },
     {
       "name": "cli",
@@ -3531,7 +3753,87 @@
       "status": "M"
     },
     {
-      "path": "scripts/openai_serve.py",
+      "path": "README.pt-BR.md",
+      "status": "M"
+    },
+    {
+      "path": "READMEs/README.ar-SA.md",
+      "status": "??"
+    },
+    {
+      "path": "READMEs/README.en.md",
+      "status": "??"
+    },
+    {
+      "path": "READMEs/README.es-ES.md",
+      "status": "??"
+    },
+    {
+      "path": "READMEs/README.fr-FR.md",
+      "status": "??"
+    },
+    {
+      "path": "READMEs/README.he-IL.md",
+      "status": "??"
+    },
+    {
+      "path": "READMEs/README.hi-IN.md",
+      "status": "??"
+    },
+    {
+      "path": "READMEs/README.id-ID.md",
+      "status": "??"
+    },
+    {
+      "path": "READMEs/README.it-IT.md",
+      "status": "??"
+    },
+    {
+      "path": "READMEs/README.ja-JP.md",
+      "status": "??"
+    },
+    {
+      "path": "READMEs/README.ko-KR.md",
+      "status": "??"
+    },
+    {
+      "path": "READMEs/README.ms-MY.md",
+      "status": "??"
+    },
+    {
+      "path": "READMEs/README.pl-PL.md",
+      "status": "??"
+    },
+    {
+      "path": "READMEs/README.pt-BR.md",
+      "status": "??"
+    },
+    {
+      "path": "READMEs/README.ru-RU.md",
+      "status": "??"
+    },
+    {
+      "path": "READMEs/README.zh-CN.md",
+      "status": "??"
+    },
+    {
+      "path": "bootstrap.ps1",
+      "status": "M"
+    },
+    {
+      "path": "bootstrap.sh",
+      "status": "M"
+    },
+    {
+      "path": "docs/readme-globalization-standard.md",
+      "status": "??"
+    },
+    {
+      "path": "package-lock.json",
+      "status": "M"
+    },
+    {
+      "path": "package.json",
       "status": "M"
     }
   ],
@@ -3539,7 +3841,27 @@
     "CHANGELOG.md",
     "CMakeLists.txt",
     "README.md",
-    "scripts/openai_serve.py"
+    "README.pt-BR.md",
+    "READMEs/README.ar-SA.md",
+    "READMEs/README.en.md",
+    "READMEs/README.es-ES.md",
+    "READMEs/README.fr-FR.md",
+    "READMEs/README.he-IL.md",
+    "READMEs/README.hi-IN.md",
+    "READMEs/README.id-ID.md",
+    "READMEs/README.it-IT.md",
+    "READMEs/README.ja-JP.md",
+    "READMEs/README.ko-KR.md",
+    "READMEs/README.ms-MY.md",
+    "READMEs/README.pl-PL.md",
+    "READMEs/README.pt-BR.md",
+    "READMEs/README.ru-RU.md",
+    "READMEs/README.zh-CN.md",
+    "bootstrap.ps1",
+    "bootstrap.sh",
+    "docs/readme-globalization-standard.md",
+    "package-lock.json",
+    "package.json"
   ],
   "integration": {
     "dev_cli_mapper": "read .simplicio/project-map.json, then use .simplicio/precedent-index.json for task-specific examples",

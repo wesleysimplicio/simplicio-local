@@ -1,8 +1,8 @@
 <h1 align="center">US4 V6 Apple Edition</h1>
 
 <p align="center">
-  <strong>Universal State Runtime for local LLM inference on Apple Silicon: MLX, Metal, NEON, ANE pathing and a practical CLI.</strong><br />
-  <em>Commands stay in English so they can be copied exactly.</em>
+  <strong>Apple Silicon पर local LLM inference के लिए Universal State Runtime: MLX, Metal, NEON, ANE pathing और practical CLI.</strong><br />
+  <em>कमांड अंग्रेज़ी में रखे गए हैं ताकि उन्हें ठीक से कॉपी किया जा सके।</em>
 </p>
 
 <p align="center">
@@ -12,20 +12,20 @@
 </p>
 
 <p align="center">
-<a href="README.md">English</a> | <a href="READMEs/README.pt-BR.md">Português</a> | <a href="READMEs/README.es-ES.md">Español</a> | <a href="READMEs/README.ja-JP.md">日本語</a> | <a href="READMEs/README.ko-KR.md">한국어</a> | <a href="READMEs/README.zh-CN.md">简体中文</a> | <a href="READMEs/README.it-IT.md">Italiano</a> | <a href="READMEs/README.fr-FR.md">Français</a> | <a href="READMEs/README.ru-RU.md">Русский</a> | <a href="READMEs/README.pl-PL.md">Polski</a> | <a href="READMEs/README.hi-IN.md">हिन्दी</a> | <a href="READMEs/README.ar-SA.md">العربية</a> | <a href="READMEs/README.he-IL.md">עברית</a> | <a href="READMEs/README.ms-MY.md">Bahasa Melayu</a> | <a href="READMEs/README.id-ID.md">Bahasa Indonesia</a>
+<a href="../README.md">English</a> | <a href="README.pt-BR.md">Português</a> | <a href="README.es-ES.md">Español</a> | <a href="README.ja-JP.md">日本語</a> | <a href="README.ko-KR.md">한국어</a> | <a href="README.zh-CN.md">简体中文</a> | <a href="README.it-IT.md">Italiano</a> | <a href="README.fr-FR.md">Français</a> | <a href="README.ru-RU.md">Русский</a> | <a href="README.pl-PL.md">Polski</a> | <a href="README.hi-IN.md">हिन्दी</a> | <a href="README.ar-SA.md">العربية</a> | <a href="README.he-IL.md">עברית</a> | <a href="README.ms-MY.md">Bahasa Melayu</a> | <a href="README.id-ID.md">Bahasa Indonesia</a>
 </p>
 
 <p align="center">
-  <img src="assets/us4-v6-apple-edition-promo.png" alt="US4 V6 Apple Edition preview" width="860" />
+  <img src="../assets/us4-v6-apple-edition-promo.png" alt="US4 V6 Apple Edition preview" width="860" />
 </p>
 
 ---
 
-## The short version
+## संक्षेप में
 
-Universal State Runtime for local LLM inference on Apple Silicon: MLX, Metal, NEON, ANE pathing and a practical CLI.
+Apple Silicon पर local LLM inference के लिए Universal State Runtime: MLX, Metal, NEON, ANE pathing और practical CLI.
 
-## Quick Start
+## त्वरित शुरुआत
 
 ```bash
 brew install cmake ninja node
@@ -35,23 +35,23 @@ cmake --build build --config Release
 ./build/apps/us4-cli --probe
 ```
 
-## What it does
+## यह क्या करता है
 
 - Local-first runtime path for Apple Silicon inference experiments.
 - CMake + Ninja build with CLI smoke flows.
 - Ollama/custom upstream serve path for practical chat backends.
 - Runtime docs for MLX, Metal, scheduler, memory, cache and benchmarks.
 
-## Why this README is built to earn attention
+## यह README ध्यान खींचने के लिए क्यों बनाया गया है
 
-- clear first-screen promise
-- language links before installation
-- badges and a visual hero for fast trust
+- पहली स्क्रीन पर साफ़ promise
+- install से पहले language links
+- badges और hero से trust
 - copy-ready quick start
-- proof before long reference material
-- star history for social proof
+- लंबे details से पहले proof
+- star history से social proof
 
-## How it works
+## यह कैसे काम करता है
 
 ```mermaid
 flowchart LR
@@ -66,26 +66,26 @@ tests, docs, screenshots"]
 delivery loop"]
 ```
 
-## Proof and validation
+## प्रमाण और सत्यापन
 
 - Changelog tracks CMake project version and starter package version separately.
 - Playwright CLI smoke tests are the high-signal E2E path.
 - Repo currently resolves on GitHub as wesleysimplicio/ds4-simplicio-apple-v6.
 
-## Simplicio ecosystem
+## Simplicio इकोसिस्टम
 
 - [simplicio-mapper](https://github.com/wesleysimplicio/simplicio-mapper) supplies repo context before interpretation.
 - [simplicio-cli](https://github.com/wesleysimplicio/simplicio-dev-cli) executes focused code tasks with verification.
 - [simplicio-prompt](https://github.com/wesleysimplicio/simplicio-prompt) provides fan-out and consensus runtime patterns.
 - [simplicio-sprint](https://github.com/wesleysimplicio/simplicio-sprint) turns cards into draft PR delivery loops.
 
-## Documentation standard
+## दस्तावेज़ मानक
 
-- [runtime/README.md](runtime/README.md)
-- [CHANGELOG.md](CHANGELOG.md)
-- [docs/readme-globalization-standard.md](docs/readme-globalization-standard.md)
+- [runtime/README.md](../runtime/README.md)
+- [CHANGELOG.md](../CHANGELOG.md)
+- [docs/readme-globalization-standard.md](../docs/readme-globalization-standard.md)
 
-## Star History
+## स्टार इतिहास
 
 <a href="https://www.star-history.com/#wesleysimplicio/ds4-simplicio-apple-v6&Date">
   <picture>
@@ -95,6 +95,6 @@ delivery loop"]
   </picture>
 </a>
 
-## License
+## लाइसेंस
 
 See the repository license and distribution notes before production use.

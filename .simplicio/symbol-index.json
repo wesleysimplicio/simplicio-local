@@ -1,0 +1,972 @@
+{
+  "schema": "simplicio.symbol-index/v1",
+  "version": 1,
+  "generated_at": "2026-06-01T04:44:30.062Z",
+  "root": "/Users/wesleysimplicio/Projetos/ai/us4-v6-simplicio-apple",
+  "symbols": [
+    {
+      "name": "normalizeMemoryGiB",
+      "qualified_name": "bin/cli.js::normalizeMemoryGiB",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 300,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 300
+      }
+    },
+    {
+      "name": "selectRuntimeMode",
+      "qualified_name": "bin/cli.js::selectRuntimeMode",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 304,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 304
+      }
+    },
+    {
+      "name": "detectAneEligibility",
+      "qualified_name": "bin/cli.js::detectAneEligibility",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 314,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 314
+      }
+    },
+    {
+      "name": "buildProbe",
+      "qualified_name": "bin/cli.js::buildProbe",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 319,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 319
+      }
+    },
+    {
+      "name": "printRuntimeText",
+      "qualified_name": "bin/cli.js::printRuntimeText",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 354,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 354
+      }
+    },
+    {
+      "name": "handleRuntimeFlags",
+      "qualified_name": "bin/cli.js::handleRuntimeFlags",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 372,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 372
+      }
+    },
+    {
+      "name": "printHelp",
+      "qualified_name": "bin/cli.js::printHelp",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 404,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 404
+      }
+    },
+    {
+      "name": "log",
+      "qualified_name": "bin/cli.js::log",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 452,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 452
+      }
+    },
+    {
+      "name": "err",
+      "qualified_name": "bin/cli.js::err",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 454,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 454
+      }
+    },
+    {
+      "name": "readSafe",
+      "qualified_name": "bin/cli.js::readSafe",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 455,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 455
+      }
+    },
+    {
+      "name": "existsIn",
+      "qualified_name": "bin/cli.js::existsIn",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 463,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 463
+      }
+    },
+    {
+      "name": "listDir",
+      "qualified_name": "bin/cli.js::listDir",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 467,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 467
+      }
+    },
+    {
+      "name": "commandExists",
+      "qualified_name": "bin/cli.js::commandExists",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 475,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 475
+      }
+    },
+    {
+      "name": "readJsonField",
+      "qualified_name": "bin/cli.js::readJsonField",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 482,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 482
+      }
+    },
+    {
+      "name": "readTomlField",
+      "qualified_name": "bin/cli.js::readTomlField",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 488,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 488
+      }
+    },
+    {
+      "name": "readYamlField",
+      "qualified_name": "bin/cli.js::readYamlField",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 494,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 494
+      }
+    },
+    {
+      "name": "detectStack",
+      "qualified_name": "bin/cli.js::detectStack",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 500,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 500
+      }
+    },
+    {
+      "name": "detectProductName",
+      "qualified_name": "bin/cli.js::detectProductName",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 535,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 535
+      }
+    },
+    {
+      "name": "detectProjectMode",
+      "qualified_name": "bin/cli.js::detectProjectMode",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 569,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 569
+      }
+    },
+    {
+      "name": "detectProjects",
+      "qualified_name": "bin/cli.js::detectProjects",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 577,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 577
+      }
+    },
+    {
+      "name": "detectExistingInstructionFiles",
+      "qualified_name": "bin/cli.js::detectExistingInstructionFiles",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 593,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 593
+      }
+    },
+    {
+      "name": "copyTemplate",
+      "qualified_name": "bin/cli.js::copyTemplate",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 605,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 605
+      }
+    },
+    {
+      "name": "handleGitignore",
+      "qualified_name": "bin/cli.js::handleGitignore",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 650,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 650
+      }
+    },
+    {
+      "name": "looksBinary",
+      "qualified_name": "bin/cli.js::looksBinary",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 705,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 705
+      }
+    },
+    {
+      "name": "substituteInFile",
+      "qualified_name": "bin/cli.js::substituteInFile",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 710,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 710
+      }
+    },
+    {
+      "name": "walk",
+      "qualified_name": "bin/cli.js::walk",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 730,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 730
+      }
+    },
+    {
+      "name": "substitute",
+      "qualified_name": "bin/cli.js::substitute",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 746,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 746
+      }
+    },
+    {
+      "name": "stamp",
+      "qualified_name": "bin/cli.js::stamp",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 749,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 749
+      }
+    },
+    {
+      "name": "writeMeta",
+      "qualified_name": "bin/cli.js::writeMeta",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 776,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 776
+      }
+    },
+    {
+      "name": "ask",
+      "qualified_name": "bin/cli.js::ask",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 807,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 807
+      }
+    },
+    {
+      "name": "chooseCli",
+      "qualified_name": "bin/cli.js::chooseCli",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 813,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 813
+      }
+    },
+    {
+      "name": "copyToClipboard",
+      "qualified_name": "bin/cli.js::copyToClipboard",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 831,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 831
+      }
+    },
+    {
+      "name": "execHandoff",
+      "qualified_name": "bin/cli.js::execHandoff",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 848,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 848
+      }
+    },
+    {
+      "name": "requireCmd",
+      "qualified_name": "bin/cli.js::requireCmd",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 857,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 857
+      }
+    },
+    {
+      "name": "handoff",
+      "qualified_name": "bin/cli.js::handoff",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 864,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 864
+      }
+    },
+    {
+      "name": "main",
+      "qualified_name": "bin/cli.js::main",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "bin/cli.js",
+      "line": 966,
+      "evidence": {
+        "file": "bin/cli.js",
+        "line": 966
+      }
+    },
+    {
+      "name": "_sanitize_path",
+      "qualified_name": "scripts/openai_serve.py::_sanitize_path",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 98,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 98
+      }
+    },
+    {
+      "name": "_truthy",
+      "qualified_name": "scripts/openai_serve.py::_truthy",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 102,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 102
+      }
+    },
+    {
+      "name": "Settings",
+      "qualified_name": "scripts/openai_serve.py::Settings",
+      "kind": "class",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 108,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 108
+      }
+    },
+    {
+      "name": "chat_model",
+      "qualified_name": "scripts/openai_serve.py::chat_model",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 134,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 134
+      }
+    },
+    {
+      "name": "upstream_port",
+      "qualified_name": "scripts/openai_serve.py::upstream_port",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 143,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 143
+      }
+    },
+    {
+      "name": "upstream_url",
+      "qualified_name": "scripts/openai_serve.py::upstream_url",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 147,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 147
+      }
+    },
+    {
+      "name": "upstream_health_url",
+      "qualified_name": "scripts/openai_serve.py::upstream_health_url",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 156,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 156
+      }
+    },
+    {
+      "name": "spawns_chat_subprocess",
+      "qualified_name": "scripts/openai_serve.py::spawns_chat_subprocess",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 164,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 164
+      }
+    },
+    {
+      "name": "EmbeddingsBackend",
+      "qualified_name": "scripts/openai_serve.py::EmbeddingsBackend",
+      "kind": "class",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 171,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 171
+      }
+    },
+    {
+      "name": "__init__",
+      "qualified_name": "scripts/openai_serve.py::__init__",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 175,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 175
+      }
+    },
+    {
+      "name": "ensure_loaded",
+      "qualified_name": "scripts/openai_serve.py::ensure_loaded",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 181,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 181
+      }
+    },
+    {
+      "name": "embed",
+      "qualified_name": "scripts/openai_serve.py::embed",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 201,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 201
+      }
+    },
+    {
+      "name": "_extract_vectors",
+      "qualified_name": "scripts/openai_serve.py::_extract_vectors",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 225,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 225
+      }
+    },
+    {
+      "name": "_send_json",
+      "qualified_name": "scripts/openai_serve.py::_send_json",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 241,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 241
+      }
+    },
+    {
+      "name": "_send_error",
+      "qualified_name": "scripts/openai_serve.py::_send_error",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 250,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 250
+      }
+    },
+    {
+      "name": "_proxy_upstream",
+      "qualified_name": "scripts/openai_serve.py::_proxy_upstream",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 254,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 254
+      }
+    },
+    {
+      "name": "_build_models_payload",
+      "qualified_name": "scripts/openai_serve.py::_build_models_payload",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 301,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 301
+      }
+    },
+    {
+      "name": "_handle_embeddings",
+      "qualified_name": "scripts/openai_serve.py::_handle_embeddings",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 311,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 311
+      }
+    },
+    {
+      "name": "Us4Handler",
+      "qualified_name": "scripts/openai_serve.py::Us4Handler",
+      "kind": "class",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 356,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 356
+      }
+    },
+    {
+      "name": "log_message",
+      "qualified_name": "scripts/openai_serve.py::log_message",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 360,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 360
+      }
+    },
+    {
+      "name": "do_GET",
+      "qualified_name": "scripts/openai_serve.py::do_GET",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 363,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 363
+      }
+    },
+    {
+      "name": "do_POST",
+      "qualified_name": "scripts/openai_serve.py::do_POST",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 373,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 373
+      }
+    },
+    {
+      "name": "_spawn_upstream",
+      "qualified_name": "scripts/openai_serve.py::_spawn_upstream",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 401,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 401
+      }
+    },
+    {
+      "name": "_terminate_proc",
+      "qualified_name": "scripts/openai_serve.py::_terminate_proc",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 501,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 501
+      }
+    },
+    {
+      "name": "_wait_upstream_ready",
+      "qualified_name": "scripts/openai_serve.py::_wait_upstream_ready",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 512,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 512
+      }
+    },
+    {
+      "name": "_init_embeddings",
+      "qualified_name": "scripts/openai_serve.py::_init_embeddings",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 533,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 533
+      }
+    },
+    {
+      "name": "_install_signal_handlers",
+      "qualified_name": "scripts/openai_serve.py::_install_signal_handlers",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 546,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 546
+      }
+    },
+    {
+      "name": "_shutdown",
+      "qualified_name": "scripts/openai_serve.py::_shutdown",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 549,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 549
+      }
+    },
+    {
+      "name": "_warn_if_non_loopback",
+      "qualified_name": "scripts/openai_serve.py::_warn_if_non_loopback",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 556,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 556
+      }
+    },
+    {
+      "name": "main",
+      "qualified_name": "scripts/openai_serve.py::main",
+      "kind": "function",
+      "language": "python",
+      "defined_in": "scripts/openai_serve.py",
+      "line": 571,
+      "evidence": {
+        "file": "scripts/openai_serve.py",
+        "line": 571
+      }
+    },
+    {
+      "name": "runCli",
+      "qualified_name": "test/cli.test.js::runCli",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "test/cli.test.js",
+      "line": 13,
+      "evidence": {
+        "file": "test/cli.test.js",
+        "line": 13
+      }
+    },
+    {
+      "name": "makeTempProject",
+      "qualified_name": "test/cli.test.js::makeTempProject",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "test/cli.test.js",
+      "line": 21,
+      "evidence": {
+        "file": "test/cli.test.js",
+        "line": 21
+      }
+    },
+    {
+      "name": "writeCoverageSummary",
+      "qualified_name": "test/run-tests.js::writeCoverageSummary",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "test/run-tests.js",
+      "line": 42,
+      "evidence": {
+        "file": "test/run-tests.js",
+        "line": 42
+      }
+    },
+    {
+      "name": "countCoveredLines",
+      "qualified_name": "test/run-tests.js::countCoveredLines",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "test/run-tests.js",
+      "line": 88,
+      "evidence": {
+        "file": "test/run-tests.js",
+        "line": 88
+      }
+    },
+    {
+      "name": "isCountedLine",
+      "qualified_name": "test/run-tests.js::isCountedLine",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "test/run-tests.js",
+      "line": 120,
+      "evidence": {
+        "file": "test/run-tests.js",
+        "line": 120
+      }
+    },
+    {
+      "name": "nextTemplateLiteralState",
+      "qualified_name": "test/run-tests.js::nextTemplateLiteralState",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "test/run-tests.js",
+      "line": 126,
+      "evidence": {
+        "file": "test/run-tests.js",
+        "line": 126
+      }
+    },
+    {
+      "name": "makeSummary",
+      "qualified_name": "test/run-tests.js::makeSummary",
+      "kind": "function",
+      "language": "javascript",
+      "defined_in": "test/run-tests.js",
+      "line": 132,
+      "evidence": {
+        "file": "test/run-tests.js",
+        "line": 132
+      }
+    },
+    {
+      "name": "freePort",
+      "qualified_name": "tests/e2e/us4-cli-serve.spec.ts::freePort",
+      "kind": "function",
+      "language": "typescript",
+      "defined_in": "tests/e2e/us4-cli-serve.spec.ts",
+      "line": 17,
+      "evidence": {
+        "file": "tests/e2e/us4-cli-serve.spec.ts",
+        "line": 17
+      }
+    },
+    {
+      "name": "waitReady",
+      "qualified_name": "tests/e2e/us4-cli-serve.spec.ts::waitReady",
+      "kind": "function",
+      "language": "typescript",
+      "defined_in": "tests/e2e/us4-cli-serve.spec.ts",
+      "line": 34,
+      "evidence": {
+        "file": "tests/e2e/us4-cli-serve.spec.ts",
+        "line": 34
+      }
+    },
+    {
+      "name": "getJson",
+      "qualified_name": "tests/e2e/us4-cli-serve.spec.ts::getJson",
+      "kind": "function",
+      "language": "typescript",
+      "defined_in": "tests/e2e/us4-cli-serve.spec.ts",
+      "line": 50,
+      "evidence": {
+        "file": "tests/e2e/us4-cli-serve.spec.ts",
+        "line": 50
+      }
+    },
+    {
+      "name": "postJson",
+      "qualified_name": "tests/e2e/us4-cli-serve.spec.ts::postJson",
+      "kind": "function",
+      "language": "typescript",
+      "defined_in": "tests/e2e/us4-cli-serve.spec.ts",
+      "line": 62,
+      "evidence": {
+        "file": "tests/e2e/us4-cli-serve.spec.ts",
+        "line": 62
+      }
+    },
+    {
+      "name": "attach",
+      "qualified_name": "tests/e2e/us4-cli-serve.spec.ts::attach",
+      "kind": "function",
+      "language": "typescript",
+      "defined_in": "tests/e2e/us4-cli-serve.spec.ts",
+      "line": 78,
+      "evidence": {
+        "file": "tests/e2e/us4-cli-serve.spec.ts",
+        "line": 78
+      }
+    },
+    {
+      "name": "runCli",
+      "qualified_name": "tests/e2e/us4-cli.spec.ts::runCli",
+      "kind": "function",
+      "language": "typescript",
+      "defined_in": "tests/e2e/us4-cli.spec.ts",
+      "line": 17,
+      "evidence": {
+        "file": "tests/e2e/us4-cli.spec.ts",
+        "line": 17
+      }
+    },
+    {
+      "name": "attachCommand",
+      "qualified_name": "tests/e2e/us4-cli.spec.ts::attachCommand",
+      "kind": "function",
+      "language": "typescript",
+      "defined_in": "tests/e2e/us4-cli.spec.ts",
+      "line": 36,
+      "evidence": {
+        "file": "tests/e2e/us4-cli.spec.ts",
+        "line": 36
+      }
+    }
+  ],
+  "counts": {
+    "symbols": 80,
+    "files": 6
+  }
+}

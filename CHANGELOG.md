@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.9] - 2026-06-01
+
+### Changed
+
+- Rebuilt the README as a multilingual, proof-first product page with Apple Silicon positioning, ecosystem graph, and Star History.
+- Added canonical translations under `READMEs/` for the full Simplicio language set.
+- Bump starter package metadata `0.1.51` -> `0.1.52` and project runtime version `0.2.8` -> `0.2.9`.
+
 All notable changes to **US4 V6 Apple Edition** are recorded here. Format
 follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the
 project adopts [Semantic Versioning](https://semver.org/spec/v2.0.0.html).

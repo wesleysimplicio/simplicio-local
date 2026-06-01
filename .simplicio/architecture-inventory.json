@@ -1,0 +1,6705 @@
+{
+  "schema": "simplicio.architecture-inventory/v1",
+  "version": 1,
+  "generated_at": "2026-06-01T04:44:30.062Z",
+  "root": "/Users/wesleysimplicio/Projetos/ai/us4-v6-simplicio-apple",
+  "source_project_map": ".simplicio/project-map.json",
+  "source_symbol_index": ".simplicio/symbol-index.json",
+  "source_call_graph": ".simplicio/call-graph.json",
+  "product": {
+    "name": "@wesleysimplicio/llm-project-mapper",
+    "stack": "commonjs",
+    "project_mode": "root"
+  },
+  "architecture": {
+    "signals": [
+      "dotnet",
+      "nextjs",
+      "playwright",
+      "react",
+      "vue"
+    ],
+    "system_type": "web"
+  },
+  "modules": [
+    {
+      "name": ".",
+      "summary": "Groups 20 files across 3 detected layers.",
+      "file_count": 20,
+      "files": [
+        ".DS_Store",
+        ".gitattributes",
+        ".gitignore",
+        "AGENTS.md",
+        "CHANGELOG.md",
+        "CLAUDE.md",
+        "CMakeLists.txt",
+        "GOAL_RESULT.md",
+        "INIT.md",
+        "PRD.md",
+        "PROGRESS.md",
+        "README.md",
+        "README.pt-BR.md",
+        "US4-V6-simplicio.md",
+        "_BOOTSTRAP.md",
+        "bootstrap.ps1",
+        "bootstrap.sh",
+        "package-lock.json",
+        "package.json",
+        "playwright.config.ts"
+      ],
+      "layers": [
+        "asset",
+        "config",
+        "documentation"
+      ],
+      "entry_points": [],
+      "tests": [],
+      "public_symbols": [],
+      "evidence": [
+        {
+          "file": ".DS_Store"
+        },
+        {
+          "file": ".gitattributes"
+        },
+        {
+          "file": ".gitignore"
+        },
+        {
+          "file": "AGENTS.md"
+        },
+        {
+          "file": "CHANGELOG.md"
+        },
+        {
+          "file": "CLAUDE.md"
+        },
+        {
+          "file": "CMakeLists.txt"
+        },
+        {
+          "file": "GOAL_RESULT.md"
+        },
+        {
+          "file": "INIT.md"
+        },
+        {
+          "file": "PRD.md"
+        }
+      ]
+    },
+    {
+      "name": ".agents",
+      "summary": "Groups 6 files across 2 detected layers.",
+      "file_count": 6,
+      "files": [
+        ".agents/README.md",
+        ".agents/_template.agent.md",
+        ".agents/architect.agent.md",
+        ".agents/ralph-loop.agent.md",
+        ".agents/reviewer.agent.md",
+        ".agents/tdd.agent.md"
+      ],
+      "layers": [
+        "documentation",
+        "ui"
+      ],
+      "entry_points": [],
+      "tests": [],
+      "public_symbols": [],
+      "evidence": [
+        {
+          "file": ".agents/README.md"
+        },
+        {
+          "file": ".agents/_template.agent.md"
+        },
+        {
+          "file": ".agents/architect.agent.md"
+        },
+        {
+          "file": ".agents/ralph-loop.agent.md"
+        },
+        {
+          "file": ".agents/reviewer.agent.md"
+        },
+        {
+          "file": ".agents/tdd.agent.md"
+        }
+      ]
+    },
+    {
+      "name": ".claude",
+      "summary": "Groups 7 files across 1 detected layers.",
+      "file_count": 7,
+      "files": [
+        ".claude/hooks/post-edit.ps1",
+        ".claude/hooks/post-edit.sh",
+        ".claude/hooks/pre-commit.ps1",
+        ".claude/hooks/pre-commit.sh",
+        ".claude/hooks/session-start-skills.sh",
+        ".claude/settings.json",
+        ".claude/settings.local.json"
+      ],
+      "layers": [
+        "asset"
+      ],
+      "entry_points": [],
+      "tests": [],
+      "public_symbols": [],
+      "evidence": [
+        {
+          "file": ".claude/hooks/post-edit.ps1"
+        },
+        {
+          "file": ".claude/hooks/post-edit.sh"
+        },
+        {
+          "file": ".claude/hooks/pre-commit.ps1"
+        },
+        {
+          "file": ".claude/hooks/pre-commit.sh"
+        },
+        {
+          "file": ".claude/hooks/session-start-skills.sh"
+        },
+        {
+          "file": ".claude/settings.json"
+        },
+        {
+          "file": ".claude/settings.local.json"
+        }
+      ]
+    },
+    {
+      "name": ".codex",
+      "summary": "Groups 7 files across 2 detected layers.",
+      "file_count": 7,
+      "files": [
+        ".codex/config.toml",
+        ".codex/hooks.json",
+        ".codex/hooks/post-edit.ps1",
+        ".codex/hooks/post-edit.sh",
+        ".codex/hooks/pre-commit.ps1",
+        ".codex/hooks/pre-commit.sh",
+        ".codex/hooks/session-start-skills.sh"
+      ],
+      "layers": [
+        "asset",
+        "config"
+      ],
+      "entry_points": [],
+      "tests": [],
+      "public_symbols": [],
+      "evidence": [
+        {
+          "file": ".codex/config.toml"
+        },
+        {
+          "file": ".codex/hooks.json"
+        },
+        {
+          "file": ".codex/hooks/post-edit.ps1"
+        },
+        {
+          "file": ".codex/hooks/post-edit.sh"
+        },
+        {
+          "file": ".codex/hooks/pre-commit.ps1"
+        },
+        {
+          "file": ".codex/hooks/pre-commit.sh"
+        },
+        {
+          "file": ".codex/hooks/session-start-skills.sh"
+        }
+      ]
+    },
+    {
+      "name": ".github",
+      "summary": "Groups 13 files across 3 detected layers.",
+      "file_count": 13,
+      "files": [
+        ".github/CODEOWNERS",
+        ".github/ISSUE_TEMPLATE/bug.md",
+        ".github/ISSUE_TEMPLATE/feature.md",
+        ".github/PULL_REQUEST_TEMPLATE.md",
+        ".github/copilot-instructions.md",
+        ".github/copilot/agents/_template.agent.md",
+        ".github/copilot/agents/architect.agent.md",
+        ".github/copilot/agents/ralph-loop.agent.md",
+        ".github/copilot/agents/reviewer.agent.md",
+        ".github/copilot/agents/tdd.agent.md",
+        ".github/workflows/ci.yml",
+        ".github/workflows/dod.yml",
+        ".github/workflows/scaffold-self-check.yml"
+      ],
+      "layers": [
+        "asset",
+        "documentation",
+        "ui"
+      ],
+      "entry_points": [],
+      "tests": [],
+      "public_symbols": [],
+      "evidence": [
+        {
+          "file": ".github/CODEOWNERS"
+        },
+        {
+          "file": ".github/ISSUE_TEMPLATE/bug.md"
+        },
+        {
+          "file": ".github/ISSUE_TEMPLATE/feature.md"
+        },
+        {
+          "file": ".github/PULL_REQUEST_TEMPLATE.md"
+        },
+        {
+          "file": ".github/copilot-instructions.md"
+        },
+        {
+          "file": ".github/copilot/agents/_template.agent.md"
+        },
+        {
+          "file": ".github/copilot/agents/architect.agent.md"
+        },
+        {
+          "file": ".github/copilot/agents/ralph-loop.agent.md"
+        },
+        {
+          "file": ".github/copilot/agents/reviewer.agent.md"
+        },
+        {
+          "file": ".github/copilot/agents/tdd.agent.md"
+        }
+      ]
+    },
+    {
+      "name": ".skills",
+      "summary": "Groups 7 files across 1 detected layers.",
+      "file_count": 7,
+      "files": [
+        ".skills/README.md",
+        ".skills/_template/SKILL.md",
+        ".skills/caveman/SKILL.md",
+        ".skills/conventional-commits/SKILL.md",
+        ".skills/everything-claude-code/SKILL.md",
+        ".skills/playwright-e2e/SKILL.md",
+        ".skills/ralph-loop/SKILL.md"
+      ],
+      "layers": [
+        "documentation"
+      ],
+      "entry_points": [],
+      "tests": [],
+      "public_symbols": [],
+      "evidence": [
+        {
+          "file": ".skills/README.md"
+        },
+        {
+          "file": ".skills/_template/SKILL.md"
+        },
+        {
+          "file": ".skills/caveman/SKILL.md"
+        },
+        {
+          "file": ".skills/conventional-commits/SKILL.md"
+        },
+        {
+          "file": ".skills/everything-claude-code/SKILL.md"
+        },
+        {
+          "file": ".skills/playwright-e2e/SKILL.md"
+        },
+        {
+          "file": ".skills/ralph-loop/SKILL.md"
+        }
+      ]
+    },
+    {
+      "name": ".specs",
+      "summary": "Groups 118 files across 5 detected layers.",
+      "file_count": 118,
+      "files": [
+        ".specs/README.md",
+        ".specs/architecture/ADR-001-mlx-primary-backend.md",
+        ".specs/architecture/ADR-002-runtime-boundaries-and-adapter-contract.md",
+        ".specs/architecture/ADR-003-backend-selection-strategy.md",
+        ".specs/architecture/ADR-004-bitnet-packed-format.md",
+        ".specs/architecture/ADR-005-kv-cache-architecture.md",
+        ".specs/architecture/ADR-006-moe-expert-paging.md",
+        ".specs/architecture/ADR-007-speculative-decoding.md",
+        ".specs/architecture/ADR-008-ane-layer-offload.md",
+        ".specs/architecture/ADR-009-router-load-balance-target.md",
+        ".specs/architecture/ADR-template.md",
+        ".specs/architecture/DESIGN.md",
+        ".specs/architecture/PATTERNS.md",
+        ".specs/product/DOMAIN.md",
+        ".specs/product/PERSONAS.md",
+        ".specs/product/VISION.md",
+        ".specs/runtime/CLI-CONTRACT.md",
+        ".specs/runtime/CLI-POLISH.md",
+        ".specs/runtime/HARDWARE-PROBE.md",
+        ".specs/runtime/PLAYWRIGHT-SMOKE.md",
+        ".specs/runtime/README.md",
+        ".specs/runtime/SERVE-OPENAI.md",
+        ".specs/runtime/TELEMETRY.md",
+        ".specs/sprints/BACKLOG.md",
+        ".specs/sprints/TIMELINE.md",
+        ".specs/sprints/sprint-01/SPRINT.md",
+        ".specs/sprints/sprint-01/T01.0-agentic-starter.task.md",
+        ".specs/sprints/sprint-01/T01.1-runtime-scaffold.task.md",
+        ".specs/sprints/sprint-01/T01.2-cli-contract.task.md",
+        ".specs/sprints/sprint-01/T01.3-adapter-contract.task.md",
+        ".specs/sprints/sprint-01/T01.4-probe-and-mode.task.md",
+        ".specs/sprints/sprint-01/T01.5-telemetry-and-gates.task.md",
+        ".specs/sprints/sprint-01/T01.6-ci-transition.task.md",
+        ".specs/sprints/sprint-01/T01.7-playwright-smoke.task.md",
+        ".specs/sprints/sprint-01/T01.8-adrs.task.md",
+        ".specs/sprints/sprint-02/SPRINT.md",
+        ".specs/sprints/sprint-02/T02.1-tensor-core.task.md",
+        ".specs/sprints/sprint-02/T02.2-scalar-matmul.task.md",
+        ".specs/sprints/sprint-02/T02.3-scalar-attention.task.md",
+        ".specs/sprints/sprint-02/T02.4-dense-adapter-base.task.md",
+        ".specs/sprints/sprint-02/T02.5-qwen-adapter.task.md",
+        ".specs/sprints/sprint-02/T02.6-gemma-adapter.task.md",
+        ".specs/sprints/sprint-02/T02.7-loader-minimal.task.md",
+        ".specs/sprints/sprint-02/T02.8-dense-benchmark.task.md",
+        ".specs/sprints/sprint-03/SPRINT.md",
+        ".specs/sprints/sprint-03/T03.1-metal-init.task.md",
+        ".specs/sprints/sprint-03/T03.2-metal-matmul-scaffold.task.md",
+        ".specs/sprints/sprint-03/T03.3-metal-softmax-rmsnorm-scaffold.task.md",
+        ".specs/sprints/sprint-03/T03.4-mlx-bridge-scaffold.task.md",
+        ".specs/sprints/sprint-03/T03.5-unified-allocator.task.md",
+        ".specs/sprints/sprint-03/T03.6-enable-metal-capability.task.md",
+        ".specs/sprints/sprint-03/T03.7-backend-selector-modes.task.md",
+        ".specs/sprints/sprint-04/SPRINT.md",
+        ".specs/sprints/sprint-04/T04.1-neon-matmul-hotpath.task.md",
+        ".specs/sprints/sprint-04/T04.2-neon-attention-hotpath.task.md",
+        ".specs/sprints/sprint-04/T04.4-block-gemm-tiling.task.md",
+        ".specs/sprints/sprint-04/T04.6-neon-rebench.task.md",
+        ".specs/sprints/sprint-05/SPRINT.md",
+        ".specs/sprints/sprint-05/T05.1-bitnet-metal-kernel.task.md",
+        ".specs/sprints/sprint-05/T05.2-bitnet-neon-kernel.task.md",
+        ".specs/sprints/sprint-05/T05.3-bitnet-adapter.task.md",
+        ".specs/sprints/sprint-05/T05.4-ternary-adapter.task.md",
+        ".specs/sprints/sprint-05/T05.5-ternary-lut.task.md",
+        ".specs/sprints/sprint-05/T05.6-lowbit-loader.task.md",
+        ".specs/sprints/sprint-05/T05.7-micro-trigger.task.md",
+        ".specs/sprints/sprint-06/SPRINT.md",
+        ".specs/sprints/sprint-06/T06.1-kv-pager-tiers.task.md",
+        ".specs/sprints/sprint-06/T06.2-prefix-cache-dedup.task.md",
+        ".specs/sprints/sprint-06/T06.3-ssd-cold-store.task.md",
+        ".specs/sprints/sprint-06/T06.4-kv-summarizer.task.md",
+        ".specs/sprints/sprint-06/T06.5-kv-eviction-policy.task.md",
+        ".specs/sprints/sprint-06/T06.6-adapter-kv-hooks.task.md",
+        ".specs/sprints/sprint-06/T06.7-kv-telemetry.task.md",
+        ".specs/sprints/sprint-07/SPRINT.md",
+        ".specs/sprints/sprint-07/T07.5-llama-loader.task.md",
+        ".specs/sprints/sprint-07/T07.6-llama-bench.task.md",
+        ".specs/sprints/sprint-08/SPRINT.md",
+        ".specs/sprints/sprint-08/T08.1-router-topk.task.md",
+        ".specs/sprints/sprint-08/T08.2-expert-pager.task.md",
+        ".specs/sprints/sprint-08/T08.3-deepseek-moe-adapter.task.md"
+      ],
+      "layers": [
+        "documentation",
+        "domain",
+        "model",
+        "route",
+        "test"
+      ],
+      "entry_points": [],
+      "tests": [
+        ".specs/README.md",
+        ".specs/architecture/ADR-001-mlx-primary-backend.md",
+        ".specs/architecture/ADR-002-runtime-boundaries-and-adapter-contract.md",
+        ".specs/architecture/ADR-003-backend-selection-strategy.md",
+        ".specs/architecture/ADR-004-bitnet-packed-format.md",
+        ".specs/architecture/ADR-005-kv-cache-architecture.md",
+        ".specs/architecture/ADR-006-moe-expert-paging.md",
+        ".specs/architecture/ADR-007-speculative-decoding.md",
+        ".specs/architecture/ADR-008-ane-layer-offload.md",
+        ".specs/architecture/ADR-009-router-load-balance-target.md",
+        ".specs/architecture/ADR-template.md",
+        ".specs/architecture/DESIGN.md",
+        ".specs/architecture/PATTERNS.md",
+        ".specs/product/DOMAIN.md",
+        ".specs/product/PERSONAS.md",
+        ".specs/product/VISION.md",
+        ".specs/runtime/CLI-CONTRACT.md",
+        ".specs/runtime/CLI-POLISH.md",
+        ".specs/runtime/HARDWARE-PROBE.md",
+        ".specs/runtime/PLAYWRIGHT-SMOKE.md",
+        ".specs/runtime/README.md",
+        ".specs/runtime/SERVE-OPENAI.md",
+        ".specs/runtime/TELEMETRY.md",
+        ".specs/sprints/BACKLOG.md",
+        ".specs/sprints/TIMELINE.md",
+        ".specs/sprints/sprint-01/SPRINT.md",
+        ".specs/sprints/sprint-01/T01.0-agentic-starter.task.md",
+        ".specs/sprints/sprint-01/T01.1-runtime-scaffold.task.md",
+        ".specs/sprints/sprint-01/T01.2-cli-contract.task.md",
+        ".specs/sprints/sprint-01/T01.3-adapter-contract.task.md",
+        ".specs/sprints/sprint-01/T01.4-probe-and-mode.task.md",
+        ".specs/sprints/sprint-01/T01.5-telemetry-and-gates.task.md",
+        ".specs/sprints/sprint-01/T01.6-ci-transition.task.md",
+        ".specs/sprints/sprint-01/T01.7-playwright-smoke.task.md",
+        ".specs/sprints/sprint-01/T01.8-adrs.task.md",
+        ".specs/sprints/sprint-02/SPRINT.md",
+        ".specs/sprints/sprint-02/T02.1-tensor-core.task.md",
+        ".specs/sprints/sprint-02/T02.2-scalar-matmul.task.md",
+        ".specs/sprints/sprint-02/T02.3-scalar-attention.task.md",
+        ".specs/sprints/sprint-02/T02.4-dense-adapter-base.task.md",
+        ".specs/sprints/sprint-02/T02.5-qwen-adapter.task.md",
+        ".specs/sprints/sprint-02/T02.6-gemma-adapter.task.md",
+        ".specs/sprints/sprint-02/T02.7-loader-minimal.task.md",
+        ".specs/sprints/sprint-02/T02.8-dense-benchmark.task.md",
+        ".specs/sprints/sprint-03/SPRINT.md",
+        ".specs/sprints/sprint-03/T03.1-metal-init.task.md",
+        ".specs/sprints/sprint-03/T03.2-metal-matmul-scaffold.task.md",
+        ".specs/sprints/sprint-03/T03.3-metal-softmax-rmsnorm-scaffold.task.md",
+        ".specs/sprints/sprint-03/T03.4-mlx-bridge-scaffold.task.md",
+        ".specs/sprints/sprint-03/T03.5-unified-allocator.task.md",
+        ".specs/sprints/sprint-03/T03.6-enable-metal-capability.task.md",
+        ".specs/sprints/sprint-03/T03.7-backend-selector-modes.task.md",
+        ".specs/sprints/sprint-04/SPRINT.md",
+        ".specs/sprints/sprint-04/T04.1-neon-matmul-hotpath.task.md",
+        ".specs/sprints/sprint-04/T04.2-neon-attention-hotpath.task.md",
+        ".specs/sprints/sprint-04/T04.4-block-gemm-tiling.task.md",
+        ".specs/sprints/sprint-04/T04.6-neon-rebench.task.md",
+        ".specs/sprints/sprint-05/SPRINT.md",
+        ".specs/sprints/sprint-05/T05.1-bitnet-metal-kernel.task.md",
+        ".specs/sprints/sprint-05/T05.2-bitnet-neon-kernel.task.md",
+        ".specs/sprints/sprint-05/T05.3-bitnet-adapter.task.md",
+        ".specs/sprints/sprint-05/T05.4-ternary-adapter.task.md",
+        ".specs/sprints/sprint-05/T05.5-ternary-lut.task.md",
+        ".specs/sprints/sprint-05/T05.6-lowbit-loader.task.md",
+        ".specs/sprints/sprint-05/T05.7-micro-trigger.task.md",
+        ".specs/sprints/sprint-06/SPRINT.md",
+        ".specs/sprints/sprint-06/T06.1-kv-pager-tiers.task.md",
+        ".specs/sprints/sprint-06/T06.2-prefix-cache-dedup.task.md",
+        ".specs/sprints/sprint-06/T06.3-ssd-cold-store.task.md",
+        ".specs/sprints/sprint-06/T06.4-kv-summarizer.task.md",
+        ".specs/sprints/sprint-06/T06.5-kv-eviction-policy.task.md",
+        ".specs/sprints/sprint-06/T06.6-adapter-kv-hooks.task.md",
+        ".specs/sprints/sprint-06/T06.7-kv-telemetry.task.md",
+        ".specs/sprints/sprint-07/SPRINT.md",
+        ".specs/sprints/sprint-07/T07.5-llama-loader.task.md",
+        ".specs/sprints/sprint-07/T07.6-llama-bench.task.md",
+        ".specs/sprints/sprint-08/SPRINT.md",
+        ".specs/sprints/sprint-08/T08.1-router-topk.task.md",
+        ".specs/sprints/sprint-08/T08.2-expert-pager.task.md",
+        ".specs/sprints/sprint-08/T08.3-deepseek-moe-adapter.task.md",
+        ".specs/sprints/sprint-08/T08.4-kimi-moe-adapter.task.md",
+        ".specs/sprints/sprint-08/T08.5-moe-loader.task.md",
+        ".specs/sprints/sprint-08/T08.6-moe-telemetry.task.md",
+        ".specs/sprints/sprint-09/SPRINT.md",
+        ".specs/sprints/sprint-09/T09.1-minimax-adapter.task.md",
+        ".specs/sprints/sprint-09/T09.2-glm-adapter.task.md",
+        ".specs/sprints/sprint-09/T09.3-speculative-prefetch.task.md",
+        ".specs/sprints/sprint-09/T09.4-sparsity-cache.task.md",
+        ".specs/sprints/sprint-09/T09.5-multimodal-cache.task.md",
+        ".specs/sprints/sprint-09/T09.6-prefetch-telemetry.task.md",
+        ".specs/sprints/sprint-10/SPRINT.md",
+        ".specs/sprints/sprint-10/T10.1-continuous-batcher.task.md",
+        ".specs/sprints/sprint-10/T10.2-session-pool.task.md",
+        ".specs/sprints/sprint-10/T10.3-peagle-decoder.task.md",
+        ".specs/sprints/sprint-10/T10.4-eagle3-decoder.task.md",
+        ".specs/sprints/sprint-10/T10.5-draft-model-loader.task.md",
+        ".specs/sprints/sprint-10/T10.6-speculative-telemetry.task.md",
+        ".specs/sprints/sprint-11/SPRINT.md",
+        ".specs/sprints/sprint-11/T11.1-ane-backend.task.md",
+        ".specs/sprints/sprint-11/T11.2-layer-offloader.task.md",
+        ".specs/sprints/sprint-11/T11.3-mixed-dispatch.task.md",
+        ".specs/sprints/sprint-11/T11.4-thermal-monitor.task.md",
+        ".specs/sprints/sprint-11/T11.5-ane-bench.task.md",
+        ".specs/sprints/sprint-11/T11.6-ane-fallback.task.md",
+        ".specs/sprints/sprint-12/SPRINT.md",
+        ".specs/sprints/sprint-12/T12.1-auto-tuner.task.md",
+        ".specs/sprints/sprint-12/T12.2-profile-cache.task.md",
+        ".specs/sprints/sprint-12/T12.3-benchmark-matrix.task.md",
+        ".specs/sprints/sprint-12/T12.4-cli-polish.task.md",
+        ".specs/sprints/sprint-12/T12.5-final-docs.task.md",
+        ".specs/sprints/sprint-12/T12.6-release-v1.task.md",
+        ".specs/sprints/sprint-12/T12.7-migration-guide.task.md",
+        ".specs/sprints/task-template.md",
+        ".specs/workflow/CONTRIBUTING.md",
+        ".specs/workflow/MIGRATION.md",
+        ".specs/workflow/RELEASE-V1.md",
+        ".specs/workflow/RELEASE.md",
+        ".specs/workflow/WORKFLOW.md"
+      ],
+      "public_symbols": [],
+      "evidence": [
+        {
+          "file": ".specs/README.md"
+        },
+        {
+          "file": ".specs/architecture/ADR-001-mlx-primary-backend.md"
+        },
+        {
+          "file": ".specs/architecture/ADR-002-runtime-boundaries-and-adapter-contract.md"
+        },
+        {
+          "file": ".specs/architecture/ADR-003-backend-selection-strategy.md"
+        },
+        {
+          "file": ".specs/architecture/ADR-004-bitnet-packed-format.md"
+        },
+        {
+          "file": ".specs/architecture/ADR-005-kv-cache-architecture.md"
+        },
+        {
+          "file": ".specs/architecture/ADR-006-moe-expert-paging.md"
+        },
+        {
+          "file": ".specs/architecture/ADR-007-speculative-decoding.md"
+        },
+        {
+          "file": ".specs/architecture/ADR-008-ane-layer-offload.md"
+        },
+        {
+          "file": ".specs/architecture/ADR-009-router-load-balance-target.md"
+        }
+      ]
+    },
+    {
+      "name": "READMEs",
+      "summary": "Groups 15 files across 1 detected layers.",
+      "file_count": 15,
+      "files": [
+        "READMEs/README.ar-SA.md",
+        "READMEs/README.en.md",
+        "READMEs/README.es-ES.md",
+        "READMEs/README.fr-FR.md",
+        "READMEs/README.he-IL.md",
+        "READMEs/README.hi-IN.md",
+        "READMEs/README.id-ID.md",
+        "READMEs/README.it-IT.md",
+        "READMEs/README.ja-JP.md",
+        "READMEs/README.ko-KR.md",
+        "READMEs/README.ms-MY.md",
+        "READMEs/README.pl-PL.md",
+        "READMEs/README.pt-BR.md",
+        "READMEs/README.ru-RU.md",
+        "READMEs/README.zh-CN.md"
+      ],
+      "layers": [
+        "documentation"
+      ],
+      "entry_points": [],
+      "tests": [],
+      "public_symbols": [],
+      "evidence": [
+        {
+          "file": "READMEs/README.ar-SA.md"
+        },
+        {
+          "file": "READMEs/README.en.md"
+        },
+        {
+          "file": "READMEs/README.es-ES.md"
+        },
+        {
+          "file": "READMEs/README.fr-FR.md"
+        },
+        {
+          "file": "READMEs/README.he-IL.md"
+        },
+        {
+          "file": "READMEs/README.hi-IN.md"
+        },
+        {
+          "file": "READMEs/README.id-ID.md"
+        },
+        {
+          "file": "READMEs/README.it-IT.md"
+        },
+        {
+          "file": "READMEs/README.ja-JP.md"
+        },
+        {
+          "file": "READMEs/README.ko-KR.md"
+        }
+      ]
+    },
+    {
+      "name": "apps",
+      "summary": "Groups 1 files across 1 detected layers.",
+      "file_count": 1,
+      "files": [
+        "apps/CMakeLists.txt"
+      ],
+      "layers": [
+        "asset"
+      ],
+      "entry_points": [],
+      "tests": [],
+      "public_symbols": [],
+      "evidence": [
+        {
+          "file": "apps/CMakeLists.txt"
+        }
+      ]
+    },
+    {
+      "name": "bin",
+      "summary": "Groups 1 files across 1 detected layers.",
+      "file_count": 1,
+      "files": [
+        "bin/cli.js"
+      ],
+      "layers": [
+        "entrypoint"
+      ],
+      "entry_points": [
+        "bin/cli.js"
+      ],
+      "tests": [],
+      "public_symbols": [
+        "ask",
+        "buildProbe",
+        "chooseCli",
+        "commandExists",
+        "copyTemplate",
+        "copyToClipboard",
+        "detectAneEligibility",
+        "detectExistingInstructionFiles",
+        "detectProductName",
+        "detectProjectMode",
+        "detectProjects",
+        "detectStack",
+        "err",
+        "execHandoff",
+        "existsIn",
+        "handleGitignore",
+        "handleRuntimeFlags",
+        "handoff",
+        "listDir",
+        "log",
+        "looksBinary",
+        "main",
+        "normalizeMemoryGiB",
+        "printHelp",
+        "printRuntimeText",
+        "readJsonField",
+        "readSafe",
+        "readTomlField",
+        "readYamlField",
+        "requireCmd",
+        "selectRuntimeMode",
+        "stamp",
+        "substitute",
+        "substituteInFile",
+        "walk",
+        "writeMeta"
+      ],
+      "evidence": [
+        {
+          "file": "bin/cli.js"
+        }
+      ]
+    },
+    {
+      "name": "docs",
+      "summary": "Groups 1 files across 1 detected layers.",
+      "file_count": 1,
+      "files": [
+        "docs/readme-globalization-standard.md"
+      ],
+      "layers": [
+        "documentation"
+      ],
+      "entry_points": [],
+      "tests": [],
+      "public_symbols": [],
+      "evidence": [
+        {
+          "file": "docs/readme-globalization-standard.md"
+        }
+      ]
+    },
+    {
+      "name": "runtime",
+      "summary": "Groups 19 files across 2 detected layers.",
+      "file_count": 19,
+      "files": [
+        "runtime/CMakeLists.txt",
+        "runtime/README.md",
+        "runtime/STARTER-TO-RUNTIME.md",
+        "runtime/adapters/README.md",
+        "runtime/ane/README.md",
+        "runtime/benchmarks/CMakeLists.txt",
+        "runtime/benchmarks/README.md",
+        "runtime/benchmarks/correctness/CMakeLists.txt",
+        "runtime/cache/README.md",
+        "runtime/cpu/README.md",
+        "runtime/kv/README.md",
+        "runtime/memory/README.md",
+        "runtime/metal/README.md",
+        "runtime/mlx/README.md",
+        "runtime/moe/README.md",
+        "runtime/neon/README.md",
+        "runtime/scheduler/README.md",
+        "runtime/speculative/README.md",
+        "runtime/tuning/README.md"
+      ],
+      "layers": [
+        "asset",
+        "documentation"
+      ],
+      "entry_points": [],
+      "tests": [],
+      "public_symbols": [],
+      "evidence": [
+        {
+          "file": "runtime/CMakeLists.txt"
+        },
+        {
+          "file": "runtime/README.md"
+        },
+        {
+          "file": "runtime/STARTER-TO-RUNTIME.md"
+        },
+        {
+          "file": "runtime/adapters/README.md"
+        },
+        {
+          "file": "runtime/ane/README.md"
+        },
+        {
+          "file": "runtime/benchmarks/CMakeLists.txt"
+        },
+        {
+          "file": "runtime/benchmarks/README.md"
+        },
+        {
+          "file": "runtime/benchmarks/correctness/CMakeLists.txt"
+        },
+        {
+          "file": "runtime/cache/README.md"
+        },
+        {
+          "file": "runtime/cpu/README.md"
+        }
+      ]
+    },
+    {
+      "name": "scripts",
+      "summary": "Groups 3 files across 1 detected layers.",
+      "file_count": 3,
+      "files": [
+        "scripts/coverage.sh",
+        "scripts/openai_serve.py",
+        "scripts/requirements-serve.txt"
+      ],
+      "layers": [
+        "script"
+      ],
+      "entry_points": [],
+      "tests": [],
+      "public_symbols": [
+        "EmbeddingsBackend",
+        "Settings",
+        "Us4Handler",
+        "__init__",
+        "_build_models_payload",
+        "_extract_vectors",
+        "_handle_embeddings",
+        "_init_embeddings",
+        "_install_signal_handlers",
+        "_proxy_upstream",
+        "_sanitize_path",
+        "_send_error",
+        "_send_json",
+        "_shutdown",
+        "_spawn_upstream",
+        "_terminate_proc",
+        "_truthy",
+        "_wait_upstream_ready",
+        "_warn_if_non_loopback",
+        "chat_model",
+        "do_GET",
+        "do_POST",
+        "embed",
+        "ensure_loaded",
+        "log_message",
+        "main",
+        "spawns_chat_subprocess",
+        "upstream_health_url",
+        "upstream_port",
+        "upstream_url"
+      ],
+      "evidence": [
+        {
+          "file": "scripts/coverage.sh"
+        },
+        {
+          "file": "scripts/openai_serve.py"
+        },
+        {
+          "file": "scripts/requirements-serve.txt"
+        }
+      ]
+    },
+    {
+      "name": "test",
+      "summary": "Groups 2 files across 1 detected layers.",
+      "file_count": 2,
+      "files": [
+        "test/cli.test.js",
+        "test/run-tests.js"
+      ],
+      "layers": [
+        "test"
+      ],
+      "entry_points": [],
+      "tests": [
+        "test/cli.test.js",
+        "test/run-tests.js"
+      ],
+      "public_symbols": [
+        "countCoveredLines",
+        "isCountedLine",
+        "makeSummary",
+        "makeTempProject",
+        "nextTemplateLiteralState",
+        "runCli",
+        "writeCoverageSummary"
+      ],
+      "evidence": [
+        {
+          "file": "test/cli.test.js"
+        },
+        {
+          "file": "test/run-tests.js"
+        }
+      ]
+    },
+    {
+      "name": "tests",
+      "summary": "Groups 10 files across 4 detected layers.",
+      "file_count": 10,
+      "files": [
+        "tests/CMakeLists.txt",
+        "tests/e2e/README.md",
+        "tests/e2e/us4-cli-serve.spec.ts",
+        "tests/e2e/us4-cli.spec.ts",
+        "tests/fixtures/models/bitnet-b1.58-2b/tokenizer.json",
+        "tests/fixtures/models/glm-5.1/tokenizer.json",
+        "tests/fixtures/models/llama-3.1-8b/tokenizer.json",
+        "tests/fixtures/models/minimax-m2/tokenizer.json",
+        "tests/fixtures/models/pt-bitnet-ternary-2b/tokenizer.json",
+        "tests/unit/CMakeLists.txt"
+      ],
+      "layers": [
+        "documentation",
+        "domain",
+        "model",
+        "test"
+      ],
+      "entry_points": [],
+      "tests": [
+        "tests/CMakeLists.txt",
+        "tests/e2e/README.md",
+        "tests/e2e/us4-cli-serve.spec.ts",
+        "tests/e2e/us4-cli.spec.ts",
+        "tests/fixtures/models/bitnet-b1.58-2b/tokenizer.json",
+        "tests/fixtures/models/glm-5.1/tokenizer.json",
+        "tests/fixtures/models/llama-3.1-8b/tokenizer.json",
+        "tests/fixtures/models/minimax-m2/tokenizer.json",
+        "tests/fixtures/models/pt-bitnet-ternary-2b/tokenizer.json",
+        "tests/unit/CMakeLists.txt"
+      ],
+      "public_symbols": [
+        "attach",
+        "attachCommand",
+        "freePort",
+        "getJson",
+        "postJson",
+        "runCli",
+        "waitReady"
+      ],
+      "evidence": [
+        {
+          "file": "tests/CMakeLists.txt"
+        },
+        {
+          "file": "tests/e2e/README.md"
+        },
+        {
+          "file": "tests/e2e/us4-cli-serve.spec.ts"
+        },
+        {
+          "file": "tests/e2e/us4-cli.spec.ts"
+        },
+        {
+          "file": "tests/fixtures/models/bitnet-b1.58-2b/tokenizer.json"
+        },
+        {
+          "file": "tests/fixtures/models/glm-5.1/tokenizer.json"
+        },
+        {
+          "file": "tests/fixtures/models/llama-3.1-8b/tokenizer.json"
+        },
+        {
+          "file": "tests/fixtures/models/minimax-m2/tokenizer.json"
+        },
+        {
+          "file": "tests/fixtures/models/pt-bitnet-ternary-2b/tokenizer.json"
+        },
+        {
+          "file": "tests/unit/CMakeLists.txt"
+        }
+      ]
+    }
+  ],
+  "layers": [
+    {
+      "name": "asset",
+      "file_count": 28,
+      "files": [
+        ".DS_Store",
+        ".claude/hooks/post-edit.ps1",
+        ".claude/hooks/post-edit.sh",
+        ".claude/hooks/pre-commit.ps1",
+        ".claude/hooks/pre-commit.sh",
+        ".claude/hooks/session-start-skills.sh",
+        ".claude/settings.json",
+        ".claude/settings.local.json",
+        ".codex/hooks.json",
+        ".codex/hooks/post-edit.ps1",
+        ".codex/hooks/post-edit.sh",
+        ".codex/hooks/pre-commit.ps1",
+        ".codex/hooks/pre-commit.sh",
+        ".codex/hooks/session-start-skills.sh",
+        ".gitattributes",
+        ".github/CODEOWNERS",
+        ".github/workflows/ci.yml",
+        ".github/workflows/dod.yml",
+        ".github/workflows/scaffold-self-check.yml",
+        ".gitignore",
+        "CMakeLists.txt",
+        "apps/CMakeLists.txt",
+        "bootstrap.ps1",
+        "bootstrap.sh",
+        "package-lock.json",
+        "runtime/CMakeLists.txt",
+        "runtime/benchmarks/CMakeLists.txt",
+        "runtime/benchmarks/correctness/CMakeLists.txt"
+      ],
+      "modules": [
+        ".",
+        ".claude",
+        ".codex",
+        ".github",
+        "apps",
+        "runtime"
+      ],
+      "evidence": [
+        {
+          "file": ".DS_Store"
+        },
+        {
+          "file": ".claude/hooks/post-edit.ps1"
+        },
+        {
+          "file": ".claude/hooks/post-edit.sh"
+        },
+        {
+          "file": ".claude/hooks/pre-commit.ps1"
+        },
+        {
+          "file": ".claude/hooks/pre-commit.sh"
+        },
+        {
+          "file": ".claude/hooks/session-start-skills.sh"
+        },
+        {
+          "file": ".claude/settings.json"
+        },
+        {
+          "file": ".claude/settings.local.json"
+        },
+        {
+          "file": ".codex/hooks.json"
+        },
+        {
+          "file": ".codex/hooks/post-edit.ps1"
+        }
+      ]
+    },
+    {
+      "name": "config",
+      "file_count": 3,
+      "files": [
+        ".codex/config.toml",
+        "package.json",
+        "playwright.config.ts"
+      ],
+      "modules": [
+        ".",
+        ".codex"
+      ],
+      "evidence": [
+        {
+          "file": ".codex/config.toml"
+        },
+        {
+          "file": "package.json"
+        },
+        {
+          "file": "playwright.config.ts"
+        }
+      ]
+    },
+    {
+      "name": "documentation",
+      "file_count": 184,
+      "files": [
+        ".agents/README.md",
+        ".agents/_template.agent.md",
+        ".agents/architect.agent.md",
+        ".agents/ralph-loop.agent.md",
+        ".agents/reviewer.agent.md",
+        ".agents/tdd.agent.md",
+        ".github/ISSUE_TEMPLATE/bug.md",
+        ".github/ISSUE_TEMPLATE/feature.md",
+        ".github/PULL_REQUEST_TEMPLATE.md",
+        ".github/copilot-instructions.md",
+        ".github/copilot/agents/_template.agent.md",
+        ".github/copilot/agents/architect.agent.md",
+        ".github/copilot/agents/ralph-loop.agent.md",
+        ".github/copilot/agents/reviewer.agent.md",
+        ".github/copilot/agents/tdd.agent.md",
+        ".skills/README.md",
+        ".skills/_template/SKILL.md",
+        ".skills/caveman/SKILL.md",
+        ".skills/conventional-commits/SKILL.md",
+        ".skills/everything-claude-code/SKILL.md",
+        ".skills/playwright-e2e/SKILL.md",
+        ".skills/ralph-loop/SKILL.md",
+        ".specs/README.md",
+        ".specs/architecture/ADR-001-mlx-primary-backend.md",
+        ".specs/architecture/ADR-002-runtime-boundaries-and-adapter-contract.md",
+        ".specs/architecture/ADR-003-backend-selection-strategy.md",
+        ".specs/architecture/ADR-004-bitnet-packed-format.md",
+        ".specs/architecture/ADR-005-kv-cache-architecture.md",
+        ".specs/architecture/ADR-006-moe-expert-paging.md",
+        ".specs/architecture/ADR-007-speculative-decoding.md",
+        ".specs/architecture/ADR-008-ane-layer-offload.md",
+        ".specs/architecture/ADR-009-router-load-balance-target.md",
+        ".specs/architecture/ADR-template.md",
+        ".specs/architecture/DESIGN.md",
+        ".specs/architecture/PATTERNS.md",
+        ".specs/product/DOMAIN.md",
+        ".specs/product/PERSONAS.md",
+        ".specs/product/VISION.md",
+        ".specs/runtime/CLI-CONTRACT.md",
+        ".specs/runtime/CLI-POLISH.md",
+        ".specs/runtime/HARDWARE-PROBE.md",
+        ".specs/runtime/PLAYWRIGHT-SMOKE.md",
+        ".specs/runtime/README.md",
+        ".specs/runtime/SERVE-OPENAI.md",
+        ".specs/runtime/TELEMETRY.md",
+        ".specs/sprints/BACKLOG.md",
+        ".specs/sprints/TIMELINE.md",
+        ".specs/sprints/sprint-01/SPRINT.md",
+        ".specs/sprints/sprint-01/T01.0-agentic-starter.task.md",
+        ".specs/sprints/sprint-01/T01.1-runtime-scaffold.task.md",
+        ".specs/sprints/sprint-01/T01.2-cli-contract.task.md",
+        ".specs/sprints/sprint-01/T01.3-adapter-contract.task.md",
+        ".specs/sprints/sprint-01/T01.4-probe-and-mode.task.md",
+        ".specs/sprints/sprint-01/T01.5-telemetry-and-gates.task.md",
+        ".specs/sprints/sprint-01/T01.6-ci-transition.task.md",
+        ".specs/sprints/sprint-01/T01.7-playwright-smoke.task.md",
+        ".specs/sprints/sprint-01/T01.8-adrs.task.md",
+        ".specs/sprints/sprint-02/SPRINT.md",
+        ".specs/sprints/sprint-02/T02.1-tensor-core.task.md",
+        ".specs/sprints/sprint-02/T02.2-scalar-matmul.task.md",
+        ".specs/sprints/sprint-02/T02.3-scalar-attention.task.md",
+        ".specs/sprints/sprint-02/T02.4-dense-adapter-base.task.md",
+        ".specs/sprints/sprint-02/T02.5-qwen-adapter.task.md",
+        ".specs/sprints/sprint-02/T02.6-gemma-adapter.task.md",
+        ".specs/sprints/sprint-02/T02.7-loader-minimal.task.md",
+        ".specs/sprints/sprint-02/T02.8-dense-benchmark.task.md",
+        ".specs/sprints/sprint-03/SPRINT.md",
+        ".specs/sprints/sprint-03/T03.1-metal-init.task.md",
+        ".specs/sprints/sprint-03/T03.2-metal-matmul-scaffold.task.md",
+        ".specs/sprints/sprint-03/T03.3-metal-softmax-rmsnorm-scaffold.task.md",
+        ".specs/sprints/sprint-03/T03.4-mlx-bridge-scaffold.task.md",
+        ".specs/sprints/sprint-03/T03.5-unified-allocator.task.md",
+        ".specs/sprints/sprint-03/T03.6-enable-metal-capability.task.md",
+        ".specs/sprints/sprint-03/T03.7-backend-selector-modes.task.md",
+        ".specs/sprints/sprint-04/SPRINT.md",
+        ".specs/sprints/sprint-04/T04.1-neon-matmul-hotpath.task.md",
+        ".specs/sprints/sprint-04/T04.2-neon-attention-hotpath.task.md",
+        ".specs/sprints/sprint-04/T04.4-block-gemm-tiling.task.md",
+        ".specs/sprints/sprint-04/T04.6-neon-rebench.task.md",
+        ".specs/sprints/sprint-05/SPRINT.md",
+        ".specs/sprints/sprint-05/T05.1-bitnet-metal-kernel.task.md",
+        ".specs/sprints/sprint-05/T05.2-bitnet-neon-kernel.task.md",
+        ".specs/sprints/sprint-05/T05.3-bitnet-adapter.task.md",
+        ".specs/sprints/sprint-05/T05.4-ternary-adapter.task.md",
+        ".specs/sprints/sprint-05/T05.5-ternary-lut.task.md",
+        ".specs/sprints/sprint-05/T05.6-lowbit-loader.task.md",
+        ".specs/sprints/sprint-05/T05.7-micro-trigger.task.md",
+        ".specs/sprints/sprint-06/SPRINT.md",
+        ".specs/sprints/sprint-06/T06.1-kv-pager-tiers.task.md",
+        ".specs/sprints/sprint-06/T06.2-prefix-cache-dedup.task.md",
+        ".specs/sprints/sprint-06/T06.3-ssd-cold-store.task.md",
+        ".specs/sprints/sprint-06/T06.4-kv-summarizer.task.md",
+        ".specs/sprints/sprint-06/T06.5-kv-eviction-policy.task.md",
+        ".specs/sprints/sprint-06/T06.6-adapter-kv-hooks.task.md",
+        ".specs/sprints/sprint-06/T06.7-kv-telemetry.task.md",
+        ".specs/sprints/sprint-07/SPRINT.md",
+        ".specs/sprints/sprint-07/T07.5-llama-loader.task.md",
+        ".specs/sprints/sprint-07/T07.6-llama-bench.task.md",
+        ".specs/sprints/sprint-08/SPRINT.md",
+        ".specs/sprints/sprint-08/T08.1-router-topk.task.md"
+      ],
+      "modules": [
+        ".",
+        ".agents",
+        ".github",
+        ".skills",
+        ".specs",
+        "READMEs",
+        "docs",
+        "runtime",
+        "tests"
+      ],
+      "evidence": [
+        {
+          "file": ".agents/README.md"
+        },
+        {
+          "file": ".agents/_template.agent.md"
+        },
+        {
+          "file": ".agents/architect.agent.md"
+        },
+        {
+          "file": ".agents/ralph-loop.agent.md"
+        },
+        {
+          "file": ".agents/reviewer.agent.md"
+        },
+        {
+          "file": ".agents/tdd.agent.md"
+        },
+        {
+          "file": ".github/ISSUE_TEMPLATE/bug.md"
+        },
+        {
+          "file": ".github/ISSUE_TEMPLATE/feature.md"
+        },
+        {
+          "file": ".github/PULL_REQUEST_TEMPLATE.md"
+        },
+        {
+          "file": ".github/copilot-instructions.md"
+        }
+      ]
+    },
+    {
+      "name": "domain",
+      "file_count": 6,
+      "files": [
+        ".specs/sprints/sprint-10/T10.5-draft-model-loader.task.md",
+        "tests/fixtures/models/bitnet-b1.58-2b/tokenizer.json",
+        "tests/fixtures/models/glm-5.1/tokenizer.json",
+        "tests/fixtures/models/llama-3.1-8b/tokenizer.json",
+        "tests/fixtures/models/minimax-m2/tokenizer.json",
+        "tests/fixtures/models/pt-bitnet-ternary-2b/tokenizer.json"
+      ],
+      "modules": [
+        ".specs",
+        "tests"
+      ],
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-10/T10.5-draft-model-loader.task.md"
+        },
+        {
+          "file": "tests/fixtures/models/bitnet-b1.58-2b/tokenizer.json"
+        },
+        {
+          "file": "tests/fixtures/models/glm-5.1/tokenizer.json"
+        },
+        {
+          "file": "tests/fixtures/models/llama-3.1-8b/tokenizer.json"
+        },
+        {
+          "file": "tests/fixtures/models/minimax-m2/tokenizer.json"
+        },
+        {
+          "file": "tests/fixtures/models/pt-bitnet-ternary-2b/tokenizer.json"
+        }
+      ]
+    },
+    {
+      "name": "entrypoint",
+      "file_count": 1,
+      "files": [
+        "bin/cli.js"
+      ],
+      "modules": [
+        "bin"
+      ],
+      "evidence": [
+        {
+          "file": "bin/cli.js"
+        }
+      ]
+    },
+    {
+      "name": "model",
+      "file_count": 6,
+      "files": [
+        ".specs/sprints/sprint-10/T10.5-draft-model-loader.task.md",
+        "tests/fixtures/models/bitnet-b1.58-2b/tokenizer.json",
+        "tests/fixtures/models/glm-5.1/tokenizer.json",
+        "tests/fixtures/models/llama-3.1-8b/tokenizer.json",
+        "tests/fixtures/models/minimax-m2/tokenizer.json",
+        "tests/fixtures/models/pt-bitnet-ternary-2b/tokenizer.json"
+      ],
+      "modules": [
+        ".specs",
+        "tests"
+      ],
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-10/T10.5-draft-model-loader.task.md"
+        },
+        {
+          "file": "tests/fixtures/models/bitnet-b1.58-2b/tokenizer.json"
+        },
+        {
+          "file": "tests/fixtures/models/glm-5.1/tokenizer.json"
+        },
+        {
+          "file": "tests/fixtures/models/llama-3.1-8b/tokenizer.json"
+        },
+        {
+          "file": "tests/fixtures/models/minimax-m2/tokenizer.json"
+        },
+        {
+          "file": "tests/fixtures/models/pt-bitnet-ternary-2b/tokenizer.json"
+        }
+      ]
+    },
+    {
+      "name": "route",
+      "file_count": 4,
+      "files": [
+        ".specs/architecture/ADR-009-router-load-balance-target.md",
+        ".specs/sprints/sprint-06/T06.1-kv-pager-tiers.task.md",
+        ".specs/sprints/sprint-08/T08.1-router-topk.task.md",
+        ".specs/sprints/sprint-08/T08.2-expert-pager.task.md"
+      ],
+      "modules": [
+        ".specs"
+      ],
+      "evidence": [
+        {
+          "file": ".specs/architecture/ADR-009-router-load-balance-target.md"
+        },
+        {
+          "file": ".specs/sprints/sprint-06/T06.1-kv-pager-tiers.task.md"
+        },
+        {
+          "file": ".specs/sprints/sprint-08/T08.1-router-topk.task.md"
+        },
+        {
+          "file": ".specs/sprints/sprint-08/T08.2-expert-pager.task.md"
+        }
+      ]
+    },
+    {
+      "name": "script",
+      "file_count": 3,
+      "files": [
+        "scripts/coverage.sh",
+        "scripts/openai_serve.py",
+        "scripts/requirements-serve.txt"
+      ],
+      "modules": [
+        "scripts"
+      ],
+      "evidence": [
+        {
+          "file": "scripts/coverage.sh"
+        },
+        {
+          "file": "scripts/openai_serve.py"
+        },
+        {
+          "file": "scripts/requirements-serve.txt"
+        }
+      ]
+    },
+    {
+      "name": "test",
+      "file_count": 130,
+      "files": [
+        ".specs/README.md",
+        ".specs/architecture/ADR-001-mlx-primary-backend.md",
+        ".specs/architecture/ADR-002-runtime-boundaries-and-adapter-contract.md",
+        ".specs/architecture/ADR-003-backend-selection-strategy.md",
+        ".specs/architecture/ADR-004-bitnet-packed-format.md",
+        ".specs/architecture/ADR-005-kv-cache-architecture.md",
+        ".specs/architecture/ADR-006-moe-expert-paging.md",
+        ".specs/architecture/ADR-007-speculative-decoding.md",
+        ".specs/architecture/ADR-008-ane-layer-offload.md",
+        ".specs/architecture/ADR-009-router-load-balance-target.md",
+        ".specs/architecture/ADR-template.md",
+        ".specs/architecture/DESIGN.md",
+        ".specs/architecture/PATTERNS.md",
+        ".specs/product/DOMAIN.md",
+        ".specs/product/PERSONAS.md",
+        ".specs/product/VISION.md",
+        ".specs/runtime/CLI-CONTRACT.md",
+        ".specs/runtime/CLI-POLISH.md",
+        ".specs/runtime/HARDWARE-PROBE.md",
+        ".specs/runtime/PLAYWRIGHT-SMOKE.md",
+        ".specs/runtime/README.md",
+        ".specs/runtime/SERVE-OPENAI.md",
+        ".specs/runtime/TELEMETRY.md",
+        ".specs/sprints/BACKLOG.md",
+        ".specs/sprints/TIMELINE.md",
+        ".specs/sprints/sprint-01/SPRINT.md",
+        ".specs/sprints/sprint-01/T01.0-agentic-starter.task.md",
+        ".specs/sprints/sprint-01/T01.1-runtime-scaffold.task.md",
+        ".specs/sprints/sprint-01/T01.2-cli-contract.task.md",
+        ".specs/sprints/sprint-01/T01.3-adapter-contract.task.md",
+        ".specs/sprints/sprint-01/T01.4-probe-and-mode.task.md",
+        ".specs/sprints/sprint-01/T01.5-telemetry-and-gates.task.md",
+        ".specs/sprints/sprint-01/T01.6-ci-transition.task.md",
+        ".specs/sprints/sprint-01/T01.7-playwright-smoke.task.md",
+        ".specs/sprints/sprint-01/T01.8-adrs.task.md",
+        ".specs/sprints/sprint-02/SPRINT.md",
+        ".specs/sprints/sprint-02/T02.1-tensor-core.task.md",
+        ".specs/sprints/sprint-02/T02.2-scalar-matmul.task.md",
+        ".specs/sprints/sprint-02/T02.3-scalar-attention.task.md",
+        ".specs/sprints/sprint-02/T02.4-dense-adapter-base.task.md",
+        ".specs/sprints/sprint-02/T02.5-qwen-adapter.task.md",
+        ".specs/sprints/sprint-02/T02.6-gemma-adapter.task.md",
+        ".specs/sprints/sprint-02/T02.7-loader-minimal.task.md",
+        ".specs/sprints/sprint-02/T02.8-dense-benchmark.task.md",
+        ".specs/sprints/sprint-03/SPRINT.md",
+        ".specs/sprints/sprint-03/T03.1-metal-init.task.md",
+        ".specs/sprints/sprint-03/T03.2-metal-matmul-scaffold.task.md",
+        ".specs/sprints/sprint-03/T03.3-metal-softmax-rmsnorm-scaffold.task.md",
+        ".specs/sprints/sprint-03/T03.4-mlx-bridge-scaffold.task.md",
+        ".specs/sprints/sprint-03/T03.5-unified-allocator.task.md",
+        ".specs/sprints/sprint-03/T03.6-enable-metal-capability.task.md",
+        ".specs/sprints/sprint-03/T03.7-backend-selector-modes.task.md",
+        ".specs/sprints/sprint-04/SPRINT.md",
+        ".specs/sprints/sprint-04/T04.1-neon-matmul-hotpath.task.md",
+        ".specs/sprints/sprint-04/T04.2-neon-attention-hotpath.task.md",
+        ".specs/sprints/sprint-04/T04.4-block-gemm-tiling.task.md",
+        ".specs/sprints/sprint-04/T04.6-neon-rebench.task.md",
+        ".specs/sprints/sprint-05/SPRINT.md",
+        ".specs/sprints/sprint-05/T05.1-bitnet-metal-kernel.task.md",
+        ".specs/sprints/sprint-05/T05.2-bitnet-neon-kernel.task.md",
+        ".specs/sprints/sprint-05/T05.3-bitnet-adapter.task.md",
+        ".specs/sprints/sprint-05/T05.4-ternary-adapter.task.md",
+        ".specs/sprints/sprint-05/T05.5-ternary-lut.task.md",
+        ".specs/sprints/sprint-05/T05.6-lowbit-loader.task.md",
+        ".specs/sprints/sprint-05/T05.7-micro-trigger.task.md",
+        ".specs/sprints/sprint-06/SPRINT.md",
+        ".specs/sprints/sprint-06/T06.1-kv-pager-tiers.task.md",
+        ".specs/sprints/sprint-06/T06.2-prefix-cache-dedup.task.md",
+        ".specs/sprints/sprint-06/T06.3-ssd-cold-store.task.md",
+        ".specs/sprints/sprint-06/T06.4-kv-summarizer.task.md",
+        ".specs/sprints/sprint-06/T06.5-kv-eviction-policy.task.md",
+        ".specs/sprints/sprint-06/T06.6-adapter-kv-hooks.task.md",
+        ".specs/sprints/sprint-06/T06.7-kv-telemetry.task.md",
+        ".specs/sprints/sprint-07/SPRINT.md",
+        ".specs/sprints/sprint-07/T07.5-llama-loader.task.md",
+        ".specs/sprints/sprint-07/T07.6-llama-bench.task.md",
+        ".specs/sprints/sprint-08/SPRINT.md",
+        ".specs/sprints/sprint-08/T08.1-router-topk.task.md",
+        ".specs/sprints/sprint-08/T08.2-expert-pager.task.md",
+        ".specs/sprints/sprint-08/T08.3-deepseek-moe-adapter.task.md",
+        ".specs/sprints/sprint-08/T08.4-kimi-moe-adapter.task.md",
+        ".specs/sprints/sprint-08/T08.5-moe-loader.task.md",
+        ".specs/sprints/sprint-08/T08.6-moe-telemetry.task.md",
+        ".specs/sprints/sprint-09/SPRINT.md",
+        ".specs/sprints/sprint-09/T09.1-minimax-adapter.task.md",
+        ".specs/sprints/sprint-09/T09.2-glm-adapter.task.md",
+        ".specs/sprints/sprint-09/T09.3-speculative-prefetch.task.md",
+        ".specs/sprints/sprint-09/T09.4-sparsity-cache.task.md",
+        ".specs/sprints/sprint-09/T09.5-multimodal-cache.task.md",
+        ".specs/sprints/sprint-09/T09.6-prefetch-telemetry.task.md",
+        ".specs/sprints/sprint-10/SPRINT.md",
+        ".specs/sprints/sprint-10/T10.1-continuous-batcher.task.md",
+        ".specs/sprints/sprint-10/T10.2-session-pool.task.md",
+        ".specs/sprints/sprint-10/T10.3-peagle-decoder.task.md",
+        ".specs/sprints/sprint-10/T10.4-eagle3-decoder.task.md",
+        ".specs/sprints/sprint-10/T10.5-draft-model-loader.task.md",
+        ".specs/sprints/sprint-10/T10.6-speculative-telemetry.task.md",
+        ".specs/sprints/sprint-11/SPRINT.md",
+        ".specs/sprints/sprint-11/T11.1-ane-backend.task.md",
+        ".specs/sprints/sprint-11/T11.2-layer-offloader.task.md"
+      ],
+      "modules": [
+        ".specs",
+        "test",
+        "tests"
+      ],
+      "evidence": [
+        {
+          "file": ".specs/README.md"
+        },
+        {
+          "file": ".specs/architecture/ADR-001-mlx-primary-backend.md"
+        },
+        {
+          "file": ".specs/architecture/ADR-002-runtime-boundaries-and-adapter-contract.md"
+        },
+        {
+          "file": ".specs/architecture/ADR-003-backend-selection-strategy.md"
+        },
+        {
+          "file": ".specs/architecture/ADR-004-bitnet-packed-format.md"
+        },
+        {
+          "file": ".specs/architecture/ADR-005-kv-cache-architecture.md"
+        },
+        {
+          "file": ".specs/architecture/ADR-006-moe-expert-paging.md"
+        },
+        {
+          "file": ".specs/architecture/ADR-007-speculative-decoding.md"
+        },
+        {
+          "file": ".specs/architecture/ADR-008-ane-layer-offload.md"
+        },
+        {
+          "file": ".specs/architecture/ADR-009-router-load-balance-target.md"
+        }
+      ]
+    },
+    {
+      "name": "ui",
+      "file_count": 2,
+      "files": [
+        ".agents/reviewer.agent.md",
+        ".github/copilot/agents/reviewer.agent.md"
+      ],
+      "modules": [
+        ".agents",
+        ".github"
+      ],
+      "evidence": [
+        {
+          "file": ".agents/reviewer.agent.md"
+        },
+        {
+          "file": ".github/copilot/agents/reviewer.agent.md"
+        }
+      ]
+    }
+  ],
+  "files": [
+    {
+      "path": ".DS_Store",
+      "language": "text",
+      "module": ".",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": ".DS_Store"
+        }
+      ]
+    },
+    {
+      "path": ".agents/README.md",
+      "language": "markdown",
+      "module": ".agents",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": ".agents/README.md"
+        }
+      ]
+    },
+    {
+      "path": ".agents/_template.agent.md",
+      "language": "markdown",
+      "module": ".agents",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": ".agents/_template.agent.md"
+        }
+      ]
+    },
+    {
+      "path": ".agents/architect.agent.md",
+      "language": "markdown",
+      "module": ".agents",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": ".agents/architect.agent.md"
+        }
+      ]
+    },
+    {
+      "path": ".agents/ralph-loop.agent.md",
+      "language": "markdown",
+      "module": ".agents",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": ".agents/ralph-loop.agent.md"
+        }
+      ]
+    },
+    {
+      "path": ".agents/reviewer.agent.md",
+      "language": "markdown",
+      "module": ".agents",
+      "layers": [
+        "documentation",
+        "ui"
+      ],
+      "roles": [
+        "ui"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": ".agents/reviewer.agent.md"
+        }
+      ]
+    },
+    {
+      "path": ".agents/tdd.agent.md",
+      "language": "markdown",
+      "module": ".agents",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": ".agents/tdd.agent.md"
+        }
+      ]
+    },
+    {
+      "path": ".claude/hooks/post-edit.ps1",
+      "language": "powershell",
+      "module": ".claude",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": ".claude/hooks/post-edit.ps1"
+        }
+      ]
+    },
+    {
+      "path": ".claude/hooks/post-edit.sh",
+      "language": "shell",
+      "module": ".claude",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": ".claude/hooks/post-edit.sh"
+        }
+      ]
+    },
+    {
+      "path": ".claude/hooks/pre-commit.ps1",
+      "language": "powershell",
+      "module": ".claude",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": ".claude/hooks/pre-commit.ps1"
+        }
+      ]
+    },
+    {
+      "path": ".claude/hooks/pre-commit.sh",
+      "language": "shell",
+      "module": ".claude",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": ".claude/hooks/pre-commit.sh"
+        }
+      ]
+    },
+    {
+      "path": ".claude/hooks/session-start-skills.sh",
+      "language": "shell",
+      "module": ".claude",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": ".claude/hooks/session-start-skills.sh"
+        }
+      ]
+    },
+    {
+      "path": ".claude/settings.json",
+      "language": "json",
+      "module": ".claude",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": ".claude/settings.json"
+        }
+      ]
+    },
+    {
+      "path": ".claude/settings.local.json",
+      "language": "json",
+      "module": ".claude",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": ".claude/settings.local.json"
+        }
+      ]
+    },
+    {
+      "path": ".codex/config.toml",
+      "language": "toml",
+      "module": ".codex",
+      "layers": [
+        "config"
+      ],
+      "roles": [
+        "config"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Configures tooling, build, runtime or packaging behavior.",
+      "evidence": [
+        {
+          "file": ".codex/config.toml"
+        }
+      ]
+    },
+    {
+      "path": ".codex/hooks.json",
+      "language": "json",
+      "module": ".codex",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": ".codex/hooks.json"
+        }
+      ]
+    },
+    {
+      "path": ".codex/hooks/post-edit.ps1",
+      "language": "powershell",
+      "module": ".codex",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": ".codex/hooks/post-edit.ps1"
+        }
+      ]
+    },
+    {
+      "path": ".codex/hooks/post-edit.sh",
+      "language": "shell",
+      "module": ".codex",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": ".codex/hooks/post-edit.sh"
+        }
+      ]
+    },
+    {
+      "path": ".codex/hooks/pre-commit.ps1",
+      "language": "powershell",
+      "module": ".codex",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": ".codex/hooks/pre-commit.ps1"
+        }
+      ]
+    },
+    {
+      "path": ".codex/hooks/pre-commit.sh",
+      "language": "shell",
+      "module": ".codex",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": ".codex/hooks/pre-commit.sh"
+        }
+      ]
+    },
+    {
+      "path": ".codex/hooks/session-start-skills.sh",
+      "language": "shell",
+      "module": ".codex",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": ".codex/hooks/session-start-skills.sh"
+        }
+      ]
+    },
+    {
+      "path": ".gitattributes",
+      "language": "text",
+      "module": ".",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": ".gitattributes"
+        }
+      ]
+    },
+    {
+      "path": ".github/CODEOWNERS",
+      "language": "text",
+      "module": ".github",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": ".github/CODEOWNERS"
+        }
+      ]
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/bug.md",
+      "language": "markdown",
+      "module": ".github",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": ".github/ISSUE_TEMPLATE/bug.md"
+        }
+      ]
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/feature.md",
+      "language": "markdown",
+      "module": ".github",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": ".github/ISSUE_TEMPLATE/feature.md"
+        }
+      ]
+    },
+    {
+      "path": ".github/PULL_REQUEST_TEMPLATE.md",
+      "language": "markdown",
+      "module": ".github",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": ".github/PULL_REQUEST_TEMPLATE.md"
+        }
+      ]
+    },
+    {
+      "path": ".github/copilot-instructions.md",
+      "language": "markdown",
+      "module": ".github",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": ".github/copilot-instructions.md"
+        }
+      ]
+    },
+    {
+      "path": ".github/copilot/agents/_template.agent.md",
+      "language": "markdown",
+      "module": ".github",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": ".github/copilot/agents/_template.agent.md"
+        }
+      ]
+    },
+    {
+      "path": ".github/copilot/agents/architect.agent.md",
+      "language": "markdown",
+      "module": ".github",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": ".github/copilot/agents/architect.agent.md"
+        }
+      ]
+    },
+    {
+      "path": ".github/copilot/agents/ralph-loop.agent.md",
+      "language": "markdown",
+      "module": ".github",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": ".github/copilot/agents/ralph-loop.agent.md"
+        }
+      ]
+    },
+    {
+      "path": ".github/copilot/agents/reviewer.agent.md",
+      "language": "markdown",
+      "module": ".github",
+      "layers": [
+        "documentation",
+        "ui"
+      ],
+      "roles": [
+        "ui"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": ".github/copilot/agents/reviewer.agent.md"
+        }
+      ]
+    },
+    {
+      "path": ".github/copilot/agents/tdd.agent.md",
+      "language": "markdown",
+      "module": ".github",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": ".github/copilot/agents/tdd.agent.md"
+        }
+      ]
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "language": "yaml",
+      "module": ".github",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": ".github/workflows/ci.yml"
+        }
+      ]
+    },
+    {
+      "path": ".github/workflows/dod.yml",
+      "language": "yaml",
+      "module": ".github",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": ".github/workflows/dod.yml"
+        }
+      ]
+    },
+    {
+      "path": ".github/workflows/scaffold-self-check.yml",
+      "language": "yaml",
+      "module": ".github",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": ".github/workflows/scaffold-self-check.yml"
+        }
+      ]
+    },
+    {
+      "path": ".gitignore",
+      "language": "text",
+      "module": ".",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": ".gitignore"
+        }
+      ]
+    },
+    {
+      "path": ".skills/README.md",
+      "language": "markdown",
+      "module": ".skills",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": ".skills/README.md"
+        }
+      ]
+    },
+    {
+      "path": ".skills/_template/SKILL.md",
+      "language": "markdown",
+      "module": ".skills",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": ".skills/_template/SKILL.md"
+        }
+      ]
+    },
+    {
+      "path": ".skills/caveman/SKILL.md",
+      "language": "markdown",
+      "module": ".skills",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": ".skills/caveman/SKILL.md"
+        }
+      ]
+    },
+    {
+      "path": ".skills/conventional-commits/SKILL.md",
+      "language": "markdown",
+      "module": ".skills",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": ".skills/conventional-commits/SKILL.md"
+        }
+      ]
+    },
+    {
+      "path": ".skills/everything-claude-code/SKILL.md",
+      "language": "markdown",
+      "module": ".skills",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": ".skills/everything-claude-code/SKILL.md"
+        }
+      ]
+    },
+    {
+      "path": ".skills/playwright-e2e/SKILL.md",
+      "language": "markdown",
+      "module": ".skills",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": ".skills/playwright-e2e/SKILL.md"
+        }
+      ]
+    },
+    {
+      "path": ".skills/ralph-loop/SKILL.md",
+      "language": "markdown",
+      "module": ".skills",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": ".skills/ralph-loop/SKILL.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/README.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/README.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/architecture/ADR-001-mlx-primary-backend.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/architecture/ADR-001-mlx-primary-backend.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/architecture/ADR-002-runtime-boundaries-and-adapter-contract.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/architecture/ADR-002-runtime-boundaries-and-adapter-contract.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/architecture/ADR-003-backend-selection-strategy.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/architecture/ADR-003-backend-selection-strategy.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/architecture/ADR-004-bitnet-packed-format.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/architecture/ADR-004-bitnet-packed-format.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/architecture/ADR-005-kv-cache-architecture.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/architecture/ADR-005-kv-cache-architecture.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/architecture/ADR-006-moe-expert-paging.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/architecture/ADR-006-moe-expert-paging.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/architecture/ADR-007-speculative-decoding.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/architecture/ADR-007-speculative-decoding.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/architecture/ADR-008-ane-layer-offload.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/architecture/ADR-008-ane-layer-offload.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/architecture/ADR-009-router-load-balance-target.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "route",
+        "test"
+      ],
+      "roles": [
+        "route",
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Defines inbound request or routing behavior.",
+      "evidence": [
+        {
+          "file": ".specs/architecture/ADR-009-router-load-balance-target.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/architecture/ADR-template.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/architecture/ADR-template.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/architecture/DESIGN.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/architecture/DESIGN.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/architecture/PATTERNS.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/architecture/PATTERNS.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/product/DOMAIN.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/product/DOMAIN.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/product/PERSONAS.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/product/PERSONAS.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/product/VISION.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/product/VISION.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/runtime/CLI-CONTRACT.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/runtime/CLI-CONTRACT.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/runtime/CLI-POLISH.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/runtime/CLI-POLISH.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/runtime/HARDWARE-PROBE.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/runtime/HARDWARE-PROBE.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/runtime/PLAYWRIGHT-SMOKE.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/runtime/PLAYWRIGHT-SMOKE.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/runtime/README.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/runtime/README.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/runtime/SERVE-OPENAI.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/runtime/SERVE-OPENAI.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/runtime/TELEMETRY.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/runtime/TELEMETRY.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/BACKLOG.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/BACKLOG.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/TIMELINE.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/TIMELINE.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-01/SPRINT.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-01/SPRINT.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-01/T01.0-agentic-starter.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-01/T01.0-agentic-starter.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-01/T01.1-runtime-scaffold.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-01/T01.1-runtime-scaffold.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-01/T01.2-cli-contract.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-01/T01.2-cli-contract.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-01/T01.3-adapter-contract.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-01/T01.3-adapter-contract.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-01/T01.4-probe-and-mode.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-01/T01.4-probe-and-mode.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-01/T01.5-telemetry-and-gates.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-01/T01.5-telemetry-and-gates.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-01/T01.6-ci-transition.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-01/T01.6-ci-transition.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-01/T01.7-playwright-smoke.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-01/T01.7-playwright-smoke.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-01/T01.8-adrs.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-01/T01.8-adrs.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-02/SPRINT.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-02/SPRINT.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-02/T02.1-tensor-core.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-02/T02.1-tensor-core.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-02/T02.2-scalar-matmul.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-02/T02.2-scalar-matmul.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-02/T02.3-scalar-attention.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-02/T02.3-scalar-attention.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-02/T02.4-dense-adapter-base.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-02/T02.4-dense-adapter-base.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-02/T02.5-qwen-adapter.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-02/T02.5-qwen-adapter.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-02/T02.6-gemma-adapter.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-02/T02.6-gemma-adapter.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-02/T02.7-loader-minimal.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-02/T02.7-loader-minimal.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-02/T02.8-dense-benchmark.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-02/T02.8-dense-benchmark.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-03/SPRINT.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-03/SPRINT.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-03/T03.1-metal-init.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-03/T03.1-metal-init.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-03/T03.2-metal-matmul-scaffold.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-03/T03.2-metal-matmul-scaffold.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-03/T03.3-metal-softmax-rmsnorm-scaffold.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-03/T03.3-metal-softmax-rmsnorm-scaffold.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-03/T03.4-mlx-bridge-scaffold.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-03/T03.4-mlx-bridge-scaffold.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-03/T03.5-unified-allocator.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-03/T03.5-unified-allocator.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-03/T03.6-enable-metal-capability.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-03/T03.6-enable-metal-capability.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-03/T03.7-backend-selector-modes.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-03/T03.7-backend-selector-modes.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-04/SPRINT.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-04/SPRINT.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-04/T04.1-neon-matmul-hotpath.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-04/T04.1-neon-matmul-hotpath.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-04/T04.2-neon-attention-hotpath.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-04/T04.2-neon-attention-hotpath.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-04/T04.4-block-gemm-tiling.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-04/T04.4-block-gemm-tiling.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-04/T04.6-neon-rebench.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-04/T04.6-neon-rebench.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-05/SPRINT.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-05/SPRINT.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-05/T05.1-bitnet-metal-kernel.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-05/T05.1-bitnet-metal-kernel.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-05/T05.2-bitnet-neon-kernel.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-05/T05.2-bitnet-neon-kernel.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-05/T05.3-bitnet-adapter.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-05/T05.3-bitnet-adapter.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-05/T05.4-ternary-adapter.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-05/T05.4-ternary-adapter.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-05/T05.5-ternary-lut.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-05/T05.5-ternary-lut.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-05/T05.6-lowbit-loader.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-05/T05.6-lowbit-loader.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-05/T05.7-micro-trigger.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-05/T05.7-micro-trigger.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-06/SPRINT.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-06/SPRINT.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-06/T06.1-kv-pager-tiers.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "route",
+        "test"
+      ],
+      "roles": [
+        "route",
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Defines inbound request or routing behavior.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-06/T06.1-kv-pager-tiers.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-06/T06.2-prefix-cache-dedup.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-06/T06.2-prefix-cache-dedup.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-06/T06.3-ssd-cold-store.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-06/T06.3-ssd-cold-store.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-06/T06.4-kv-summarizer.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-06/T06.4-kv-summarizer.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-06/T06.5-kv-eviction-policy.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-06/T06.5-kv-eviction-policy.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-06/T06.6-adapter-kv-hooks.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-06/T06.6-adapter-kv-hooks.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-06/T06.7-kv-telemetry.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-06/T06.7-kv-telemetry.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-07/SPRINT.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-07/SPRINT.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-07/T07.5-llama-loader.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-07/T07.5-llama-loader.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-07/T07.6-llama-bench.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-07/T07.6-llama-bench.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-08/SPRINT.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-08/SPRINT.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-08/T08.1-router-topk.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "route",
+        "test"
+      ],
+      "roles": [
+        "route",
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Defines inbound request or routing behavior.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-08/T08.1-router-topk.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-08/T08.2-expert-pager.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "route",
+        "test"
+      ],
+      "roles": [
+        "route",
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Defines inbound request or routing behavior.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-08/T08.2-expert-pager.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-08/T08.3-deepseek-moe-adapter.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-08/T08.3-deepseek-moe-adapter.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-08/T08.4-kimi-moe-adapter.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-08/T08.4-kimi-moe-adapter.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-08/T08.5-moe-loader.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-08/T08.5-moe-loader.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-08/T08.6-moe-telemetry.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-08/T08.6-moe-telemetry.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-09/SPRINT.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-09/SPRINT.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-09/T09.1-minimax-adapter.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-09/T09.1-minimax-adapter.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-09/T09.2-glm-adapter.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-09/T09.2-glm-adapter.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-09/T09.3-speculative-prefetch.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-09/T09.3-speculative-prefetch.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-09/T09.4-sparsity-cache.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-09/T09.4-sparsity-cache.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-09/T09.5-multimodal-cache.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-09/T09.5-multimodal-cache.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-09/T09.6-prefetch-telemetry.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-09/T09.6-prefetch-telemetry.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-10/SPRINT.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-10/SPRINT.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-10/T10.1-continuous-batcher.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-10/T10.1-continuous-batcher.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-10/T10.2-session-pool.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-10/T10.2-session-pool.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-10/T10.3-peagle-decoder.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-10/T10.3-peagle-decoder.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-10/T10.4-eagle3-decoder.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-10/T10.4-eagle3-decoder.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-10/T10.5-draft-model-loader.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "domain",
+        "model",
+        "test"
+      ],
+      "roles": [
+        "domain",
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Defines domain, data or schema structures.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-10/T10.5-draft-model-loader.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-10/T10.6-speculative-telemetry.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-10/T10.6-speculative-telemetry.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-11/SPRINT.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-11/SPRINT.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-11/T11.1-ane-backend.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-11/T11.1-ane-backend.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-11/T11.2-layer-offloader.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-11/T11.2-layer-offloader.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-11/T11.3-mixed-dispatch.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-11/T11.3-mixed-dispatch.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-11/T11.4-thermal-monitor.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-11/T11.4-thermal-monitor.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-11/T11.5-ane-bench.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-11/T11.5-ane-bench.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-11/T11.6-ane-fallback.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-11/T11.6-ane-fallback.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-12/SPRINT.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-12/SPRINT.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-12/T12.1-auto-tuner.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-12/T12.1-auto-tuner.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-12/T12.2-profile-cache.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-12/T12.2-profile-cache.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-12/T12.3-benchmark-matrix.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-12/T12.3-benchmark-matrix.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-12/T12.4-cli-polish.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-12/T12.4-cli-polish.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-12/T12.5-final-docs.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-12/T12.5-final-docs.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-12/T12.6-release-v1.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-12/T12.6-release-v1.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/sprint-12/T12.7-migration-guide.task.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/sprint-12/T12.7-migration-guide.task.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/sprints/task-template.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/sprints/task-template.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/workflow/CONTRIBUTING.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/workflow/CONTRIBUTING.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/workflow/MIGRATION.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/workflow/MIGRATION.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/workflow/RELEASE-V1.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/workflow/RELEASE-V1.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/workflow/RELEASE.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/workflow/RELEASE.md"
+        }
+      ]
+    },
+    {
+      "path": ".specs/workflow/WORKFLOW.md",
+      "language": "markdown",
+      "module": ".specs",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": ".specs/workflow/WORKFLOW.md"
+        }
+      ]
+    },
+    {
+      "path": "AGENTS.md",
+      "language": "markdown",
+      "module": ".",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "AGENTS.md"
+        }
+      ]
+    },
+    {
+      "path": "CHANGELOG.md",
+      "language": "markdown",
+      "module": ".",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "CHANGELOG.md"
+        }
+      ]
+    },
+    {
+      "path": "CLAUDE.md",
+      "language": "markdown",
+      "module": ".",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "CLAUDE.md"
+        }
+      ]
+    },
+    {
+      "path": "CMakeLists.txt",
+      "language": "txt",
+      "module": ".",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": "CMakeLists.txt"
+        }
+      ]
+    },
+    {
+      "path": "GOAL_RESULT.md",
+      "language": "markdown",
+      "module": ".",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "GOAL_RESULT.md"
+        }
+      ]
+    },
+    {
+      "path": "INIT.md",
+      "language": "markdown",
+      "module": ".",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "INIT.md"
+        }
+      ]
+    },
+    {
+      "path": "PRD.md",
+      "language": "markdown",
+      "module": ".",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "PRD.md"
+        }
+      ]
+    },
+    {
+      "path": "PROGRESS.md",
+      "language": "markdown",
+      "module": ".",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "PROGRESS.md"
+        }
+      ]
+    },
+    {
+      "path": "README.md",
+      "language": "markdown",
+      "module": ".",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "README.md"
+        }
+      ]
+    },
+    {
+      "path": "README.pt-BR.md",
+      "language": "markdown",
+      "module": ".",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "README.pt-BR.md"
+        }
+      ]
+    },
+    {
+      "path": "READMEs/README.ar-SA.md",
+      "language": "markdown",
+      "module": "READMEs",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "READMEs/README.ar-SA.md"
+        }
+      ]
+    },
+    {
+      "path": "READMEs/README.en.md",
+      "language": "markdown",
+      "module": "READMEs",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "READMEs/README.en.md"
+        }
+      ]
+    },
+    {
+      "path": "READMEs/README.es-ES.md",
+      "language": "markdown",
+      "module": "READMEs",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "READMEs/README.es-ES.md"
+        }
+      ]
+    },
+    {
+      "path": "READMEs/README.fr-FR.md",
+      "language": "markdown",
+      "module": "READMEs",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "READMEs/README.fr-FR.md"
+        }
+      ]
+    },
+    {
+      "path": "READMEs/README.he-IL.md",
+      "language": "markdown",
+      "module": "READMEs",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "READMEs/README.he-IL.md"
+        }
+      ]
+    },
+    {
+      "path": "READMEs/README.hi-IN.md",
+      "language": "markdown",
+      "module": "READMEs",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "READMEs/README.hi-IN.md"
+        }
+      ]
+    },
+    {
+      "path": "READMEs/README.id-ID.md",
+      "language": "markdown",
+      "module": "READMEs",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "READMEs/README.id-ID.md"
+        }
+      ]
+    },
+    {
+      "path": "READMEs/README.it-IT.md",
+      "language": "markdown",
+      "module": "READMEs",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "READMEs/README.it-IT.md"
+        }
+      ]
+    },
+    {
+      "path": "READMEs/README.ja-JP.md",
+      "language": "markdown",
+      "module": "READMEs",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "READMEs/README.ja-JP.md"
+        }
+      ]
+    },
+    {
+      "path": "READMEs/README.ko-KR.md",
+      "language": "markdown",
+      "module": "READMEs",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "READMEs/README.ko-KR.md"
+        }
+      ]
+    },
+    {
+      "path": "READMEs/README.ms-MY.md",
+      "language": "markdown",
+      "module": "READMEs",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "READMEs/README.ms-MY.md"
+        }
+      ]
+    },
+    {
+      "path": "READMEs/README.pl-PL.md",
+      "language": "markdown",
+      "module": "READMEs",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "READMEs/README.pl-PL.md"
+        }
+      ]
+    },
+    {
+      "path": "READMEs/README.pt-BR.md",
+      "language": "markdown",
+      "module": "READMEs",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "READMEs/README.pt-BR.md"
+        }
+      ]
+    },
+    {
+      "path": "READMEs/README.ru-RU.md",
+      "language": "markdown",
+      "module": "READMEs",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "READMEs/README.ru-RU.md"
+        }
+      ]
+    },
+    {
+      "path": "READMEs/README.zh-CN.md",
+      "language": "markdown",
+      "module": "READMEs",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "READMEs/README.zh-CN.md"
+        }
+      ]
+    },
+    {
+      "path": "US4-V6-simplicio.md",
+      "language": "markdown",
+      "module": ".",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "US4-V6-simplicio.md"
+        }
+      ]
+    },
+    {
+      "path": "_BOOTSTRAP.md",
+      "language": "markdown",
+      "module": ".",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "_BOOTSTRAP.md"
+        }
+      ]
+    },
+    {
+      "path": "apps/CMakeLists.txt",
+      "language": "txt",
+      "module": "apps",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": "apps/CMakeLists.txt"
+        }
+      ]
+    },
+    {
+      "path": "bin/cli.js",
+      "language": "javascript",
+      "module": "bin",
+      "layers": [
+        "entrypoint"
+      ],
+      "roles": [
+        "entrypoint"
+      ],
+      "imports": [
+        "node:child_process",
+        "node:fs",
+        "node:os",
+        "node:path",
+        "node:readline"
+      ],
+      "symbols": [
+        "normalizeMemoryGiB",
+        "selectRuntimeMode",
+        "detectAneEligibility",
+        "buildProbe",
+        "printRuntimeText",
+        "handleRuntimeFlags",
+        "printHelp",
+        "log",
+        "err",
+        "readSafe",
+        "existsIn",
+        "listDir",
+        "commandExists",
+        "readJsonField",
+        "readTomlField",
+        "readYamlField",
+        "detectStack",
+        "detectProductName",
+        "detectProjectMode",
+        "detectProjects",
+        "detectExistingInstructionFiles",
+        "copyTemplate",
+        "handleGitignore",
+        "looksBinary",
+        "substituteInFile",
+        "walk",
+        "substitute",
+        "stamp",
+        "writeMeta",
+        "ask",
+        "chooseCli",
+        "copyToClipboard",
+        "execHandoff",
+        "requireCmd",
+        "handoff",
+        "main"
+      ],
+      "summary": "Starts a CLI, runtime or package entrypoint.",
+      "evidence": [
+        {
+          "file": "bin/cli.js"
+        }
+      ]
+    },
+    {
+      "path": "bootstrap.ps1",
+      "language": "powershell",
+      "module": ".",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Defines exported symbols: Choose, Copy, Detect, Handle, Has.",
+      "evidence": [
+        {
+          "file": "bootstrap.ps1"
+        }
+      ]
+    },
+    {
+      "path": "bootstrap.sh",
+      "language": "shell",
+      "module": ".",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": "bootstrap.sh"
+        }
+      ]
+    },
+    {
+      "path": "docs/readme-globalization-standard.md",
+      "language": "markdown",
+      "module": "docs",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "docs/readme-globalization-standard.md"
+        }
+      ]
+    },
+    {
+      "path": "package-lock.json",
+      "language": "json",
+      "module": ".",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": "package-lock.json"
+        }
+      ]
+    },
+    {
+      "path": "package.json",
+      "language": "json",
+      "module": ".",
+      "layers": [
+        "config"
+      ],
+      "roles": [
+        "config"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Configures tooling, build, runtime or packaging behavior.",
+      "evidence": [
+        {
+          "file": "package.json"
+        }
+      ]
+    },
+    {
+      "path": "playwright.config.ts",
+      "language": "typescript",
+      "module": ".",
+      "layers": [
+        "config"
+      ],
+      "roles": [
+        "config"
+      ],
+      "imports": [
+        "@playwright/test"
+      ],
+      "symbols": [],
+      "summary": "Configures tooling, build, runtime or packaging behavior.",
+      "evidence": [
+        {
+          "file": "playwright.config.ts"
+        }
+      ]
+    },
+    {
+      "path": "runtime/CMakeLists.txt",
+      "language": "txt",
+      "module": "runtime",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": "runtime/CMakeLists.txt"
+        }
+      ]
+    },
+    {
+      "path": "runtime/README.md",
+      "language": "markdown",
+      "module": "runtime",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "runtime/README.md"
+        }
+      ]
+    },
+    {
+      "path": "runtime/STARTER-TO-RUNTIME.md",
+      "language": "markdown",
+      "module": "runtime",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "runtime/STARTER-TO-RUNTIME.md"
+        }
+      ]
+    },
+    {
+      "path": "runtime/adapters/README.md",
+      "language": "markdown",
+      "module": "runtime",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "runtime/adapters/README.md"
+        }
+      ]
+    },
+    {
+      "path": "runtime/ane/README.md",
+      "language": "markdown",
+      "module": "runtime",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "runtime/ane/README.md"
+        }
+      ]
+    },
+    {
+      "path": "runtime/benchmarks/CMakeLists.txt",
+      "language": "txt",
+      "module": "runtime",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": "runtime/benchmarks/CMakeLists.txt"
+        }
+      ]
+    },
+    {
+      "path": "runtime/benchmarks/README.md",
+      "language": "markdown",
+      "module": "runtime",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "runtime/benchmarks/README.md"
+        }
+      ]
+    },
+    {
+      "path": "runtime/benchmarks/correctness/CMakeLists.txt",
+      "language": "txt",
+      "module": "runtime",
+      "layers": [
+        "asset"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": "runtime/benchmarks/correctness/CMakeLists.txt"
+        }
+      ]
+    },
+    {
+      "path": "runtime/cache/README.md",
+      "language": "markdown",
+      "module": "runtime",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "runtime/cache/README.md"
+        }
+      ]
+    },
+    {
+      "path": "runtime/cpu/README.md",
+      "language": "markdown",
+      "module": "runtime",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "runtime/cpu/README.md"
+        }
+      ]
+    },
+    {
+      "path": "runtime/kv/README.md",
+      "language": "markdown",
+      "module": "runtime",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "runtime/kv/README.md"
+        }
+      ]
+    },
+    {
+      "path": "runtime/memory/README.md",
+      "language": "markdown",
+      "module": "runtime",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "runtime/memory/README.md"
+        }
+      ]
+    },
+    {
+      "path": "runtime/metal/README.md",
+      "language": "markdown",
+      "module": "runtime",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "runtime/metal/README.md"
+        }
+      ]
+    },
+    {
+      "path": "runtime/mlx/README.md",
+      "language": "markdown",
+      "module": "runtime",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "runtime/mlx/README.md"
+        }
+      ]
+    },
+    {
+      "path": "runtime/moe/README.md",
+      "language": "markdown",
+      "module": "runtime",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "runtime/moe/README.md"
+        }
+      ]
+    },
+    {
+      "path": "runtime/neon/README.md",
+      "language": "markdown",
+      "module": "runtime",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "runtime/neon/README.md"
+        }
+      ]
+    },
+    {
+      "path": "runtime/scheduler/README.md",
+      "language": "markdown",
+      "module": "runtime",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "runtime/scheduler/README.md"
+        }
+      ]
+    },
+    {
+      "path": "runtime/speculative/README.md",
+      "language": "markdown",
+      "module": "runtime",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "runtime/speculative/README.md"
+        }
+      ]
+    },
+    {
+      "path": "runtime/tuning/README.md",
+      "language": "markdown",
+      "module": "runtime",
+      "layers": [
+        "documentation"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Documents product, architecture, operation or contributor workflow.",
+      "evidence": [
+        {
+          "file": "runtime/tuning/README.md"
+        }
+      ]
+    },
+    {
+      "path": "scripts/coverage.sh",
+      "language": "shell",
+      "module": "scripts",
+      "layers": [
+        "script"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": "scripts/coverage.sh"
+        }
+      ]
+    },
+    {
+      "path": "scripts/openai_serve.py",
+      "language": "python",
+      "module": "scripts",
+      "layers": [
+        "script"
+      ],
+      "roles": [],
+      "imports": [
+        "__future__",
+        "atexit",
+        "http.server",
+        "ipaddress",
+        "json",
+        "logging",
+        "mlx_embeddings",
+        "mlx_lm",
+        "os",
+        "shlex",
+        "signal",
+        "socket",
+        "subprocess",
+        "sys",
+        "threading",
+        "time",
+        "typing",
+        "urllib.error",
+        "urllib.request"
+      ],
+      "symbols": [
+        "_sanitize_path",
+        "_truthy",
+        "Settings",
+        "chat_model",
+        "upstream_port",
+        "upstream_url",
+        "upstream_health_url",
+        "spawns_chat_subprocess",
+        "EmbeddingsBackend",
+        "__init__",
+        "ensure_loaded",
+        "embed",
+        "_extract_vectors",
+        "_send_json",
+        "_send_error",
+        "_proxy_upstream",
+        "_build_models_payload",
+        "_handle_embeddings",
+        "Us4Handler",
+        "log_message",
+        "do_GET",
+        "do_POST",
+        "_spawn_upstream",
+        "_terminate_proc",
+        "_wait_upstream_ready",
+        "_init_embeddings",
+        "_install_signal_handlers",
+        "_shutdown",
+        "_warn_if_non_loopback",
+        "main"
+      ],
+      "summary": "Defines exported symbols: EmbeddingsBackend, Settings, Us4Handler, __init__, _build_models_payload.",
+      "evidence": [
+        {
+          "file": "scripts/openai_serve.py"
+        }
+      ]
+    },
+    {
+      "path": "scripts/requirements-serve.txt",
+      "language": "txt",
+      "module": "scripts",
+      "layers": [
+        "script"
+      ],
+      "roles": [],
+      "imports": [],
+      "symbols": [],
+      "summary": "Participates in the project implementation; inspect imports and symbols for exact usage.",
+      "evidence": [
+        {
+          "file": "scripts/requirements-serve.txt"
+        }
+      ]
+    },
+    {
+      "path": "test/cli.test.js",
+      "language": "javascript",
+      "module": "test",
+      "layers": [
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [
+        "node:assert/strict",
+        "node:child_process",
+        "node:fs",
+        "node:os",
+        "node:path",
+        "node:test"
+      ],
+      "symbols": [
+        "runCli",
+        "makeTempProject"
+      ],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": "test/cli.test.js"
+        }
+      ]
+    },
+    {
+      "path": "test/run-tests.js",
+      "language": "javascript",
+      "module": "test",
+      "layers": [
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [
+        "node:child_process",
+        "node:fs",
+        "node:path",
+        "node:url"
+      ],
+      "symbols": [
+        "writeCoverageSummary",
+        "countCoveredLines",
+        "isCountedLine",
+        "nextTemplateLiteralState",
+        "makeSummary"
+      ],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": "test/run-tests.js"
+        }
+      ]
+    },
+    {
+      "path": "tests/CMakeLists.txt",
+      "language": "txt",
+      "module": "tests",
+      "layers": [
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": "tests/CMakeLists.txt"
+        }
+      ]
+    },
+    {
+      "path": "tests/e2e/README.md",
+      "language": "markdown",
+      "module": "tests",
+      "layers": [
+        "documentation",
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": "tests/e2e/README.md"
+        }
+      ]
+    },
+    {
+      "path": "tests/e2e/us4-cli-serve.spec.ts",
+      "language": "typescript",
+      "module": "tests",
+      "layers": [
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [
+        "@playwright/test",
+        "node:child_process",
+        "node:fs",
+        "node:net",
+        "node:path",
+        "node:timers/promises"
+      ],
+      "symbols": [
+        "freePort",
+        "waitReady",
+        "getJson",
+        "postJson",
+        "attach"
+      ],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": "tests/e2e/us4-cli-serve.spec.ts"
+        }
+      ]
+    },
+    {
+      "path": "tests/e2e/us4-cli.spec.ts",
+      "language": "typescript",
+      "module": "tests",
+      "layers": [
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [
+        "@playwright/test",
+        "node:child_process",
+        "node:fs",
+        "node:path",
+        "node:util"
+      ],
+      "symbols": [
+        "runCli",
+        "attachCommand"
+      ],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": "tests/e2e/us4-cli.spec.ts"
+        }
+      ]
+    },
+    {
+      "path": "tests/fixtures/models/bitnet-b1.58-2b/tokenizer.json",
+      "language": "json",
+      "module": "tests",
+      "layers": [
+        "domain",
+        "model",
+        "test"
+      ],
+      "roles": [
+        "domain",
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Defines domain, data or schema structures.",
+      "evidence": [
+        {
+          "file": "tests/fixtures/models/bitnet-b1.58-2b/tokenizer.json"
+        }
+      ]
+    },
+    {
+      "path": "tests/fixtures/models/glm-5.1/tokenizer.json",
+      "language": "json",
+      "module": "tests",
+      "layers": [
+        "domain",
+        "model",
+        "test"
+      ],
+      "roles": [
+        "domain",
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Defines domain, data or schema structures.",
+      "evidence": [
+        {
+          "file": "tests/fixtures/models/glm-5.1/tokenizer.json"
+        }
+      ]
+    },
+    {
+      "path": "tests/fixtures/models/llama-3.1-8b/tokenizer.json",
+      "language": "json",
+      "module": "tests",
+      "layers": [
+        "domain",
+        "model",
+        "test"
+      ],
+      "roles": [
+        "domain",
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Defines domain, data or schema structures.",
+      "evidence": [
+        {
+          "file": "tests/fixtures/models/llama-3.1-8b/tokenizer.json"
+        }
+      ]
+    },
+    {
+      "path": "tests/fixtures/models/minimax-m2/tokenizer.json",
+      "language": "json",
+      "module": "tests",
+      "layers": [
+        "domain",
+        "model",
+        "test"
+      ],
+      "roles": [
+        "domain",
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Defines domain, data or schema structures.",
+      "evidence": [
+        {
+          "file": "tests/fixtures/models/minimax-m2/tokenizer.json"
+        }
+      ]
+    },
+    {
+      "path": "tests/fixtures/models/pt-bitnet-ternary-2b/tokenizer.json",
+      "language": "json",
+      "module": "tests",
+      "layers": [
+        "domain",
+        "model",
+        "test"
+      ],
+      "roles": [
+        "domain",
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Defines domain, data or schema structures.",
+      "evidence": [
+        {
+          "file": "tests/fixtures/models/pt-bitnet-ternary-2b/tokenizer.json"
+        }
+      ]
+    },
+    {
+      "path": "tests/unit/CMakeLists.txt",
+      "language": "txt",
+      "module": "tests",
+      "layers": [
+        "test"
+      ],
+      "roles": [
+        "test"
+      ],
+      "imports": [],
+      "symbols": [],
+      "summary": "Verifies project behavior through automated tests.",
+      "evidence": [
+        {
+          "file": "tests/unit/CMakeLists.txt"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::handleGitignore",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::ask",
+      "line": 663,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::buildProbe",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::buildProbe",
+      "line": 320,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::chooseCli",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::chooseCli",
+      "line": 814,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::commandExists",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::commandExists",
+      "line": 476,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::copyTemplate",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::copyTemplate",
+      "line": 606,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::copyToClipboard",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::copyToClipboard",
+      "line": 832,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::detectAneEligibility",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::detectAneEligibility",
+      "line": 315,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::detectExistingInstructionFiles",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::detectExistingInstructionFiles",
+      "line": 594,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::detectProductName",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::detectProductName",
+      "line": 536,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::detectProjectMode",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::detectProjectMode",
+      "line": 570,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::detectProjects",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::detectProjects",
+      "line": 578,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::detectStack",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::detectStack",
+      "line": 501,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::copyTemplate",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::err",
+      "line": 644,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::execHandoff",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::execHandoff",
+      "line": 849,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::existsIn",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::existsIn",
+      "line": 464,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::handleGitignore",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::handleGitignore",
+      "line": 651,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::handleRuntimeFlags",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::handleRuntimeFlags",
+      "line": 373,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::printHelp",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::handoff",
+      "line": 423,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::listDir",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::listDir",
+      "line": 468,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::printRuntimeText",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::log",
+      "line": 370,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::looksBinary",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::looksBinary",
+      "line": 706,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::main",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::main",
+      "line": 967,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::normalizeMemoryGiB",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::normalizeMemoryGiB",
+      "line": 301,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::printHelp",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::printHelp",
+      "line": 405,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::printRuntimeText",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::printRuntimeText",
+      "line": 355,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::readJsonField",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::readJsonField",
+      "line": 483,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::readSafe",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::readSafe",
+      "line": 456,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::readTomlField",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::readTomlField",
+      "line": 489,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::readYamlField",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::readYamlField",
+      "line": 495,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::requireCmd",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::requireCmd",
+      "line": 858,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::selectRuntimeMode",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::selectRuntimeMode",
+      "line": 305,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::stamp",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::stamp",
+      "line": 757,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::substitute",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::substitute",
+      "line": 747,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::substituteInFile",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::substituteInFile",
+      "line": 711,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::walk",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::walk",
+      "line": 731,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::writeMeta",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::writeMeta",
+      "line": 777,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "bin/cli.js",
+      "source_symbol": "bin/cli.js::main",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::main",
+      "line": 967,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::main",
+      "target_file": "bin/cli.js",
+      "target_symbol": "bin/cli.js::main",
+      "line": 573,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_init_embeddings",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::EmbeddingsBackend",
+      "line": 545,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::spawns_chat_subprocess",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::Settings",
+      "line": 170,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::Us4Handler",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::Us4Handler",
+      "line": 358,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::__init__",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::__init__",
+      "line": 176,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_build_models_payload",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_build_models_payload",
+      "line": 303,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::embed",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_extract_vectors",
+      "line": 222,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_handle_embeddings",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_handle_embeddings",
+      "line": 313,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_init_embeddings",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_init_embeddings",
+      "line": 535,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_install_signal_handlers",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_install_signal_handlers",
+      "line": 548,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_proxy_upstream",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_proxy_upstream",
+      "line": 256,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_sanitize_path",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_sanitize_path",
+      "line": 100,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_send_error",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_send_error",
+      "line": 252,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_send_json",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_send_json",
+      "line": 243,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_spawn_upstream",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_spawn_upstream",
+      "line": 403,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_terminate_proc",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_terminate_proc",
+      "line": 503,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_truthy",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_truthy",
+      "line": 104,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_wait_upstream_ready",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_wait_upstream_ready",
+      "line": 514,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::_warn_if_non_loopback",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::_warn_if_non_loopback",
+      "line": 558,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::do_GET",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::do_GET",
+      "line": 364,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::do_POST",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::do_POST",
+      "line": 374,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::embed",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::embed",
+      "line": 202,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::ensure_loaded",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::ensure_loaded",
+      "line": 182,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::log_message",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::log_message",
+      "line": 361,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "scripts/openai_serve.py",
+      "source_symbol": "scripts/openai_serve.py::main",
+      "target_file": "scripts/openai_serve.py",
+      "target_symbol": "scripts/openai_serve.py::main",
+      "line": 573,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "test/cli.test.js",
+      "source_symbol": "test/cli.test.js::makeTempProject",
+      "target_file": "test/cli.test.js",
+      "target_symbol": "test/cli.test.js::makeTempProject",
+      "line": 22,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "test/cli.test.js",
+      "source_symbol": "test/cli.test.js::runCli",
+      "target_file": "test/cli.test.js",
+      "target_symbol": "test/cli.test.js::runCli",
+      "line": 14,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "test/cli.test.js",
+      "source_symbol": "test/cli.test.js::runCli",
+      "target_file": "tests/e2e/us4-cli.spec.ts",
+      "target_symbol": "tests/e2e/us4-cli.spec.ts::runCli",
+      "line": 14,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "test/run-tests.js",
+      "source_symbol": "test/run-tests.js::writeCoverageSummary",
+      "target_file": "test/run-tests.js",
+      "target_symbol": "test/run-tests.js::countCoveredLines",
+      "line": 71,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "test/run-tests.js",
+      "source_symbol": "test/run-tests.js::countCoveredLines",
+      "target_file": "test/run-tests.js",
+      "target_symbol": "test/run-tests.js::isCountedLine",
+      "line": 108,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "test/run-tests.js",
+      "source_symbol": "test/run-tests.js::writeCoverageSummary",
+      "target_file": "test/run-tests.js",
+      "target_symbol": "test/run-tests.js::makeSummary",
+      "line": 73,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "test/run-tests.js",
+      "source_symbol": "test/run-tests.js::countCoveredLines",
+      "target_file": "test/run-tests.js",
+      "target_symbol": "test/run-tests.js::nextTemplateLiteralState",
+      "line": 109,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "test/run-tests.js",
+      "source_symbol": null,
+      "target_file": "test/run-tests.js",
+      "target_symbol": "test/run-tests.js::writeCoverageSummary",
+      "line": 40,
+      "confidence": 0.48
+    },
+    {
+      "type": "calls",
+      "source_file": "tests/e2e/us4-cli-serve.spec.ts",
+      "source_symbol": "tests/e2e/us4-cli-serve.spec.ts::attach",
+      "target_file": "tests/e2e/us4-cli-serve.spec.ts",
+      "target_symbol": "tests/e2e/us4-cli-serve.spec.ts::attach",
+      "line": 79,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "tests/e2e/us4-cli-serve.spec.ts",
+      "source_symbol": "tests/e2e/us4-cli-serve.spec.ts::freePort",
+      "target_file": "tests/e2e/us4-cli-serve.spec.ts",
+      "target_symbol": "tests/e2e/us4-cli-serve.spec.ts::freePort",
+      "line": 18,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "tests/e2e/us4-cli-serve.spec.ts",
+      "source_symbol": "tests/e2e/us4-cli-serve.spec.ts::getJson",
+      "target_file": "tests/e2e/us4-cli-serve.spec.ts",
+      "target_symbol": "tests/e2e/us4-cli-serve.spec.ts::getJson",
+      "line": 51,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "tests/e2e/us4-cli-serve.spec.ts",
+      "source_symbol": "tests/e2e/us4-cli-serve.spec.ts::postJson",
+      "target_file": "tests/e2e/us4-cli-serve.spec.ts",
+      "target_symbol": "tests/e2e/us4-cli-serve.spec.ts::postJson",
+      "line": 63,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "tests/e2e/us4-cli-serve.spec.ts",
+      "source_symbol": "tests/e2e/us4-cli-serve.spec.ts::waitReady",
+      "target_file": "tests/e2e/us4-cli-serve.spec.ts",
+      "target_symbol": "tests/e2e/us4-cli-serve.spec.ts::waitReady",
+      "line": 35,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "tests/e2e/us4-cli.spec.ts",
+      "source_symbol": "tests/e2e/us4-cli.spec.ts::runCli",
+      "target_file": "test/cli.test.js",
+      "target_symbol": "test/cli.test.js::runCli",
+      "line": 18,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "tests/e2e/us4-cli.spec.ts",
+      "source_symbol": "tests/e2e/us4-cli.spec.ts::attachCommand",
+      "target_file": "tests/e2e/us4-cli-serve.spec.ts",
+      "target_symbol": "tests/e2e/us4-cli-serve.spec.ts::attach",
+      "line": 42,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "tests/e2e/us4-cli.spec.ts",
+      "source_symbol": "tests/e2e/us4-cli.spec.ts::attachCommand",
+      "target_file": "tests/e2e/us4-cli.spec.ts",
+      "target_symbol": "tests/e2e/us4-cli.spec.ts::attachCommand",
+      "line": 37,
+      "confidence": 0.58
+    },
+    {
+      "type": "calls",
+      "source_file": "tests/e2e/us4-cli.spec.ts",
+      "source_symbol": "tests/e2e/us4-cli.spec.ts::runCli",
+      "target_file": "tests/e2e/us4-cli.spec.ts",
+      "target_symbol": "tests/e2e/us4-cli.spec.ts::runCli",
+      "line": 18,
+      "confidence": 0.58
+    }
+  ],
+  "coverage": {
+    "files": 230,
+    "modules": 15,
+    "layers": 10,
+    "symbols": 80,
+    "relationships": 79,
+    "tests": 130
+  },
+  "notes": [
+    "Generated from deterministic repository inspection.",
+    "Relationship confidence below 1.0 means the edge is heuristic and should be reviewed before making broad claims."
+  ]
+}
