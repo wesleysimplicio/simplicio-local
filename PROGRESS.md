@@ -159,6 +159,29 @@ Next:
 (KV cache) pode ganhar teste de paridade com/sem cache sobre este forward
 real.
 
+## Checkpoint seguinte (4)
+
+Status: done
+
+Task:
+#87 - KV cache real sobre estados de atenção reais
+
+Result:
+`kv_cache_real_forward_contract_test.cpp` chama `Generate()` duas vezes com
+o mesmo `RuntimeContext` e o mesmo prompt sobre a fixture `toy-dense-real`
+(pesos reais): a primeira chamada tem `kvCacheHit=false` (popula o pager),
+a segunda tem `kvCacheHit=true` (reusa), e a saída (`generatedTokens`/
+`text`) é idêntica nas duas — provando que o cache não altera o resultado
+sobre um forward real, não apenas sobre o caminho sintético anterior.
+
+Validation:
+`cmake --build build`; `ctest --test-dir build --output-on-failure` (213/213);
+`npx playwright test --reporter=list` (26/26); `clang-format --dry-run --Werror`
+e `clang-tidy -p build` limpos no arquivo novo.
+
+Next:
+#81.7 (MoE real) e #81.9 (speculative real) são os próximos passos.
+
 Status: done
 
 Task:
