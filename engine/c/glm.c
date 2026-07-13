@@ -548,6 +548,78 @@ static void pack_int2(const float *w, uint8_t *q2, float *scale, int O, int I, i
     }
 }
 
+/* DUMP_TENSORS=1 -> emette tabela tensor-a-tensor (nome, shape, dtype, byte residenti) su
+ * stdout durante il load. Issue #119 (perfil 16gb): mapear o tronco denso tensor a tensor
+ * antes de decidir onde aplicar quantizacao mista. Zero custo quando desativado. */
+static int g_dump_tensors=0;
+static int64_t g_dump_total_bytes=0;
+static const char *qt_fmt_label(int fmt){
+    return fmt==0?"F32" : fmt==1?"I8" : fmt==2?"I4" : "I2";
+}
+static void dump_tensor_row(const char *name, int64_t o, int64_t i, int64_t bytes, const char *dtype){
+    if(!g_dump_tensors) return;
+    g_dump_total_bytes += bytes;
+    printf("[DUMP_TENSORS] %-72s shape=[%lld,%lld] dtype=%-3s bytes=%lld\n",
+           name, (long long)o, (long long)i, dtype, (long long)bytes);
+}
+
+/* CONTAINER MANIFEST v2 (issue #119): <snap>/container_manifest.json declara, por tensor,
+ * o numero de bits com que o conversor (tools/convert_fp8_to_int4.py --dtype-map) empacotou
+ * aquele peso. E' OPCIONAL: containers v1 (sem o arquivo) nao mudam de comportamento — o
+ * fmt continua inferido a partir do tamanho em bytes no disco, como sempre foi. Quando o
+ * manifesto existe, o loader VALIDA a inferencia contra o declarado e aborta com uma
+ * mensagem acionavel se nao combinarem (corrupcao de container ou desalinhamento
+ * conversor/loader), em vez de silenciosamente ler bytes errados. */
+typedef struct { char **names; int *bits; int n, hcap; int *hidx; } Manifest;
+static Manifest g_manifest;
+static int g_manifest_loaded=0;
+static void manifest_load(const char *snap){
+    char p[2048]; snprintf(p,sizeof(p),"%s/container_manifest.json",snap);
+    FILE *f=fopen(p,"rb");
+    if(!f) return;                                   /* v1: nenhum manifesto -> nada a validar */
+    fseek(f,0,SEEK_END); long n=ftell(f); fseek(f,0,SEEK_SET);
+    char *b=malloc(n+1);
+    size_t rd=fread(b,1,n,f); fclose(f);
+    if(rd!=(size_t)n){ free(b); return; }
+    b[n]=0;
+    char *ar=NULL; jval *root=json_parse(b,&ar);
+    jval *ver=json_get(root,"container_version");
+    jval *tensors=ver?json_get(root,"tensors"):NULL;
+    if(!ver || (int)ver->num<2 || !tensors || tensors->t!=J_OBJ){ free(b); free(ar); return; }
+    g_manifest.names=malloc((tensors->len>0?tensors->len:1)*sizeof(char*));
+    g_manifest.bits =malloc((tensors->len>0?tensors->len:1)*sizeof(int));
+    g_manifest.n=0;
+    for(int i=0;i<tensors->len;i++){
+        jval *ent=tensors->kids[i]; jval *bv=ent?json_get(ent,"bits"):NULL;
+        if(!bv) continue;
+        g_manifest.names[g_manifest.n]=strdup(tensors->keys[i]);
+        g_manifest.bits[g_manifest.n]=(int)bv->num;
+        g_manifest.n++;
+    }
+    g_manifest.hcap=1; while(g_manifest.hcap < g_manifest.n*2+1) g_manifest.hcap<<=1;
+    g_manifest.hidx=malloc(g_manifest.hcap*sizeof(int));
+    for(int i=0;i<g_manifest.hcap;i++) g_manifest.hidx[i]=-1;
+    for(int i=0;i<g_manifest.n;i++){
+        uint64_t h=st_hash(g_manifest.names[i])&(g_manifest.hcap-1);
+        while(g_manifest.hidx[h]>=0) h=(h+1)&(g_manifest.hcap-1);
+        g_manifest.hidx[h]=i;
+    }
+    g_manifest_loaded=1;
+    fprintf(stderr,"[CONTAINER v2] manifesto carregado: %d tensores com dtype declarado (%s)\n",
+        g_manifest.n, p);
+    free(b); free(ar);
+}
+static int manifest_bits_for(const char *name){
+    if(!g_manifest_loaded) return -1;
+    uint64_t h=st_hash(name)&(g_manifest.hcap-1);
+    while(g_manifest.hidx[h]>=0){
+        int idx=g_manifest.hidx[h];
+        if(!strcmp(g_manifest.names[idx],name)) return g_manifest.bits[idx];
+        h=(h+1)&(g_manifest.hcap-1);
+    }
+    return -1;
+}
+
 static int g_nopack=0;   /* NOPACK=1 -> tiene i valori <=4bit in contenitore int8 (per validare il packing) */
 static int g_drop=0;     /* DROP=1 -> scarta le pagine expart dopo l'uso. Default 0: le lascia in
                           * page-cache (buff/cache, NON RSS) come L2 gratuito -> sfrutta lo
@@ -694,6 +766,18 @@ static void qt_from_disk(Model *m, const char *name, int O, int I, int bits, int
     if(st_has(&m->S,sn)){
         int64_t nb=st_nbytes(&m->S,name);
         int fmt = (nb==(int64_t)O*I)?1 : (nb==(int64_t)O*((I+1)/2))?2 : 3;  /* int8 / int4 / int2 dai byte */
+        int declared=manifest_bits_for(name);
+        if(declared>=0){
+            int inferred_bits = fmt==1?8 : fmt==2?4 : 2;
+            if(declared!=inferred_bits){
+                fprintf(stderr,
+                    "[CONTAINER v2] ABORT: tensor '%s' declara %d-bit no manifesto mas o layout no "
+                    "disco implica %d-bit (%lld bytes para O=%d I=%d). Container corrompido ou "
+                    "conversor/loader desalinhados — recrie o container com "
+                    "tools/convert_fp8_to_int4.py.\n", name, declared, inferred_bits, (long long)nb, O, I);
+                exit(1);
+            }
+        }
         if(fmt==1){ if(t->fmt!=1||!t->q8){ t->fmt=1; t->O=O; t->I=I; t->q8=malloc(nb); t->s=falloc(O); } st_read_raw(&m->S,name,t->q8,drop); }
         else      { if(t->fmt!=fmt||!t->q4){ t->fmt=fmt; t->O=O; t->I=I; t->q4=malloc(nb); t->s=falloc(O); } st_read_raw(&m->S,name,t->q4,drop); }
         st_read_f32(&m->S,sn,t->s,drop);
@@ -705,6 +789,7 @@ static void qt_from_disk(Model *m, const char *name, int O, int I, int bits, int
 }
 static QT qt_load(Model *m, const char *name, int O, int I, int bits){
     QT t; memset(&t,0,sizeof(t)); qt_from_disk(m,name,O,I,bits,0,&t);
+    dump_tensor_row(name, O, I, qt_bytes(&t), qt_fmt_label(t.fmt));
 #ifdef COLI_CUDA
     if(g_cuda_enabled&&g_cuda_dense){
         t.cuda_eligible=1;
@@ -716,12 +801,14 @@ static QT qt_load(Model *m, const char *name, int O, int I, int bits){
 }
 static float *ld(Model *m, const char *name){   /* tensore 1D f32 residente (norme/bias) */
     int64_t n=st_numel(&m->S,name); if(n<0){fprintf(stderr,"manca %s\n",name);exit(1);}
-    float *p=falloc(n); st_read_f32(&m->S,name,p,0); return p;
+    float *p=falloc(n); st_read_f32(&m->S,name,p,0);
+    dump_tensor_row(name, n, 1, n*4, "F32");
+    return p;
 }
 
 static void model_init(Model *m, const char *snap, int cap, int ebits, int dbits){
     memset(m,0,sizeof(*m)); m->ebits=ebits; m->dbits=dbits;
-    load_cfg(&m->c,snap); st_init(&m->S,snap);
+    load_cfg(&m->c,snap); st_init(&m->S,snap); manifest_load(snap);
     Cfg *c=&m->c; char nm[256]; int H=c->n_heads, D=c->hidden;
     /* embed e lm_head sono il confine I/O: tenerli ad alta precisione (come i quant dynamic
      * reali). A bf16 ~1.9GB su GLM reale: trascurabile. dbits>=8 -> qui f32; piu' basso -> dbits. */
@@ -858,6 +945,9 @@ static void model_init(Model *m, const char *snap, int cap, int ebits, int dbits
     if(m->has_dsa) for(int i=0;i<c->n_layers;i++) if(c->idx_type[i])
         rb+=qt_bytes(&m->ix_wq[i])+qt_bytes(&m->ix_wk[i])+qt_bytes(&m->ix_wp[i]);
     m->resident_bytes=rb;
+    if(g_dump_tensors) printf("[DUMP_TENSORS] TOTAL tronco denso residente = %lld bytes (%.2f MB, "
+        "soma das linhas acima; pode diferir levemente de resident_bytes se houver f32 residuais)\n",
+        (long long)g_dump_total_bytes, g_dump_total_bytes/1e6);
 }
 
 /* embed: dequantizza la riga del token (scala per-riga) in x[hidden] */
@@ -2402,10 +2492,66 @@ static void cap_for_ram(Model *m, double ram_gb, int ebits, int max_ctx){
     }
 }
 
+/* GATE DURO DE RSS (issue #119, perfil 16gb): projeta o pico MINIMO possivel — tronco denso
+ * residente + UMA fatia de cache por camada sparse (cap=1, o menor cache_for_ram jamais
+ * produz) + KV/working-set/slack honesto — e ABORTA de forma limpa (sem crash, sem esperar
+ * o OOM-killer do kernel) se esse minimo ja excede o teto configurado. Diferente de
+ * cap_for_ram (que so' ENCOLHE a cache dentro do teto), este gate cobre o caso em que nem o
+ * tronco denso cabe: nesse caso encolher a cache nao resolve, e continuar rodando so' atrasa
+ * um OOM-kill inevitavel numa maquina real de RAM limitada. ceiling_gb<=0 desativa o gate
+ * (comportamento legado, compativel com quem nao usa --profile 16gb / COLI_RSS_CEILING_GB). */
+static void rss_hard_gate(Model *m, double ceiling_gb, int ebits, int max_ctx){
+    if(ceiling_gb<=0) return;
+    Cfg *c=&m->c; int nsp=0; for(int i=0;i<c->n_layers;i++) if(m->L[i].sparse) nsp++;
+    if(m->has_mtp) nsp+=2;
+    int64_t eb=expert_bytes_probe(m,ebits);
+    double ws_b  = 64.0*(double)eb;
+    double kv_b  = kv_pool_bytes(m,max_ctx);
+    double kvb_b = (double)max_ctx*c->n_heads*(c->qk_nope+c->v_head)*4.0;
+    double pc_b  = 2.5e9;
+    double slack = 1.2e9 + pc_b + ws_b + kv_b + kvb_b;
+    double min_cache = (double)nsp*(double)eb;      /* cap=1: a menor cache expert possivel */
+    double projected = (double)m->resident_bytes + min_cache + slack;
+    double ceiling = ceiling_gb*1e9;
+    if(projected > ceiling){
+        fprintf(stderr,
+            "\n[RSS GATE] ABORT: projecao de pico MINIMA %.2f GB excede o teto configurado %.2f GB.\n"
+            "  tronco denso residente                     : %.2f GB\n"
+            "  cache expert minima (cap=1, %d layer sparse): %.2f GB\n"
+            "  slack (KV+working-set+page-cache+overhead)  : %.2f GB\n"
+            "  Este processo seria OOM-killed numa maquina real com este teto de RAM — abortando\n"
+            "  ANTES de alocar, com uma mensagem clara, em vez de deixar o kernel matar o processo\n"
+            "  a meio da geracao.\n"
+            "  Acoes possiveis: use pesos densos em bit-width menor (--dbits 4 ou 2 / container\n"
+            "  int2 misto via tools/convert_fp8_to_int4.py --dtype-map), reduza --ctx, ou aumente\n"
+            "  o teto (COLI_RSS_CEILING_GB=<gb> / RAM_GB=<gb>) se esta maquina tem mais RAM do\n"
+            "  que o perfil assume. Ver docs/profiles/16gb.md.\n\n",
+            projected/1e9, ceiling_gb, m->resident_bytes/1e9, nsp, min_cache/1e9, slack/1e9);
+        exit(3);
+    }
+}
+
 int main(int argc, char **argv){
+    /* PERFIL 16gb (issue #119, epica #116): defaults que maximizam qualidade/velocidade
+     * dentro de um teto de RSS de 13 GB (SO ~3GB + tronco denso <=8.5GB + cache expert
+     * 1.5-3GB + KV/buffers <=1GB — ver docs/profiles/16gb.md). So' aplica cada default
+     * quando o usuario ainda NAO setou a variavel explicitamente (respeita override). */
+    if(getenv("COLI_PROFILE") && !strcmp(getenv("COLI_PROFILE"),"16gb")){
+        if(!getenv("MTP"))     setenv("MTP","0",1);      /* MTP a frio: mais expert-loads do que o draft economiza sob cache pequena */
+        if(!getenv("DSA"))     setenv("DSA","1",1);       /* indexer DSA: atencao esparsa poupa KV/compute em contexto longo */
+        if(!getenv("TEMP"))    setenv("TEMP","0.7",1);
+        if(!getenv("TOPP"))    setenv("TOPP","0.7",1);
+        if(!getenv("AUTOPIN")) setenv("AUTOPIN","1",1);   /* pin learning: fixa os experts mais usados entre sessoes */
+        if(!getenv("COLI_RSS_CEILING_GB")) setenv("COLI_RSS_CEILING_GB","13",1);
+        if(!getenv("RAM_GB"))  setenv("RAM_GB","13",1);
+        fprintf(stderr,"[PROFILE 16gb] MTP=%s DSA=%s TEMP=%s TOPP=%s AUTOPIN=%s teto_RSS=%sGB "
+            "(ver docs/profiles/16gb.md)\n", getenv("MTP"),getenv("DSA"),getenv("TEMP"),
+            getenv("TOPP"),getenv("AUTOPIN"),getenv("COLI_RSS_CEILING_GB"));
+    }
     /* i thread OMP non devono girare a vuoto mentre il main aspetta il disco */
     if(!getenv("OMP_WAIT_POLICY")) setenv("OMP_WAIT_POLICY","passive",1);
     const char *snap=getenv("SNAP"); if(!snap){fprintf(stderr,"SNAP=<dir>\n");return 1;}
+    g_dump_tensors = getenv("DUMP_TENSORS")?atoi(getenv("DUMP_TENSORS")):0;
     g_nopack = getenv("NOPACK")?1:0;
     g_drop = getenv("DROP")?1:0;
     g_prefetch = getenv("PREFETCH")?atoi(getenv("PREFETCH")):0;
@@ -2473,6 +2619,12 @@ int main(int argc, char **argv){
     if(!strncmp(snap,"/mnt/",5))
         fprintf(stderr,"ATTENZIONE: il modello e' su %s (filesystem 9p/Windows, lento e fadvise inefficace).\n"
                        "            Per RAM e velocita' tienilo su ext4 (es. /home/...).\n", snap);
+    /* GATE DURO DE RSS (issue #119): projeta o pico MINIMO possivel e aborta ANTES de
+     * qualquer alocacao de cache/PIN se ja excede o teto. COLI_RSS_CEILING_GB<=0/ausente ->
+     * gate desativado (comportamento legado). */
+    { double ceiling_gb = getenv("COLI_RSS_CEILING_GB")?atof(getenv("COLI_RSS_CEILING_GB")):0.0;
+      int gate_ctx = getenv("CTX")?atoi(getenv("CTX")):4096;
+      rss_hard_gate(&m, ceiling_gb, ebits, gate_ctx); }
     /* HOT-STORE: PIN=<statsfile> [PIN_GB=g] -> top expert per frequenza fissi in RAM.
      * Va PRIMA di cap_for_ram: i pinnati contano nel residente. */
     if(getenv("PIN")) pin_load(&m, getenv("PIN"), getenv("PIN_GB")?atof(getenv("PIN_GB")):10.0);

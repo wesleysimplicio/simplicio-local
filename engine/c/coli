@@ -127,6 +127,10 @@ def resource_request(a, env):
 
 def env_for(a):
     e = dict(os.environ, SNAP=a.model)
+    # perfil nomeado (issue #119): --profile 16gb -> COLI_PROFILE=16gb no ambiente do motor C.
+    # Os defaults concretos (MTP/DSA/TEMP/TOPP/AUTOPIN/teto de RSS) vivem no motor (glm.c),
+    # nao aqui, para que TAMBEM funcionem chamando o binario direto sem passar por esta CLI.
+    if getattr(a, "profile", None): e["COLI_PROFILE"]=a.profile
     if a.ram:  e["RAM_GB"]=str(a.ram)
     if a.ngen: e["NGEN"]=str(a.ngen)
     if a.topp: e["TOPP"]=str(a.topp)
@@ -320,12 +324,19 @@ def cmd_info(a):
     print()
 
 def cmd_plan(a):
-    from resource_plan import build_plan, format_plan
+    from resource_plan import build_plan, check_rss_ceiling, format_plan, RssCeilingExceeded
     try:
         ram,ctx,devices,vram=resource_request(a,os.environ)
         if ctx<1: raise ValueError("--ctx deve essere positivo")
         if a.vram<0: raise ValueError("--vram non puo essere negativo")
         plan=build_plan(a.model,ram,ctx,devices,vram)
+        # gate duro de RSS (issue #119): --profile 16gb ou COLI_RSS_CEILING_GB explicito
+        # rejeitam AQUI um plano inviavel, antes de qualquer processo do motor ser iniciado.
+        ceiling_gb=float(os.environ.get("COLI_RSS_CEILING_GB",0) or 0)
+        if a.profile=="16gb" and not os.environ.get("COLI_RSS_CEILING_GB"): ceiling_gb=13.0
+        if ceiling_gb>0: check_rss_ceiling(plan,ceiling_gb)
+    except RssCeilingExceeded as error:
+        sys.exit(f"{C.yel}plano excede o teto de RSS:{C.r} {error}")
     except (OSError, ValueError, json.JSONDecodeError) as error:
         sys.exit(f"{C.yel}impossibile creare il piano:{C.r} {error}")
     if a.json:
@@ -520,6 +531,11 @@ def main():
     common.add_argument("--cap", type=int, default=8); common.add_argument("--ngen", type=int, default=1024)  # rete di sicurezza: la fine vera la decidono gli stop token
     common.add_argument("--topp", type=float, default=0); common.add_argument("--topk", type=int, default=0)
     common.add_argument("--temp", type=float, default=None)  # temperatura token (0=greedy, default 1.0+nucleus .95)
+    common.add_argument("--profile", default=os.environ.get("COLI_PROFILE"),
+        help="perfil de execucao nomeado. 'coli plan/run/serve/... --profile 16gb' (issue #119, "
+             "epica #116): aplica defaults que garantem por construcao RSS <= 13GB (MTP off, DSA "
+             "on, temp/topp 0.7, pin learning on, gate duro de RSS). Ver docs/profiles/16gb.md. "
+             "Equivalente a COLI_PROFILE=16gb; flags explicitas continuam tendo prioridade.")
     ap=argparse.ArgumentParser(prog="coli", parents=[common], description="colibrì — GLM-5.2 in locale")
     sub=ap.add_subparsers(dest="cmd")
     sub.add_parser("build", parents=[common]); sub.add_parser("info", parents=[common])
