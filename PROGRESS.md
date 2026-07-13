@@ -292,6 +292,54 @@ Religar kimi/minimax/glm ao mesmo helper de expert real. #81.10 (API
 nativa) já tem todas as dependências centrais (#81.2/#81.4/#81.5)
 concluídas.
 
+## Checkpoint seguinte (8)
+
+Status: done
+
+Task:
+#91 - API OpenAI-compatible nativa (sem depender de mlx_lm.server/Ollama)
++ benchmarks reais
+
+Result:
+`us4-cli serve --native` sobe um servidor HTTP/1.1 real e mínimo
+(`runtime/net/native_http_server.{h,cpp}`, sockets POSIX puros, sem
+dependência nova) que responde `GET /v1/models` e
+`POST /v1/chat/completions` diretamente do `Generate()` do runtime, via
+`runtime/net/openai_chat_handler.{h,cpp}` — sem processo externo, sem
+Python. O handler aceita um campo de extensão `model_path` (fora do schema
+OpenAI, documentado como extensão us4-cli) para carregar pesos reais como
+`us4-cli run --model-path` já fazia, e a resposta expõe
+`used_real_weights`.
+
+Evidência ponta-a-ponta real (não mock): teste Playwright novo
+(`tests/e2e/us4-cli-serve.spec.ts`) sobe o binário `us4-cli serve --native`
+como processo real, faz requisição HTTP genuína com `model_path` apontando
+pra fixture `toy-dense-real` (#85), e recebe `used_real_weights: true` com
+`content: "delta"` — a mesma previsão do oráculo externo já usada como
+evidência em #85, agora servida por um servidor HTTP nativo de verdade.
+Testes unitários cobrem o parser de request e o handler isoladamente (sem
+sockets).
+
+README (`6.2.1`) distingue explicitamente `serve` (proxy pra
+mlx_lm.server/Ollama via `scripts/openai_serve.py`) de `serve --native`
+(motor nativo direto). Benchmark de performance Metal/MLX real fica
+bloqueado pelo mesmo hardware Apple Silicon que falta pra #81.5 — o que
+foi verificado aqui é corretude funcional, documentado como tal, não
+throughput.
+
+Validation:
+`cmake --build build` (sem warning novo); `ctest --test-dir build
+--output-on-failure` (222/222, zero regressão); `npx playwright test
+--reporter=list` (29/29, incluindo 3 testes novos do servidor nativo);
+`clang-format --dry-run --Werror` e `clang-tidy -p build` limpos nos
+arquivos tocados.
+
+Next:
+Das 10 frentes da epic #81, 8/9 issues filhas tratáveis estão fechadas.
+Só #81.5 (Metal/MLX/ANE reais) permanece aberta, bloqueada por hardware
+(requer macOS/Apple Silicon real — não pode ser implementada nem validada
+nesta sessão Linux x86_64).
+
 Status: done
 
 Task:
