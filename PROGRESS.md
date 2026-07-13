@@ -253,6 +253,45 @@ Next:
 #81.7 (MoE real) é a última frente tratável sem hardware Apple. #81.10 (API
 nativa) depende dela + de #81.4/#81.5 (já concluídas).
 
+## Checkpoint seguinte (7)
+
+Status: done
+
+Task:
+#88 - MoE real — streaming de pesos de expert do disco, roteamento
+aplicado ao forward
+
+Result:
+`TryLoadExpertShardLmHead` (novo em `runtime/core/model_asset.{h,cpp}`) lê
+de verdade o tensor `lm_head.weight` do shard `.safetensors` real apontado
+por `asset.expertShardPaths[expertIndex]` (via `SafetensorsReader`, não
+mais um manifesto texto nunca aberto). `DeepSeekMoEAdapter::Generate` usa
+isso: quando o expert escolhido pelo router tem shard real compatível, o
+adapter substitui o `lm_head.weight` do asset roteado pelo peso real
+daquele expert antes de chamar `DenseAdapterBase::Generate` — o resultado
+da geração passa a refletir de fato o peso do expert selecionado, não só
+uma contabilidade de `Touch()` no pager. CLI expõe
+`used_real_expert_weights`.
+
+Fixture `toy-moe-real/` tem um tensor "decoy" no modelo base (argmaxa para
+"alpha") e um shard de expert real com peso diferente (argmaxa para
+"beta"). O teste de contrato prova que a saída observada é "beta" — ou
+seja, o peso do expert roteado, não o decoy da base, dirigiu o forward.
+
+Apenas o DeepSeek foi religado nesta sessão; kimi/minimax/glm compartilham
+o mesmo padrão e podem adotar o mesmo helper depois.
+
+Validation:
+`cmake --build build`; `ctest --test-dir build --output-on-failure` (217/217,
+zero regressão); `npx playwright test --reporter=list` (26/26);
+`clang-format --dry-run --Werror` e `clang-tidy -p build` limpos nos
+arquivos tocados.
+
+Next:
+Religar kimi/minimax/glm ao mesmo helper de expert real. #81.10 (API
+nativa) já tem todas as dependências centrais (#81.2/#81.4/#81.5)
+concluídas.
+
 Status: done
 
 Task:

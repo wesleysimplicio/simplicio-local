@@ -47,4 +47,18 @@ std::string_view ToString(ModelFormat format);
 bool LoadModelAsset(const std::filesystem::path &path, ModelAsset &asset,
                     std::string *error = nullptr);
 
+// Reads the real "lm_head.weight" tensor from the shard file at
+// `asset.expertShardPaths[expertIndex]` (a genuine .safetensors file, parsed
+// via SafetensorsReader -- not the shard manifest's text-only bookkeeping),
+// so a router decision can drive which expert's ACTUAL weight the forward
+// uses instead of only recording that the expert was "touched" for
+// telemetry. Returns false (with `error` set) when the shard is missing,
+// unreadable, or its shape doesn't match `vocabSize` under the real HF
+// convention ([vocab_size, hidden_size]).
+bool TryLoadExpertShardLmHead(const ModelAsset &asset, std::size_t expertIndex,
+                              std::size_t vocabSize,
+                              std::vector<float> *outWeights,
+                              std::vector<std::size_t> *outShape,
+                              std::string *error = nullptr);
+
 } // namespace us4
