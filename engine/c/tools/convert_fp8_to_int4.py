@@ -25,8 +25,31 @@ USO:
   # reale: scarica+converte+cancella shard per shard
   python3 tools/convert_fp8_to_int4.py --repo zai-org/GLM-5.2-FP8 --outdir /home/vincenzo/glm52_i4
 """
-import os, sys, glob, json, shutil, argparse
+import os, sys, glob, json, re, shutil, argparse
 import numpy as np
+
+# ---------- container v2: dtype misto por-tensor (issue #119) ----------
+# v1 (comportamento original): TODO tensor de uma categoria (q/x/io) sai com o MESMO
+# numero de bits (--ebits/--xbits/--io-bits). v2 acrescenta um override por-tensor via
+# --dtype-map <json.json> ({"regex-do-nome-final": bits}) e grava um manifesto
+# `container_manifest.json` no outdir documentando, tensor a tensor, o bits final e a
+# categoria usada. O loader C (glm.c) LE esse manifesto e VALIDA a inferencia por-tamanho
+# contra o declarado -- mas so' se o manifesto existir: containers v1 (sem o arquivo)
+# continuam lidos exatamente como antes (nenhuma mudanca de comportamento).
+def load_dtype_map(path):
+    if not path:
+        return None
+    with open(path) as f:
+        raw = json.load(f)
+    return [(re.compile(pattern), int(bits)) for pattern, bits in raw.items()]
+
+def dtype_map_lookup(dtype_map, name):
+    if not dtype_map:
+        return None
+    for pattern, bits in dtype_map:
+        if pattern.fullmatch(name):
+            return bits
+    return None
 
 # ---------- quantizzazione: identica al C (glm.c) ----------
 def quant_int8(w, bits):                       # w: [O,I] f32 -> (qbytes U8 [O*I], scale f32 [O])
@@ -107,7 +130,8 @@ def dequant(f, name):
         return (w * sc).numpy()
     return f.get_tensor(name).to(torch.float32).numpy()
 
-def convert_shard(path, out_dict, n_layers, ebits, io_bits, xbits, keep_mtp=False, keep_idx=False):
+def convert_shard(path, out_dict, n_layers, ebits, io_bits, xbits, keep_mtp=False, keep_idx=False,
+                   dtype_map=None, manifest=None):
     from safetensors import safe_open
     with safe_open(path, framework="pt") as f:
         for name in f.keys():
@@ -116,14 +140,24 @@ def convert_shard(path, out_dict, n_layers, ebits, io_bits, xbits, keep_mtp=Fals
             w = dequant(f, name)
             if kind == "f32":
                 out_dict[name] = w.astype(np.float32)
+                if manifest is not None:
+                    manifest[name] = {"kind": "f32", "bits": 32, "shape": list(w.shape)}
             else:
                 bits = io_bits if kind == "io" else xbits if kind == "x" else ebits
+                override = dtype_map_lookup(dtype_map, name)   # container v2: dtype por-tensor
+                if override is not None:
+                    bits = override
                 if w.ndim != 2:        # es. bias 1D non previsto come 'q' -> tienilo f32
-                    out_dict[name] = w.astype(np.float32); continue
+                    out_dict[name] = w.astype(np.float32)
+                    if manifest is not None:
+                        manifest[name] = {"kind": "f32", "bits": 32, "shape": list(w.shape)}
+                    continue
                 q, s = (quant_int2(w, bits) if bits <= 2 else
                         quant_int4(w, bits) if bits <= 4 else quant_int8(w, bits))
                 out_dict[name] = q
                 out_dict[name + ".qs"] = s
+                if manifest is not None:
+                    manifest[name] = {"kind": kind, "bits": bits, "shape": list(w.shape)}
 
 def free_gb(p): return shutil.disk_usage(p).free / 1e9
 
@@ -144,6 +178,11 @@ def main():
         help="estrae SOLO i pesi del DSA lightning indexer -> out-idx-*.safetensors. ATTENZIONE: "
              "i tensori indexer sono sparsi su ~tutti gli shard: ri-scarica l'intero repo (~756 GB "
              "di traffico) per tenerne pochi GB. Resumabile shard per shard. Consigliato --ebits 8.")
+    ap.add_argument("--dtype-map", default=None,
+        help="container v2 (issue #119): path per un JSON {\"regex-nome-tensor\": bits} que "
+             "sobrescreve --ebits/--io-bits/--xbits POR TENSOR (ex.: forcar int2 em tensores "
+             "grandes especificos do tronco denso para caber no teto de 16GB). Sem esta flag, "
+             "o comportamento e' v1 (bits uniforme por categoria, como sempre foi).")
     a = ap.parse_args()
     if a.ebits is None:
         # testa MTP a int4 = acceptance ~0-4% (misurato, issue #8): il draft sbaglia sempre
@@ -168,16 +207,28 @@ def main():
         return
 
     os.makedirs(a.outdir, exist_ok=True)
+    dtype_map = load_dtype_map(a.dtype_map)
     if a.indir:    # conversione locale (test)
         shards = sorted(glob.glob(os.path.join(a.indir, "*.safetensors")))
         from safetensors.numpy import save_file
+        manifest = {}
         for i, sp in enumerate(shards):
-            out = {}; convert_shard(sp, out, a.n_layers, a.ebits, a.io_bits, a.xbits)
+            out = {}
+            convert_shard(sp, out, a.n_layers, a.ebits, a.io_bits, a.xbits,
+                          dtype_map=dtype_map, manifest=manifest)
             save_file(out, os.path.join(a.outdir, f"out-{i:05d}.safetensors"))
         # copia config + tokenizer
         for fn in ["config.json"]:
             src = os.path.join(a.indir, fn)
             if os.path.exists(src): shutil.copy(src, a.outdir)
+        # container v2: manifesto por-tensor SO' quando --dtype-map foi usado (mixed
+        # quantization real). Sem --dtype-map o container e' v1 uniforme e o loader C
+        # continua a inferir o dtype pelo tamanho em bytes, como sempre fez.
+        if dtype_map is not None:
+            manifest_path = os.path.join(a.outdir, "container_manifest.json")
+            with open(manifest_path, "w") as f:
+                json.dump({"container_version": 2, "tensors": manifest}, f, indent=2)
+            print(f"container v2: manifesto escrito em {manifest_path} ({len(manifest)} tensores)")
         print(f"convertito {len(shards)} shard -> {a.outdir}")
         return
 
@@ -398,7 +449,7 @@ def main():
             if os.path.exists(outp): print(f"[MTP] {outp} gia' fatto"); continue
             print(f"[MTP {i+1}/{len(mtp_shards)}] scarico {sh}...", flush=True)
             p = download_retry(a.repo, sh, tmp)
-            out = {}; convert_shard(p, out, a.n_layers, a.ebits, a.io_bits, a.xbits, keep_mtp=True)
+            out = {}; convert_shard(p, out, a.n_layers, a.ebits, a.io_bits, a.xbits, keep_mtp=True, dtype_map=dtype_map)
             save_file(out, outp)
             os.remove(p)
             for blob in glob.glob(os.path.join(tmp, "**", "*"), recursive=True):
@@ -418,7 +469,7 @@ def main():
             if os.path.exists(outp): continue             # gia' fatto -> ripartibile
             print(f"[IDX {i+1}/{len(idx_shards)}] scarico {sh}...", flush=True)
             p = download_retry(a.repo, sh, tmp)
-            out = {}; convert_shard(p, out, a.n_layers, a.ebits, a.io_bits, a.xbits, keep_idx=True)
+            out = {}; convert_shard(p, out, a.n_layers, a.ebits, a.io_bits, a.xbits, keep_idx=True, dtype_map=dtype_map)
             if out: save_file(out, outp)
             os.remove(p)
             for blob in glob.glob(os.path.join(tmp, "**", "*"), recursive=True):
@@ -432,7 +483,7 @@ def main():
         if os.path.exists(outp): continue                 # gia' fatto -> ripartibile
         print(f"[{i+1}/{len(shards)}] scarico {sh} (libero {free_gb(a.outdir):.0f} GB)...", flush=True)
         p = download_retry(a.repo, sh, tmp)
-        out = {}; convert_shard(p, out, a.n_layers, a.ebits, a.io_bits, a.xbits)
+        out = {}; convert_shard(p, out, a.n_layers, a.ebits, a.io_bits, a.xbits, dtype_map=dtype_map)
         save_file(out, outp)
         os.remove(p)                                       # <-- cancella subito lo shard fp8
         for blob in glob.glob(os.path.join(tmp, "**", "*"), recursive=True):

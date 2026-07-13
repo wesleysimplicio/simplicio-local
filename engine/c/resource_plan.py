@@ -197,6 +197,52 @@ def environment_for_plan(plan, env=None, cuda_enabled=True):
     return result
 
 
+class RssCeilingExceeded(ValueError):
+    """Raised by check_rss_ceiling when the projected peak exceeds the configured ceiling.
+
+    Mirrors the hard gate implemented in glm.c (rss_hard_gate, issue #119): a planning-time
+    projection that can be checked WITHOUT loading the model or having real 16GB hardware
+    (tracked separately, blocked, in issue #118). ``coli plan``/``coli doctor`` raise this
+    instead of silently producing a plan nobody could actually run within budget.
+    """
+
+
+def project_minimum_peak_bytes(plan):
+    """Minimum possible resident peak for a plan: dense trunk + ONE expert slot per sparse
+    layer (the smallest cache cap_for_ram can ever produce) + the runtime slack the plan
+    already accounts for. Mirrors the C engine's rss_hard_gate projection formula so the
+    Python planner and the C loader agree on what "fits" means."""
+    ram = plan["tiers"]["ram"]
+    model = plan["model"]
+    per_cap = model.get("per_cap_bytes", 0)
+    dense = ram["dense_bytes"]
+    runtime = ram["runtime_bytes"]
+    return dense + per_cap + runtime
+
+
+def check_rss_ceiling(plan, ceiling_gb):
+    """Raise RssCeilingExceeded if the plan's minimum projected peak exceeds ceiling_gb.
+
+    ceiling_gb<=0 disables the gate (legacy behavior: no ceiling configured). This is the
+    Python-side half of the hard RSS gate (issue #119) — it lets `coli plan`/`coli doctor`
+    reject an unviable plan BEFORE the engine process is even started, with the same
+    actionable framing as the C-side abort in glm.c's rss_hard_gate.
+    """
+    if ceiling_gb is None or ceiling_gb <= 0:
+        return
+    projected = project_minimum_peak_bytes(plan)
+    ceiling = ceiling_gb * GB
+    if projected > ceiling:
+        raise RssCeilingExceeded(
+            f"projected minimum peak {projected / GB:.2f} GB exceeds the configured RAM "
+            f"ceiling {ceiling_gb:.2f} GB (dense {plan['tiers']['ram']['dense_bytes'] / GB:.2f} GB "
+            f"+ 1 expert slot/layer {plan['model'].get('per_cap_bytes', 0) / GB:.2f} GB + "
+            f"runtime slack {plan['tiers']['ram']['runtime_bytes'] / GB:.2f} GB). Lower the "
+            "dense bit-width (int4/int2, see tools/convert_fp8_to_int4.py --dtype-map), reduce "
+            "--ctx, or raise the ceiling if this machine has more RAM than assumed."
+        )
+
+
 def format_bytes(value):
     return f"{value / GB:.1f} GB"
 

@@ -6,7 +6,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from resource_plan import GB, analyze_model, build_plan, environment_for_plan, format_plan
+from resource_plan import (GB, RssCeilingExceeded, analyze_model, build_plan, check_rss_ceiling,
+                            environment_for_plan, format_plan, project_minimum_peak_bytes)
 
 
 def write_shard(path, tensors):
@@ -105,6 +106,65 @@ class ResourcePlanTest(unittest.TestCase):
         disabled = environment_for_plan(plan, {"COLI_CUDA": "0"}, cuda_enabled=True)
         self.assertNotIn("COLI_GPU", disabled)
         self.assertNotIn("CUDA_EXPERT_GB", disabled)
+
+
+class RssHardGateTest(unittest.TestCase):
+    """Issue #119: the hard RSS gate is planning-time LOGIC, testable without real 16GB
+    hardware (that validation is tracked separately in issue #118, blocked on hardware)."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.model = Path(self.tmp.name)
+        (self.model / "config.json").write_text(json.dumps({
+            "num_hidden_layers": 2, "n_routed_experts": 2, "kv_lora_rank": 4,
+            "qk_rope_head_dim": 2, "qk_nope_head_dim": 3, "v_head_dim": 5,
+            "num_attention_heads": 2,
+        }))
+        write_shard(self.model / "model.safetensors", [
+            ("model.embed_tokens.weight", 100),
+            ("model.layers.0.self_attn.q_a_proj.weight", 200),
+            ("model.layers.1.mlp.experts.0.gate_proj.weight", 30),
+            ("model.layers.1.mlp.experts.0.up_proj.weight", 30),
+            ("model.layers.1.mlp.experts.1.gate_proj.weight", 30),
+            ("model.layers.1.mlp.experts.1.up_proj.weight", 30),
+        ])
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_ceiling_disabled_by_default_does_not_raise(self):
+        plan = build_plan(self.model, ram_gb=16, available_memory=32 * GB, available_disk=100 * GB)
+        check_rss_ceiling(plan, 0)          # 0/None = gate desligado: comportamento legado
+        check_rss_ceiling(plan, None)
+
+    def test_generous_ceiling_does_not_raise(self):
+        plan = build_plan(self.model, ram_gb=16, available_memory=32 * GB, available_disk=100 * GB)
+        check_rss_ceiling(plan, 1000)       # teto absurdamente generoso: nunca deveria falhar
+
+    def test_tiny_ceiling_raises_with_actionable_message(self):
+        plan = build_plan(self.model, ram_gb=16, available_memory=32 * GB, available_disk=100 * GB)
+        # cenario SINTETICO onde a projecao (dense+cache-minima+runtime) excede um teto
+        # microscopico de propósito: prova que o gate aborta de forma limpa (exception
+        # tipada, mensagem acionavel) em vez de deixar o processo continuar e OOM-killar
+        # mais tarde numa maquina real de RAM limitada.
+        with self.assertRaises(RssCeilingExceeded) as ctx:
+            check_rss_ceiling(plan, 0.000001)
+        message = str(ctx.exception)
+        self.assertIn("exceeds", message)
+        self.assertIn("GB", message)
+
+    def test_projection_grows_with_dense_bytes(self):
+        small_plan = build_plan(self.model, ram_gb=16, available_memory=32 * GB, available_disk=100 * GB)
+        write_shard(self.model / "model.safetensors", [
+            ("model.embed_tokens.weight", 100_000),
+            ("model.layers.0.self_attn.q_a_proj.weight", 200_000),
+            ("model.layers.1.mlp.experts.0.gate_proj.weight", 30),
+            ("model.layers.1.mlp.experts.0.up_proj.weight", 30),
+            ("model.layers.1.mlp.experts.1.gate_proj.weight", 30),
+            ("model.layers.1.mlp.experts.1.up_proj.weight", 30),
+        ])
+        bigger_plan = build_plan(self.model, ram_gb=16, available_memory=32 * GB, available_disk=100 * GB)
+        self.assertGreater(project_minimum_peak_bytes(bigger_plan), project_minimum_peak_bytes(small_plan))
 
 
 if __name__ == "__main__":

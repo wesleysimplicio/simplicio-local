@@ -2,3 +2,10 @@
 glm_tiny/
 olmoe_hf/
 olmoe_i4/
+/glm
+/olmoe
+tests/test_json
+tests/test_st
+tests/test_tier
+tests/test_tok
+tests/audit_win_shims
