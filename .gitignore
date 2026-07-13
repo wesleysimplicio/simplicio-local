@@ -63,6 +63,7 @@ Thumbs.db
 .codex/history
 .claude/sessions
 .claude/cache
+.claude/worktrees/
 
 # Tarballs / debug
 *.tgz
