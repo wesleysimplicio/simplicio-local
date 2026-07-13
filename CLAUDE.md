@@ -44,6 +44,7 @@ Detalhes:
 - **Linter / formatter**: clang-tidy (`.clang-tidy`) + clang-format (`.clang-format`).
 - **CI/CD**: GitHub Actions (`.github/workflows/{ci,dod}.yml`). Runner: `macos-14` (M-series).
 - **Distribuição**: tarball assinado + Homebrew tap (`wesleysimplicio/us4`). Detalhes em `.specs/workflow/RELEASE.md`.
+- **Engine tier (vendored)**: motor de inferência C do colibri (Apache-2.0) em `engine/` — forward MoE completo, streaming de experts do disco, kernels quantizados int8/int4/int2, tokenizer BPE, servidor OpenAI-compatible. Stack C separada do runtime C++ nativo, buildada via `engine/c/Makefile` (delegado por `add_custom_target` no CMake raiz). Ver `engine/README.md` e [ADR-010](.specs/architecture/ADR-010-adopt-colibri-engine.md). Segue os mesmos gates de DoD deste repositório (format/lint próprios do motor, `make test`, sem regressão).
 
 > Antes de adicionar dependência nova (CMake `FetchContent`, vcpkg, Homebrew formula, MLX subdir): **pergunta ao usuário**. Sem exceção.
 

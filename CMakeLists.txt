@@ -44,6 +44,7 @@ configure_file(
 
 add_subdirectory(runtime)
 add_subdirectory(apps)
+add_subdirectory(engine)
 
 if(US4_BUILD_TESTS)
   enable_testing()

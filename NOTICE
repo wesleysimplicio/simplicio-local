@@ -1,0 +1,22 @@
+US4 V6 Apple Edition (us4-v6-simplicio-apple)
+Copyright (c) us4-core contributors.
+
+This product includes software vendored from the "colibri" project:
+
+  colibri (original upstream)
+  https://github.com/JustVugg/colibri
+  Licensed under the Apache License, Version 2.0.
+
+  colibri (fork used for vendoring into this repository)
+  https://github.com/wesleysimplicio/colibri
+  Vendored commit: 8f5f3e3a2b7bef53daa1cc8608df6d91fc9a54eb
+
+The directory `engine/` in this repository is derived from the `c/`
+tree of the fork above (the `web/` tree was moved to
+`apps/web-chat/`), under the terms of the Apache License, Version 2.0.
+See `engine/LICENSE` for the full license text. Any copyright notices
+present in the original source files have been preserved.
+
+See `.specs/architecture/ADR-010-adopt-colibri-engine.md` for the
+rationale behind adopting this engine as a temporary/parallel inference
+tier alongside the native C++ runtime in `runtime/`.

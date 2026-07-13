@@ -1,0 +1,56 @@
+"""Genera tok_unicode.h: tabelle di range per le classi Unicode usate dal
+pre-tokenizer cl100k (regex del tokenizer GLM-5.2):
+  - \\p{L}  lettere   (categoria Unicode che inizia per 'L')
+  - \\p{N}  numeri    (categoria che inizia per 'N')
+  - \\s     whitespace (proprieta' Unicode White_Space)
+Ogni classe diventa un array ordinato di range [lo,hi] inclusivi; il C fa ricerca
+binaria. Eseguire una volta: python3 tools/gen_unicode.py > tok_unicode.h
+"""
+import sys, unicodedata
+
+WHITE_SPACE = {0x09,0x0A,0x0B,0x0C,0x0D,0x20,0x85,0xA0,0x1680,
+    0x2000,0x2001,0x2002,0x2003,0x2004,0x2005,0x2006,0x2007,0x2008,0x2009,0x200A,
+    0x2028,0x2029,0x202F,0x205F,0x3000}
+
+def ranges(pred):
+    out=[]; lo=None
+    for cp in range(0x110000):
+        if 0xD800<=cp<=0xDFFF:        # surrogati: mai
+            if lo is not None: out.append((lo,cp-1)); lo=None
+            continue
+        if pred(cp):
+            if lo is None: lo=cp
+        else:
+            if lo is not None: out.append((lo,cp-1)); lo=None
+    if lo is not None: out.append((lo,0x10FFFF))
+    return out
+
+def cat(cp):
+    try: return unicodedata.category(chr(cp))
+    except ValueError: return "Cn"
+
+L = ranges(lambda c: cat(c).startswith("L"))
+N = ranges(lambda c: cat(c).startswith("N"))
+S = ranges(lambda c: c in WHITE_SPACE)
+
+def emit(name, rs):
+    print(f"static const uint32_t {name}[][2] = {{")
+    for i in range(0,len(rs),6):
+        chunk="".join(f"{{0x{lo:X},0x{hi:X}}}," for lo,hi in rs[i:i+6])
+        print("    "+chunk)
+    print("};")
+    print(f"static const int {name}_n = {len(rs)};\n")
+
+print("/* GENERATO da tools/gen_unicode.py — non modificare a mano. */")
+print("#ifndef TOK_UNICODE_H\n#define TOK_UNICODE_H\n#include <stdint.h>\n")
+emit("uni_L", L); emit("uni_N", N); emit("uni_S", S)
+print("""static int uni_in(const uint32_t t[][2], int n, uint32_t cp){
+    int lo=0, hi=n-1;
+    while(lo<=hi){ int m=(lo+hi)>>1;
+        if(cp<t[m][0]) hi=m-1; else if(cp>t[m][1]) lo=m+1; else return 1; }
+    return 0;
+}
+static inline int is_L(uint32_t c){ return uni_in(uni_L,uni_L_n,c); }
+static inline int is_N(uint32_t c){ return uni_in(uni_N,uni_N_n,c); }
+static inline int is_S(uint32_t c){ return uni_in(uni_S,uni_S_n,c); }
+#endif""")
