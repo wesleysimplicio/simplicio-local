@@ -44,6 +44,8 @@ add_library(us4_runtime_core
   metal/kernel_library.cpp
   mlx/dense_plan.cpp
   mlx/mlx_bridge.cpp
+  net/native_http_server.cpp
+  net/openai_chat_handler.cpp
   moe/expert_pager.cpp
   moe/moe_telemetry.cpp
   moe/router.cpp

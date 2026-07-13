@@ -387,6 +387,41 @@ with CLI flag → env var translation:
 ./build/apps/us4-cli serve --no-embed --port 8088
 ```
 
+##### 6.2.1 Native mode (`--native`) vs the proxy above
+
+`us4-cli serve` (no flag) is the **proxy** mode described above: it shells
+out to `scripts/openai_serve.py`, which drives a real `mlx_lm.server` or
+Ollama child process — real inference, but not this repo's own runtime
+engine.
+
+`us4-cli serve --native` is a different, self-contained mode: a minimal
+HTTP server implemented directly in this runtime (`runtime/net/`) that
+answers `GET /v1/models` and `POST /v1/chat/completions` straight from the
+adapter registry's `Generate()` pipeline — no external process, no Python.
+It accepts an OpenAI-shaped body plus one extension field, `model_path`,
+to point at a real `.safetensors`/`.gguf`/`.us4manifest` asset the same way
+`us4-cli run --model-path` does; the response's `used_real_weights` field
+reports whether that asset's real weights actually drove the output (see
+issues #81.2/#81.4/#81.5) or the runtime fell back to its synthetic path.
+
+```bash
+./build/apps/us4-cli serve --native --port 8080
+
+curl -s http://127.0.0.1:8080/v1/models
+
+curl -s -X POST http://127.0.0.1:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model":"qwen-0.5b","model_path":"/path/to/model.safetensors",
+       "messages":[{"role":"user","content":"hi"}],"max_tokens":16}'
+```
+
+It is intentionally simple: single-threaded, one request at a time, no
+TLS, no auth — a correctness/contract server for issue #81.10, not a
+production-concurrency one. Performance benchmarking of the native path
+against Metal/MLX acceleration is blocked by the same missing macOS/Apple
+Silicon hardware as issue #81.5; what's verified here is functional
+correctness (see `tests/e2e/us4-cli-serve.spec.ts`), not throughput.
+
 ##### 6.3 Smoke test the endpoint
 
 Once the server logs `us4 serve starting (host=127.0.0.1 port=8080 ...)`:

@@ -187,3 +187,103 @@ test.describe("us4-cli serve OpenAI-compat smoke", () => {
     });
   });
 });
+
+// Issue #81.10: `serve --native` must answer OpenAI-compatible requests
+// directly from this runtime's own Generate() pipeline -- no external
+// mlx_lm.server/Ollama process, unlike the proxy mode exercised above.
+test.describe("us4-cli serve --native (real runtime, no external process)",
+             () => {
+  test.skip(!haveBinary, "native us4-cli not built");
+
+  let nativeProc: ChildProcess|null = null;
+  let nativePort = 0;
+
+  test.beforeAll(async () => {
+    nativePort = await freePort();
+    nativeProc = spawn(nativeBin,
+                       [
+                         "serve",
+                         "--native",
+                         "--host",
+                         "127.0.0.1",
+                         "--port",
+                         String(nativePort),
+                       ],
+                       {
+                         cwd : repoRoot,
+                         env : {...process.env, NO_COLOR : "1"},
+                         stdio : [ "ignore", "pipe", "pipe" ],
+                       });
+    await waitReady(`http://127.0.0.1:${nativePort}/v1/models`);
+  });
+
+  test.afterAll(async () => {
+    if (nativeProc && !nativeProc.killed) {
+      nativeProc.kill("SIGINT");
+      await new Promise<void>((resolve) => {
+        if (!nativeProc) return resolve();
+        nativeProc.once("exit", () => resolve());
+        setTimeout(() => {
+          if (nativeProc && !nativeProc.killed) {
+            nativeProc.kill("SIGKILL");
+          }
+          resolve();
+        }, 3000);
+      });
+    }
+  });
+
+  test("models list is served from the adapter registry, not a proxy",
+       async ({}, testInfo) => {
+         const result =
+             await getJson(`http://127.0.0.1:${nativePort}/v1/models`);
+         await attach(testInfo, "native-models", result.body);
+         expect(result.status).toBe(200);
+         expect(result.json).toMatchObject({object : "list"});
+         const data = (result.json as {data: Array<{id: string}>}).data;
+         expect(data.some((entry) => entry.id === "qwen-0.5b")).toBe(true);
+       });
+
+  test("chat completions with a real model_path use real weights end to end",
+       async ({}, testInfo) => {
+         const tensorPath = path.join(
+             repoRoot,
+             "tests",
+             "fixtures",
+             "models",
+             "toy-dense-real",
+             "toy-dense-real.safetensors",
+         );
+         const result = await postJson(
+             `http://127.0.0.1:${nativePort}/v1/chat/completions`, {
+               model : "qwen-0.5b",
+               model_path : tensorPath,
+               messages : [ {role : "user", content : "alpha"} ],
+               max_tokens : 1,
+             });
+         await attach(testInfo, "native-chat-real-weights", result.body);
+         expect(result.status).toBe(200);
+         // Same external-oracle prediction as the #85 evidence: embedding
+         // "alpha" is one-hot over these real weights and argmaxes to
+         // "delta" -- this is the native runtime computing it live, not a
+         // canned response.
+         expect(result.json).toMatchObject({
+           used_real_weights : true,
+           choices : [ {message : {role : "assistant", content : "delta"}} ],
+         });
+       });
+
+  test("unknown model returns an explicit error, never a fabricated answer",
+       async ({}, testInfo) => {
+         const result = await postJson(
+             `http://127.0.0.1:${nativePort}/v1/chat/completions`, {
+               model : "does-not-exist",
+               messages : [ {role : "user", content : "hi"} ],
+             });
+         await attach(testInfo, "native-chat-unknown-model", result.body);
+         expect(result.status).toBe(404);
+         expect(result.json).toMatchObject({
+           error : {message : expect.stringContaining("unknown model")},
+         });
+       });
+});

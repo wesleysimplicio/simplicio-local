@@ -21,6 +21,7 @@
 #include "core/runtime_mode.h"
 #include "metal/command_queue.h"
 #include "metal/device_info.h"
+#include "net/native_http_server.h"
 #include "us4/version.h"
 
 namespace {
@@ -120,7 +121,14 @@ void PrintHelp() {
                "[--chat-backend <mlx|ollama|custom>] "
                "[--chat-upstream <url>] "
                "[--chat-model <id>] [--embed-model <id>] "
-               "[--no-chat] [--no-embed]\n";
+               "[--no-chat] [--no-embed]\n"
+            << "  us4-cli serve --native [--host <addr>] [--port <n>]\n"
+            << "      --native answers /v1/chat/completions from this "
+               "runtime's own\n"
+            << "      adapters directly (no external process); without "
+               "--native, serve\n"
+            << "      proxies to mlx_lm.server/Ollama via "
+               "scripts/openai_serve.py.\n";
 }
 
 int SetServeEnv(const char *name, const std::string &value) {
@@ -608,6 +616,7 @@ int main(int argc, char **argv) {
   bool serveCommand = false;
   bool serveDisableChat = false;
   bool serveDisableEmbed = false;
+  bool serveNative = false;
   std::optional<std::string> modeValue;
   std::optional<std::string> modelName;
   std::optional<std::string> modelPath;
@@ -645,6 +654,8 @@ int main(int argc, char **argv) {
       serveDisableChat = true;
     } else if (arg == "--no-embed") {
       serveDisableEmbed = true;
+    } else if (arg == "--native") {
+      serveNative = true;
     } else if (arg == "--json") {
       outputJson = true;
     } else if (arg == "--probe") {
@@ -692,6 +703,16 @@ int main(int argc, char **argv) {
   }
 
   if (serveCommand) {
+    if (serveNative) {
+      us4::NativeServeOptions nativeOptions;
+      if (serveHost.has_value()) {
+        nativeOptions.host = *serveHost;
+      }
+      if (servePort.has_value()) {
+        nativeOptions.port = std::atoi(servePort->c_str());
+      }
+      return us4::RunNativeHttpServer(nativeOptions);
+    }
     return RunServeCommand(serveHost, servePort, serveChatBackend,
                            serveChatUpstream, serveChatModel, serveEmbedModel,
                            serveDisableChat, serveDisableEmbed);
