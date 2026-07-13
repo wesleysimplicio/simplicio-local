@@ -711,8 +711,10 @@ void DenseAdapterBase::CopyVectorToTensorValues(
 
 bool DenseAdapterBase::MaterializeProjectionForAsset(
     const std::vector<float> &source, const std::vector<std::size_t> &shape,
-    const ModelAsset *asset, Tensor &projection, std::string *error) const {
-  return MaterializeProjectionTensor(source, shape, asset, projection, error);
+    const ModelAsset *asset, Tensor &projection, std::string *error,
+    const bool sourceIsRealWeights) const {
+  return MaterializeProjectionTensor(source, shape, asset, projection, error,
+                                     sourceIsRealWeights);
 }
 
 std::string

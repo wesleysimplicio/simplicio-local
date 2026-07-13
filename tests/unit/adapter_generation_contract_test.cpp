@@ -541,6 +541,41 @@ TEST(AdapterGenerationContractTest,
   EXPECT_EQ(alternateSeedRepeat.prefixCacheEntries, 2U);
 }
 
+// Issue #81.4b: Llama's NEON/GQA-specific BuildQueryRow/BuildKeyRow/
+// BuildValueRow path must actually use real embedding/lm_head weights when
+// they're available -- it used to call BuildTokenEmbedding/
+// BuildOutputProjection without ever passing the asset through, so
+// usedRealWeights was unconditionally false even for a real fixture.
+TEST(AdapterGenerationContractTest,
+     LlamaNeonPathUsesRealEmbeddingAndLmHeadWeights) {
+  const us4::IUS4V6Adapter *adapter = us4::FindAdapterByModel("llama-3.1-8b");
+  ASSERT_NE(adapter, nullptr);
+
+  us4::ModelAsset asset;
+  std::string error;
+  const std::filesystem::path tensorPath = RepoRoot() / "tests" / "fixtures" /
+                                           "models" / "toy-llama-real" /
+                                           "toy-llama-real.safetensors";
+  ASSERT_TRUE(us4::LoadModelAsset(tensorPath, asset, &error)) << error;
+  ASSERT_TRUE(asset.hasRealWeights) << "fixture must carry real tensors";
+
+  us4::RuntimeContext context(MakeProbe());
+  adapter->ConfigureRuntime(context);
+
+  const us4::GenerationResult result = adapter->Generate(
+      {.prompt = "", .maxTokens = 1, .asset = &asset}, context);
+
+  ASSERT_EQ(result.backend, "neon");
+  EXPECT_TRUE(result.usedRealWeights);
+  // DecorateLlamaResult always overwrites generatedTokens[0] with the
+  // literal family marker "llama" (see llama_adapter.cpp), but it runs
+  // AFTER result.text is already built from the real generated token --
+  // so the oracle prediction is only observable through result.text here.
+  EXPECT_EQ(result.text, "llama beta")
+      << "external-oracle prediction: the one-hot 'alpha' embedding row "
+         "dotted with lm_head's column 0 argmaxes to 'beta'";
+}
+
 TEST(AdapterGenerationContractTest,
      LlamaScalarBackendKeepsFp16AssetsRunnableWithoutMatmulError) {
   const us4::IUS4V6Adapter *adapter = us4::FindAdapterByModel("llama-3.1-8b");

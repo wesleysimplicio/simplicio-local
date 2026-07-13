@@ -844,3 +844,58 @@ verde).
 Next:
 Avaliar #104 [#81.7c] (MoE roteando pela FFN completa do expert) ou #105
 [#81.4b] (path NEON/GQA do Llama ainda sintetico).
+
+### Checkpoint 15
+
+Status: done
+
+Task:
+#105 [#81.4b] - o path NEON/GQA-especifico do Llama
+(`BuildQueryRow`/`BuildKeyRow`/`BuildValueRow` + a projecao de saida dentro
+de `LlamaAdapter::Generate`) chamava `BuildTokenEmbedding`/
+`BuildOutputProjection` SEM passar o `asset` -- entao `usedRealWeights`
+ficava sempre falso e pesos reais nunca eram usados nesse path, mesmo
+quando a fixture tinha `embedding.weight`/`lm_head.weight` reais.
+
+Result:
+`BuildQueryRow`/`BuildKeyRow`/`BuildValueRow` agora recebem `asset` e um
+`usedReal` out-param, seguindo o mesmo contrato do
+`DenseAdapterBase::BuildTokenEmbedding`. `BuildValueRow` só aplica a
+perturbacao sintetica posicional quando o embedding NAO e real (mesma
+logica de gate per-call ja usada em `DenseAdapterBase::Generate`).
+`LlamaAdapter::Generate` agora passa `request.asset` em toda chamada de
+Build*/`BuildOutputProjection`, agrega um `anyRealWeightUsed` e passa isso
+pro `FinalizeGenerationResult` (que já aceitava esse parametro, só nao
+era usado pelo Llama). `MaterializeProjectionForAsset` (metodo publico de
+`DenseAdapterBase`) ganhou um `sourceIsRealWeights` opcional pra evitar
+quantizar/dequantizar pesos reais s? porque o manifest declara int8/int4
+pra outro caminho.
+
+Durante a implementacao, uma revisao adversarial contra o proprio oraculo
+externo (embedding one-hot -> RoPE identity na posicao 0 -> attention
+trivial de 1 kv-row -> lm_head coluna 0) pegou um bug real introduzido na
+mesma edicao: o replace acidentalmente removeu as duas linhas que copiavam
+`keyBuffer`/`valueBuffer` pros tensors `key`/`value` antes do
+`GqaAttention`, deixando esses tensors com lixo/zero. O teste previu
+"beta" e observou "delta" -- a divergencia expôs a omissao antes do merge,
+nao depois.
+
+Fixture novo: `tests/fixtures/models/toy-llama-real/` (hidden_size=4,
+query_heads=1, kv_heads=1, head_dim=4 -- kv width igual ao hidden size de
+proposito, pra que a MESMA `embedding.weight` sirva de fonte real pra
+query, key e value). Teste novo:
+`AdapterGenerationContractTest.LlamaNeonPathUsesRealEmbeddingAndLmHeadWeights`
+em `adapter_generation_contract_test.cpp`, com oraculo externo (nao
+reusa nenhum codigo do runtime pra prever "beta"). Zero regressao: suite
+unitaria foi de 230 para 231 testes verdes.
+
+Validation:
+`cmake --build build`; `clang-format --dry-run --Werror` nos arquivos
+tocados; `clang-tidy -p build` em `llama_adapter.cpp`/
+`dense_adapter_base.cpp` (sem warnings); `ctest --test-dir build
+--output-on-failure` (231/231 verde).
+
+Next:
+Avaliar #104 [#81.7c] (MoE roteando pela FFN completa do expert), #106
+[#81.11] (validar contra checkpoint real), #107 [#81.12] (benchmarks
+reais), ou #108 [#81.13] (sanitizers/fuzzing locais).
