@@ -899,3 +899,60 @@ Next:
 Avaliar #104 [#81.7c] (MoE roteando pela FFN completa do expert), #106
 [#81.11] (validar contra checkpoint real), #107 [#81.12] (benchmarks
 reais), ou #108 [#81.13] (sanitizers/fuzzing locais).
+
+### Checkpoint 16
+
+Status: done
+
+Task:
+#108 [#81.13] - build com ASan/UBSan disponivel localmente + harness de
+fuzzing pros parsers de entrada nao confiavel (`JsonValue::Parse`,
+`SafetensorsReader`, `GgufReader`, `BpeTokenizer::LoadFromFile`). Job de CI
+fica documentado mas nao ativado (decisao explicita do usuario de manter
+`.github/workflows.disabled` desligado nesta sessao).
+
+Result:
+`CMakeLists.txt` ganhou `US4_ENABLE_ASAN`/`US4_ENABLE_UBSAN` (mesmo padrao
+do `US4_ENABLE_COVERAGE` que ja existia) e `US4_BUILD_FUZZERS`. Novo
+`runtime/fuzz/` com 4 harnesses libFuzzer (`us4_fuzz_json_value`,
+`us4_fuzz_safetensors_reader`, `us4_fuzz_gguf_reader`,
+`us4_fuzz_bpe_tokenizer`) -- os tres parsers path-based escrevem o input
+num arquivo temporario por chamada (`ScopedFuzzInputFile`) porque a API
+deles le de disco, nao de buffer.
+
+Rodar os harnesses de verdade (nao so compilar) contra os fixtures
+existentes como seed corpus PEGOU UM BUG REAL em minutos:
+`GgufReader::ReadFloat32` multiplicava as dimensoes do shape sem checar
+overflow/limite antes de `std::vector<float> values(elementCount)` --
+um shape adversario faz esse construtor lancar `std::length_error`
+(exception nao capturada, abort do processo). Corrigido com checagem de
+overflow na multiplicacao e um limite explicito contra
+`vector::max_size()` antes de alocar, retornando o erro explicito de
+sempre em vez de crashar. Dois testes de regressao novos em
+`gguf_reader_contract_test.cpp` fixam esse caso (overflow puro e
+"cabe em size_t mas excede max_size()") pra nao depender só do fuzzer
+pra pegar de novo.
+
+Validado localmente com Clang 18 + `libclang-rt-18-dev` (pacote extra
+necessario nesta sandbox pra runtime do libFuzzer/ASan/UBSan): os 4
+harnesses rodaram ~25s cada contra os fixtures existentes como seed
+corpus, sem nenhum outro crash apos a correcao. Suite unitaria normal
+(sem sanitizers): 231 para 233 testes verdes (os 2 testes de regressao),
+zero regressao.
+
+Validation:
+```
+cmake -S . -B build-fuzz -G Ninja -DUS4_BUILD_FUZZERS=ON \
+  -DUS4_ENABLE_ASAN=ON -DUS4_ENABLE_UBSAN=ON -DUS4_BUILD_TESTS=OFF \
+  -DUS4_BUILD_BENCHMARKS=OFF -DCMAKE_CXX_COMPILER=clang++
+cmake --build build-fuzz
+./build-fuzz/runtime/fuzz/us4_fuzz_<nome> -max_total_time=25 <seed-corpus-dir>
+```
+`cmake --build build` (build normal); `clang-format --dry-run --Werror` e
+`clang-tidy -p build` nos arquivos tocados (sem warnings); `ctest
+--test-dir build --output-on-failure` (233/233 verde).
+
+Next:
+Avaliar #104 [#81.7c] (MoE roteando pela FFN completa do expert), #106
+[#81.11] (validar contra checkpoint real), ou #107 [#81.12] (benchmarks
+reais).
