@@ -74,8 +74,8 @@ protected:
   bool MaterializeProjectionForAsset(const std::vector<float> &source,
                                      const std::vector<std::size_t> &shape,
                                      const ModelAsset *asset,
-                                     Tensor &projection,
-                                     std::string *error) const;
+                                     Tensor &projection, std::string *error,
+                                     bool sourceIsRealWeights = false) const;
   std::string ResolveDequantPathForAsset(const ModelAsset *asset) const;
   bool TryRestorePromptKvFromColdStore(RuntimeContext &context,
                                        const std::string &prefixKey,

@@ -21,15 +21,28 @@ protected:
   std::string DefaultPromptToken() const override;
 
 private:
+  // `asset`/`usedReal` follow the same contract as
+  // DenseAdapterBase::BuildTokenEmbedding: when `asset` has a
+  // shape-compatible real embedding tensor, these return the genuine row
+  // instead of the deterministic synthetic placeholder, and set
+  // `*usedReal` (when non-null) so Generate() can gate the value row's
+  // synthetic positional perturbation and aggregate real-weight telemetry
+  // precisely.
   std::vector<float> BuildQueryRow(std::size_t tokenId, std::uint32_t seed,
                                    std::size_t position,
-                                   const LlamaConfig &config) const;
+                                   const LlamaConfig &config,
+                                   const ModelAsset *asset = nullptr,
+                                   bool *usedReal = nullptr) const;
   std::vector<float> BuildKeyRow(std::size_t tokenId, std::uint32_t seed,
                                  std::size_t position,
-                                 const LlamaConfig &config) const;
+                                 const LlamaConfig &config,
+                                 const ModelAsset *asset = nullptr,
+                                 bool *usedReal = nullptr) const;
   std::vector<float> BuildValueRow(std::size_t tokenId, std::uint32_t seed,
                                    std::size_t position,
-                                   const LlamaConfig &config) const;
+                                   const LlamaConfig &config,
+                                   const ModelAsset *asset = nullptr,
+                                   bool *usedReal = nullptr) const;
 };
 
 } // namespace us4

@@ -1,0 +1,17 @@
+# Sibling manifest for toy-llama-real.safetensors (issue #81.4b: Llama's
+# NEON/GQA-specific BuildQueryRow/BuildKeyRow/BuildValueRow path must use
+# real embedding/lm_head weights when available, not call
+# BuildTokenEmbedding without ever passing the asset through).
+family=llama
+model_name=toy-llama-real
+weight_dtype=fp16
+seed=31801
+default_prompt_token=alpha
+vocabulary=alpha,beta,gamma,delta
+hidden_size=4
+query_heads=1
+kv_heads=1
+head_dim=4
+rope_theta=10000
+rope_scaling=dynamic
+rope_scale=1.0

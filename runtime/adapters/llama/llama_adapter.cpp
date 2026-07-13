@@ -45,39 +45,51 @@ bool LlamaAdapter::SupportsMetalBackend() const { return true; }
 
 bool LlamaAdapter::SupportsAneBackend() const { return true; }
 
-std::vector<float>
-LlamaAdapter::BuildQueryRow(const std::size_t tokenId, const std::uint32_t seed,
-                            const std::size_t position,
-                            const LlamaConfig &config) const {
+std::vector<float> LlamaAdapter::BuildQueryRow(const std::size_t tokenId,
+                                               const std::uint32_t seed,
+                                               const std::size_t position,
+                                               const LlamaConfig &config,
+                                               const ModelAsset *asset,
+                                               bool *usedReal) const {
   Tensor row({1, config.hiddenSize}, DType::kFloat32);
   CopyVectorToTensorValues(
-      BuildTokenEmbedding(tokenId, config.hiddenSize, seed), row);
-  ApplyRopeInPlace(row, position, config.ropeTheta, config.ropeScaling,
-                   config.ropeScale);
-  return ReadTensorRow(row);
-}
-
-std::vector<float> LlamaAdapter::BuildKeyRow(const std::size_t tokenId,
-                                             const std::uint32_t seed,
-                                             const std::size_t position,
-                                             const LlamaConfig &config) const {
-  const std::size_t kvWidth = config.kvHeads * config.headDim;
-  Tensor row({1, kvWidth}, DType::kFloat32);
-  CopyVectorToTensorValues(BuildTokenEmbedding(tokenId, kvWidth, seed + 11U),
-                           row);
+      BuildTokenEmbedding(tokenId, config.hiddenSize, seed, asset, usedReal),
+      row);
   ApplyRopeInPlace(row, position, config.ropeTheta, config.ropeScaling,
                    config.ropeScale);
   return ReadTensorRow(row);
 }
 
 std::vector<float>
-LlamaAdapter::BuildValueRow(const std::size_t tokenId, const std::uint32_t seed,
-                            const std::size_t position,
-                            const LlamaConfig &config) const {
+LlamaAdapter::BuildKeyRow(const std::size_t tokenId, const std::uint32_t seed,
+                          const std::size_t position, const LlamaConfig &config,
+                          const ModelAsset *asset, bool *usedReal) const {
   const std::size_t kvWidth = config.kvHeads * config.headDim;
-  std::vector<float> row = BuildTokenEmbedding(tokenId, kvWidth, seed + 29U);
-  for (std::size_t hidden = 0; hidden < row.size(); ++hidden) {
-    row[hidden] += static_cast<float>((position + hidden) % 5U) * 0.01F;
+  Tensor row({1, kvWidth}, DType::kFloat32);
+  CopyVectorToTensorValues(
+      BuildTokenEmbedding(tokenId, kvWidth, seed + 11U, asset, usedReal), row);
+  ApplyRopeInPlace(row, position, config.ropeTheta, config.ropeScaling,
+                   config.ropeScale);
+  return ReadTensorRow(row);
+}
+
+std::vector<float> LlamaAdapter::BuildValueRow(const std::size_t tokenId,
+                                               const std::uint32_t seed,
+                                               const std::size_t position,
+                                               const LlamaConfig &config,
+                                               const ModelAsset *asset,
+                                               bool *usedReal) const {
+  const std::size_t kvWidth = config.kvHeads * config.headDim;
+  bool embeddingIsReal = false;
+  std::vector<float> row = BuildTokenEmbedding(tokenId, kvWidth, seed + 29U,
+                                               asset, &embeddingIsReal);
+  if (!embeddingIsReal) {
+    for (std::size_t hidden = 0; hidden < row.size(); ++hidden) {
+      row[hidden] += static_cast<float>((position + hidden) % 5U) * 0.01F;
+    }
+  }
+  if (usedReal != nullptr) {
+    *usedReal = embeddingIsReal;
   }
   return row;
 }
@@ -125,6 +137,14 @@ GenerationResult LlamaAdapter::Generate(const GenerationRequest &request,
     tokenIds.push_back(TokenIdFor(token, vocabulary));
   }
 
+  // Tracks whether ANY BuildQueryRow/BuildKeyRow/BuildValueRow/
+  // BuildOutputProjection call in this Generate() actually used real
+  // weights (for telemetry only), the same aggregate-vs-per-call
+  // distinction DenseAdapterBase::Generate makes -- per-call synthetic
+  // perturbation suppression always uses that specific call's own
+  // `usedReal` result.
+  bool anyRealWeightUsed = false;
+
   const std::string prefixKey =
       BuildPromptCacheKeyForFamily(activeSeed, promptTokens);
   mutableContext.prefixCache().Retain(prefixKey);
@@ -152,10 +172,15 @@ GenerationResult LlamaAdapter::Generate(const GenerationRequest &request,
       keyBuffer.reserve(tokenIds.size() * kvWidth);
       valueBuffer.reserve(tokenIds.size() * kvWidth);
       for (std::size_t index = 0; index < tokenIds.size(); ++index) {
+        bool keyIsReal = false;
+        bool valueIsReal = false;
         const std::vector<float> keyRow =
-            BuildKeyRow(tokenIds[index], activeSeed, index, config);
+            BuildKeyRow(tokenIds[index], activeSeed, index, config,
+                        request.asset, &keyIsReal);
         const std::vector<float> valueRow =
-            BuildValueRow(tokenIds[index], activeSeed, index, config);
+            BuildValueRow(tokenIds[index], activeSeed, index, config,
+                          request.asset, &valueIsReal);
+        anyRealWeightUsed = anyRealWeightUsed || keyIsReal || valueIsReal;
         keyBuffer.insert(keyBuffer.end(), keyRow.begin(), keyRow.end());
         valueBuffer.insert(valueBuffer.end(), valueRow.begin(), valueRow.end());
       }
@@ -177,9 +202,13 @@ GenerationResult LlamaAdapter::Generate(const GenerationRequest &request,
 
     CopyVectorToTensorValues(keyBuffer, key);
     CopyVectorToTensorValues(valueBuffer, value);
-    CopyVectorToTensorValues(
-        BuildQueryRow(tokenIds.back(), activeSeed, sequenceLength - 1U, config),
-        query);
+
+    bool queryIsReal = false;
+    CopyVectorToTensorValues(BuildQueryRow(tokenIds.back(), activeSeed,
+                                           sequenceLength - 1U, config,
+                                           request.asset, &queryIsReal),
+                             query);
+    anyRealWeightUsed = anyRealWeightUsed || queryIsReal;
 
     std::string error;
     if (!GqaAttention(query, key, value, config.queryHeads, config.kvHeads,
@@ -191,14 +220,17 @@ GenerationResult LlamaAdapter::Generate(const GenerationRequest &request,
     const ModelAsset *projectionAsset =
         backendSelection.selected == BackendType::kNeon ? request.asset
                                                         : nullptr;
+    bool projectionIsReal = false;
     Tensor projection({config.hiddenSize, vocabulary.size()}, DType::kFloat32);
     if (!MaterializeProjectionForAsset(
-            BuildOutputProjection(vocabulary, config.hiddenSize, activeSeed),
+            BuildOutputProjection(vocabulary, config.hiddenSize, activeSeed,
+                                  request.asset, &projectionIsReal),
             {config.hiddenSize, vocabulary.size()}, projectionAsset, projection,
-            &error)) {
+            &error, projectionIsReal)) {
       generatedTokens.push_back("projection-error");
       break;
     }
+    anyRealWeightUsed = anyRealWeightUsed || projectionIsReal;
     const bool matmulOk = NeonMatmul(contextTensor, projection, logits, &error);
     if (!matmulOk) {
       generatedTokens.push_back("matmul-error");
@@ -221,10 +253,15 @@ GenerationResult LlamaAdapter::Generate(const GenerationRequest &request,
     generatedTokens.push_back(vocabulary[bestIndex]);
     tokenIds.push_back(bestIndex);
 
+    bool nextKeyIsReal = false;
+    bool nextValueIsReal = false;
     const std::vector<float> nextKeyRow =
-        BuildKeyRow(bestIndex, activeSeed, sequenceLength, config);
+        BuildKeyRow(bestIndex, activeSeed, sequenceLength, config,
+                    request.asset, &nextKeyIsReal);
     const std::vector<float> nextValueRow =
-        BuildValueRow(bestIndex, activeSeed, sequenceLength, config);
+        BuildValueRow(bestIndex, activeSeed, sequenceLength, config,
+                      request.asset, &nextValueIsReal);
+    anyRealWeightUsed = anyRealWeightUsed || nextKeyIsReal || nextValueIsReal;
     keyBuffer.insert(keyBuffer.end(), nextKeyRow.begin(), nextKeyRow.end());
     valueBuffer.insert(valueBuffer.end(), nextValueRow.begin(),
                        nextValueRow.end());
@@ -234,7 +271,7 @@ GenerationResult LlamaAdapter::Generate(const GenerationRequest &request,
       request, context, backendSelection, std::move(promptTokens),
       std::move(generatedTokens), kvCacheHit, kvRestoredFromColdStore,
       kvSummaryRows, config.hiddenSize, usedRealBpeTokenizer,
-      tokenizerFallbackReason);
+      tokenizerFallbackReason, anyRealWeightUsed);
   DecorateLlamaResult(result);
   return result;
 }
