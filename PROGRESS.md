@@ -41,6 +41,36 @@ Issue #82 (oraculo real) e #83 (loader real de pesos) sao os proximos passos
 tratáveis sem hardware Apple. #85 (Metal/MLX reais) permanece bloqueada por
 ambiente (requer macOS/Apple Silicon real).
 
+## Checkpoint seguinte
+
+Status: done
+
+Task:
+#83 - Loader real de pesos (.safetensors) — parsear e carregar tensores de
+verdade
+
+Result:
+`SafetensorsReader` (runtime/core/safetensors_reader.{h,cpp}) parseia o
+header binario real do formato safetensors (8 bytes de tamanho + JSON de
+tensores) e le os bytes reais de tensores F32 do corpo do arquivo, em vez de
+tratar a extensao como dica sem nunca abrir o binario. `ModelAsset` ganhou
+`realTensors`/`hasRealWeights` e `LoadModelAsset` tenta carregar
+`embedding.weight`/`lm_head.weight` reais quando o arquivo `.safetensors` e
+genuino, registrando `safetensors_load_status` explicito quando cai para
+placeholder. Fixture genuina binaria (`tests/fixtures/safetensors/
+toy_real.safetensors`, gerada por `generate_toy_safetensors.py`) com dois
+tensores reais valida shapes/dtype/bytes em
+`safetensors_reader_contract_test.cpp`.
+
+Validation:
+`cmake --build build`; `ctest --test-dir build --output-on-failure` (210/210);
+`npx playwright test --reporter=list` (25/25); `clang-format --dry-run --Werror`
+e `clang-tidy -p build` limpos nos arquivos tocados.
+
+Next:
+GGUF real (subconjunto do formato) e wiring pleno do forward denso (#81.4)
+para consumir `realTensors` em vez de `DeterministicValue`.
+
 Status: done
 
 Task:

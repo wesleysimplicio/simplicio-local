@@ -18,6 +18,7 @@ set(us4_runtime_contract_test_sources
   benchmark_observability_contract_test.cpp
   model_asset_contract_test.cpp
   bpe_tokenizer_contract_test.cpp
+  safetensors_reader_contract_test.cpp
   kv_contract_test.cpp
   eviction_policy_contract_test.cpp
   moe_contract_test.cpp
