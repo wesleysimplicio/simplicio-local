@@ -84,3 +84,7 @@ target_compile_features(us4_runtime_core PUBLIC cxx_std_20)
 if(US4_BUILD_BENCHMARKS)
   add_subdirectory(benchmarks)
 endif()
+
+if(US4_BUILD_FUZZERS)
+  add_subdirectory(fuzz)
+endif()

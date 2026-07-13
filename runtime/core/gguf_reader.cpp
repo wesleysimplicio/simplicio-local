@@ -2,6 +2,7 @@
 
 #include <array>
 #include <fstream>
+#include <limits>
 
 namespace us4 {
 
@@ -253,9 +254,27 @@ std::vector<float> GgufReader::ReadFloat32(const std::string &name,
     return {};
   }
 
+  // A malformed/adversarial header can declare dimensions whose product
+  // overflows size_t (wrapping to a small, wrong value) or that stays
+  // within size_t but still exceeds std::vector<float>::max_size(),
+  // which throws std::length_error -- an uncaught exception that would
+  // abort the process instead of returning the usual explicit error.
   std::size_t elementCount = 1;
   for (const std::size_t dim : info->shape) {
+    if (dim != 0 &&
+        elementCount > std::numeric_limits<std::size_t>::max() / dim) {
+      if (error != nullptr) {
+        *error = "tensor " + name + " shape overflows size_t";
+      }
+      return {};
+    }
     elementCount *= dim;
+  }
+  if (elementCount > std::numeric_limits<std::size_t>::max() / sizeof(float)) {
+    if (error != nullptr) {
+      *error = "tensor " + name + " byte length overflows size_t";
+    }
+    return {};
   }
   const std::size_t byteLength = elementCount * sizeof(float);
 
