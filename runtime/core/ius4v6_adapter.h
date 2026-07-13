@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -26,6 +27,9 @@ struct GenerationRequest {
   std::size_t maxTokens = 16;
   const ModelAsset *asset = nullptr;
   std::optional<BackendType> requestedBackend = std::nullopt;
+  // OpenAI-compatible deterministic override. When absent, the adapter or
+  // model asset seed remains authoritative.
+  std::optional<std::uint32_t> seed = std::nullopt;
   // When set (see #81.7c), DenseAdapterBase::Generate routes the attention
   // context through this expert's real FFN (SwiGLU: down(silu(gate(x)) *
   // up(x))) before the output projection, instead of projecting the raw

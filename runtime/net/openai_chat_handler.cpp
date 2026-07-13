@@ -1,5 +1,8 @@
 #include "net/openai_chat_handler.h"
 
+#include <cmath>
+#include <limits>
+
 #include "adapters/adapter_registry.h"
 #include "core/hardware_probe.h"
 #include "core/json_value.h"
@@ -76,6 +79,57 @@ ParseChatCompletionRequestBody(const std::string &jsonBody,
     request.stream = root["stream"].AsBool();
   }
 
+  if (root.Has("seed")) {
+    if (root["seed"].type() != JsonValue::Type::kNumber) {
+      if (error != nullptr) {
+        *error = "request field \"seed\" must be a non-negative integer";
+      }
+      return std::nullopt;
+    }
+    const double seed = root["seed"].AsNumber();
+    if (!std::isfinite(seed) || seed < 0.0 || std::floor(seed) != seed ||
+        seed > static_cast<double>(std::numeric_limits<std::uint32_t>::max())) {
+      if (error != nullptr) {
+        *error = "request field \"seed\" must be a non-negative uint32";
+      }
+      return std::nullopt;
+    }
+    request.seed = static_cast<std::uint32_t>(seed);
+  }
+
+  if (root.Has("stop")) {
+    const JsonValue &stop = root["stop"];
+    auto addStop = [&](const JsonValue &value) -> bool {
+      if (!value.IsString() || value.AsString().empty()) {
+        return false;
+      }
+      request.stopSequences.push_back(value.AsString());
+      return true;
+    };
+    if (stop.IsString()) {
+      if (!addStop(stop)) {
+        if (error != nullptr) {
+          *error = "request field \"stop\" must contain non-empty strings";
+        }
+        return std::nullopt;
+      }
+    } else if (stop.IsArray()) {
+      for (const JsonValue &value : stop.AsArray()) {
+        if (!addStop(value)) {
+          if (error != nullptr) {
+            *error = "request field \"stop\" must contain non-empty strings";
+          }
+          return std::nullopt;
+        }
+      }
+    } else {
+      if (error != nullptr) {
+        *error = "request field \"stop\" must be a string or array";
+      }
+      return std::nullopt;
+    }
+  }
+
   if (root.Has("model_path") && root["model_path"].IsString()) {
     request.modelPath = root["model_path"].AsString();
   }
@@ -137,11 +191,23 @@ HandleChatCompletion(const ChatCompletionRequest &request) {
   const GenerationResult result =
       adapter->Generate({.prompt = request.prompt,
                          .maxTokens = request.maxTokens,
-                         .asset = assetPtr},
+                         .asset = assetPtr,
+                         .seed = request.seed},
                         context);
 
   response.ok = true;
   response.content = result.text;
+  std::size_t stopPosition = std::string::npos;
+  for (const std::string &stop : request.stopSequences) {
+    const std::size_t position = response.content.find(stop);
+    if (position != std::string::npos &&
+        (stopPosition == std::string::npos || position < stopPosition)) {
+      stopPosition = position;
+    }
+  }
+  if (stopPosition != std::string::npos) {
+    response.content.resize(stopPosition);
+  }
   response.generatedTokens = result.generatedTokens;
   response.usedRealWeights = result.usedRealWeights;
   return response;

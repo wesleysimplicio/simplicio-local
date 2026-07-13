@@ -112,9 +112,9 @@ GenerationResult LlamaAdapter::Generate(const GenerationRequest &request,
           ? request.asset->vocabulary
           : Vocabulary();
   const std::uint32_t activeSeed =
-      (request.asset != nullptr && request.asset->seed != 0U)
+      request.seed.value_or((request.asset != nullptr && request.asset->seed != 0U)
           ? request.asset->seed
-          : Seed();
+          : Seed());
   const LlamaConfig config = ResolveLlamaConfig(request.asset);
   const std::size_t kvWidth = config.kvHeads * config.headDim;
 
