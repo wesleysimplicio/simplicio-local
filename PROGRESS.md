@@ -795,3 +795,52 @@ tocados; `clang-tidy -p build` nos 3 adapters; `ctest --test-dir build
 Next:
 Avaliar #102 [#81.2b] (GGUF real parsing) ou #104 [#81.7c] (MoE roteando
 pela FFN completa do expert, nao so pela output projection).
+
+### Checkpoint 14
+
+Status: done
+
+Task:
+#102 [#81.2b] - GGUF real parsing (parser binario real do container GGUF,
+nao so tratar a extensao como dica e nunca abrir o arquivo).
+
+Result:
+Novo `runtime/core/gguf_reader.{h,cpp}` (`GgufReader`) parseia o container
+GGUF binario de verdade: magic `GGUF`, versao, contagem de tensors/kv,
+secao de metadata (com skip generico por tipo, incluindo arrays de um
+nivel, e decodificacao real de `general.alignment` quando presente), array
+de tensor info (nome, dims, ggml_type, offset), e secao de dados alinhada
+(`align_up` pelo alignment lido ou 32 por padrao). `ReadFloat32` le bytes
+reais de tensors ggml F32. Segue a mesma postura defensiva do
+`SafetensorsReader` (#81.5/#85): caps em tamanho de string, contagem de
+array, numero de dimensoes e contagem de tensors/kv contra arquivo
+malformado/adversario, e validacao de offset+tamanho contra o tamanho real
+do arquivo antes de ler.
+
+`LoadModelAsset` agora tambem tenta `GgufReader::Open` para arquivos
+`.gguf` (mesmo padrao ja usado para `.safetensors` desde #83), populando
+`realTensors`/`realTensorShapes`/`hasRealWeights` quando `embedding.weight`
+ou `lm_head.weight` sao encontrados como F32. Os fixtures `.gguf`
+pre-existentes (`toy-qwen.gguf`, `toy-llama.gguf`, `toy-bitnet.gguf`) sao
+placeholders de texto, nao GGUF real -- continuam falhando o parse (como
+esperado) e caindo no fallback synthetic/hidratacao por manifest sibling,
+sem regressao.
+
+Fixture novo: `tests/fixtures/gguf/toy_real.gguf` (gerado por
+`generate_toy_gguf.py`, mesmos valores/shapes do `toy_real.safetensors` de
+#83 para comparação direta entre os dois formatos). Testes novos:
+`gguf_reader_contract_test.cpp` (4 testes: rejeita placeholder, parseia
+header/shapes reais, le bytes float32 reais, erro explicito pra tensor
+ausente) e `ModelAssetContractTest.RealGgufAssetExposesRealTensorBytes`
+em `model_asset_contract_test.cpp`. Zero regressao: suite unitaria foi de
+225 para 230 testes verdes.
+
+Validation:
+`cmake --build build`; `clang-format --dry-run --Werror` nos arquivos
+tocados; `clang-tidy -p build` em `gguf_reader.cpp`/`model_asset.cpp`
+(sem warnings); `ctest --test-dir build --output-on-failure` (230/230
+verde).
+
+Next:
+Avaliar #104 [#81.7c] (MoE roteando pela FFN completa do expert) ou #105
+[#81.4b] (path NEON/GQA do Llama ainda sintetico).

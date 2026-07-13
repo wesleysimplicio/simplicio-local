@@ -19,6 +19,7 @@ set(us4_runtime_contract_test_sources
   model_asset_contract_test.cpp
   bpe_tokenizer_contract_test.cpp
   safetensors_reader_contract_test.cpp
+  gguf_reader_contract_test.cpp
   oracle_correctness_contract_test.cpp
   kv_cache_real_forward_contract_test.cpp
   quantization_real_weights_contract_test.cpp

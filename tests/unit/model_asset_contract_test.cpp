@@ -152,6 +152,35 @@ TEST(ModelAssetContractTest, LlamaManifestSurfacesTypedConfigMetadata) {
   EXPECT_FLOAT_EQ(config.ropeScale, 1.0F);
 }
 
+// Issue #81.2b: LoadModelAsset must actually open and parse a real .gguf
+// container's tensor bytes, not just note the extension and hydrate from a
+// sibling manifest. This fixture is a real GGUF file (see
+// tests/fixtures/gguf/generate_toy_gguf.py), not the text placeholder the
+// other .gguf fixtures above still use.
+TEST(ModelAssetContractTest, RealGgufAssetExposesRealTensorBytes) {
+  us4::ModelAsset asset;
+  std::string error;
+  const std::filesystem::path inputPath =
+      std::filesystem::path(US4_SOURCE_DIR) / "tests" / "fixtures" / "gguf" /
+      "toy_real.gguf";
+
+  ASSERT_TRUE(us4::LoadModelAsset(inputPath, asset, &error)) << error;
+
+  EXPECT_EQ(asset.format, us4::ModelFormat::kGguf);
+  ASSERT_TRUE(asset.hasRealWeights);
+  ASSERT_TRUE(asset.realTensors.contains("embedding.weight"));
+  ASSERT_TRUE(asset.realTensors.contains("lm_head.weight"));
+  EXPECT_EQ(asset.realTensorShapes.at("embedding.weight"),
+            (std::vector<std::size_t>{4, 3}));
+  EXPECT_EQ(asset.realTensorShapes.at("lm_head.weight"),
+            (std::vector<std::size_t>{3, 4}));
+  const std::vector<float> &embedding =
+      asset.realTensors.at("embedding.weight");
+  ASSERT_EQ(embedding.size(), 12U);
+  EXPECT_FLOAT_EQ(embedding[0], 0.1F);
+  EXPECT_FLOAT_EQ(embedding[11], 3.3F);
+}
+
 TEST(ModelAssetContractTest,
      LlamaBinaryAssetsInheritSiblingManifestMetadataWhenAvailable) {
   us4::ModelAsset asset;
