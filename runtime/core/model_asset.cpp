@@ -6,6 +6,7 @@
 #include <sstream>
 #include <unordered_map>
 
+#include "core/gguf_reader.h"
 #include "core/safetensors_reader.h"
 
 namespace us4 {
@@ -292,6 +293,29 @@ bool LoadModelAsset(const std::filesystem::path &path, ModelAsset &asset,
     asset.format = ModelFormat::kGguf;
     asset.weightDType = DType::kFloat16;
     HydrateFromSiblingManifest(resolved, asset);
+
+    std::string ggufError;
+    if (const auto reader = GgufReader::Open(resolved, &ggufError);
+        reader.has_value()) {
+      for (const std::string &tensorName :
+           {std::string("embedding.weight"), std::string("lm_head.weight")}) {
+        std::string readError;
+        std::vector<float> values = reader->ReadFloat32(tensorName, &readError);
+        if (!values.empty()) {
+          if (const auto *info = reader->Find(tensorName); info != nullptr) {
+            asset.realTensorShapes[tensorName] = info->shape;
+          }
+          asset.realTensors[tensorName] = std::move(values);
+        }
+      }
+      asset.hasRealWeights = !asset.realTensors.empty();
+      asset.metadata["gguf_load_status"] =
+          asset.hasRealWeights ? "real-tensors-loaded"
+                               : "real-header-parsed-no-known-tensor-names";
+    } else {
+      asset.metadata["gguf_load_status"] =
+          "placeholder-or-unparseable: " + ggufError;
+    }
     return true;
   }
   if (extension == ".safetensors") {
