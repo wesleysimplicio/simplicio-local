@@ -35,6 +35,11 @@ struct ModelAsset {
   std::size_t moeActiveExperts = 0;
   std::vector<std::filesystem::path> expertShardPaths;
   std::unordered_map<std::string, std::string> metadata;
+  // Populated only when sourcePath points at a real, parseable .safetensors
+  // file (genuine header + tensor bytes) rather than a placeholder/manifest.
+  // See SafetensorsReader; keys are tensor names as they appear in the file.
+  std::unordered_map<std::string, std::vector<float>> realTensors;
+  bool hasRealWeights = false;
 };
 
 std::string_view ToString(ModelFormat format);

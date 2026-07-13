@@ -6,6 +6,8 @@
 #include <sstream>
 #include <unordered_map>
 
+#include "core/safetensors_reader.h"
+
 namespace us4 {
 
 namespace {
@@ -296,6 +298,27 @@ bool LoadModelAsset(const std::filesystem::path &path, ModelAsset &asset,
     asset.format = ModelFormat::kSafetensors;
     asset.weightDType = DType::kFloat16;
     HydrateFromSiblingManifest(resolved, asset);
+
+    std::string safetensorsError;
+    if (const auto reader =
+            SafetensorsReader::Open(resolved, &safetensorsError);
+        reader.has_value()) {
+      for (const std::string &tensorName :
+           {std::string("embedding.weight"), std::string("lm_head.weight")}) {
+        std::string readError;
+        std::vector<float> values = reader->ReadFloat32(tensorName, &readError);
+        if (!values.empty()) {
+          asset.realTensors[tensorName] = std::move(values);
+        }
+      }
+      asset.hasRealWeights = !asset.realTensors.empty();
+      asset.metadata["safetensors_load_status"] =
+          asset.hasRealWeights ? "real-tensors-loaded"
+                               : "real-header-parsed-no-known-tensor-names";
+    } else {
+      asset.metadata["safetensors_load_status"] =
+          "placeholder-or-unparseable: " + safetensorsError;
+    }
     return true;
   }
 
