@@ -1,0 +1,11 @@
+# Sibling manifest for toy-moe-real.safetensors (issue #81.7: MoE real).
+# moe_expert_shards points at genuine per-expert safetensors files whose
+# real lm_head.weight the runtime applies when the router selects that
+# expert (see TryLoadExpertShardLmHead / DeepSeekMoEAdapter::Generate).
+family=deepseek
+model_name=toy-moe-real
+weight_dtype=fp32
+seed=11
+vocabulary=alpha,beta,gamma,delta
+default_prompt_token=alpha
+moe_expert_shards=expert0.safetensors,expert1.safetensors

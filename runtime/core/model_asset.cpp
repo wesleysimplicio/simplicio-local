@@ -329,4 +329,45 @@ bool LoadModelAsset(const std::filesystem::path &path, ModelAsset &asset,
                     "unsupported model asset format: " + resolved.string());
 }
 
+bool TryLoadExpertShardLmHead(const ModelAsset &asset,
+                              const std::size_t expertIndex,
+                              const std::size_t vocabSize,
+                              std::vector<float> *outWeights,
+                              std::vector<std::size_t> *outShape,
+                              std::string *error) {
+  if (expertIndex >= asset.expertShardPaths.size()) {
+    return WriteError(error, "expert index " + std::to_string(expertIndex) +
+                                 " has no shard path on this asset");
+  }
+
+  const auto reader =
+      SafetensorsReader::Open(asset.expertShardPaths[expertIndex], error);
+  if (!reader.has_value()) {
+    return false;
+  }
+
+  const auto *info = reader->Find("lm_head.weight");
+  if (info == nullptr || info->shape.size() != 2) {
+    return WriteError(error, "expert shard has no real lm_head.weight");
+  }
+  if (info->shape[0] != vocabSize) {
+    return WriteError(
+        error, "expert shard lm_head.weight vocab dimension does not match "
+               "the requested vocabulary size");
+  }
+
+  std::vector<float> weights = reader->ReadFloat32("lm_head.weight", error);
+  if (weights.empty()) {
+    return false;
+  }
+
+  if (outWeights != nullptr) {
+    *outWeights = std::move(weights);
+  }
+  if (outShape != nullptr) {
+    *outShape = info->shape;
+  }
+  return true;
+}
+
 } // namespace us4
