@@ -76,7 +76,6 @@ jobs:
   starter-dod:
     name: Starter DoD
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('package.json', 'bin/cli.js', 'test/**/*.js') != '' }}
     timeout-minutes: 20
     steps:
       - name: Checkout
@@ -115,7 +114,6 @@ jobs:
   runtime-native-dod:
     name: Runtime DoD (${{ matrix.label }})
     runs-on: ${{ matrix.runs_on }}
-    if: ${{ hashFiles('CMakeLists.txt', 'runtime/CMakeLists.txt', 'apps/CMakeLists.txt', 'tests/CMakeLists.txt') != '' }}
     timeout-minutes: 45
     strategy:
       fail-fast: false
@@ -277,7 +275,6 @@ jobs:
   runtime-sanitizers:
     name: Runtime sanitizers (ubuntu-x64-clang)
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('CMakeLists.txt', 'runtime/CMakeLists.txt', 'tests/CMakeLists.txt') != '' }}
     timeout-minutes: 25
     steps:
       - name: Checkout

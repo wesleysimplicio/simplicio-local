@@ -27,7 +27,6 @@ jobs:
   starter-lint:
     name: Starter lint
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('package.json', 'bin/cli.js', 'test/**/*.js') != '' }}
     timeout-minutes: 10
     steps:
       - name: Checkout
@@ -55,7 +54,6 @@ jobs:
     name: Starter unit tests (node ${{ matrix.node-version }})
     needs: starter-lint
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('package.json', 'bin/cli.js', 'test/**/*.js') != '' }}
     timeout-minutes: 15
     strategy:
       fail-fast: false
@@ -96,7 +94,6 @@ jobs:
     name: Starter E2E Playwright (node ${{ matrix.node-version }})
     needs: starter-unit
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('package.json', 'playwright.config.ts') != '' && (hashFiles('tests/e2e/**/*.spec.ts') != '' || hashFiles('tests/e2e/**/*.spec.js') != '' || hashFiles('tests/e2e/**/*.test.ts') != '' || hashFiles('tests/e2e/**/*.test.js') != '') }}
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -214,7 +211,7 @@ jobs:
   runtime-quick:
     name: Runtime quick (${{ matrix.label }})
     runs-on: ${{ matrix.runs_on }}
-    if: ${{ github.event_name == 'workflow_dispatch' && hashFiles('CMakeLists.txt', 'runtime/CMakeLists.txt', 'apps/CMakeLists.txt', 'tests/CMakeLists.txt') != '' }}
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     timeout-minutes: 10
     strategy:
       fail-fast: false
