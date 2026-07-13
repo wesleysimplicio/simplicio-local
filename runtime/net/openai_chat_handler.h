@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
@@ -21,6 +22,8 @@ struct ChatCompletionRequest {
   std::string prompt; // content of the last "user" message
   std::size_t maxTokens = 64;
   bool stream = false;
+  std::optional<std::uint32_t> seed = std::nullopt;
+  std::vector<std::string> stopSequences;
   // us4-cli extension (not part of the OpenAI schema): optional path to a
   // .safetensors/.gguf/.us4manifest asset to load real weights from, the
   // same way `us4-cli run --model-path` does.
@@ -39,6 +42,7 @@ struct ChatCompletionResponse {
 // Parses an OpenAI-shaped request body:
 //   {"model": "...", "messages": [{"role": "user", "content": "..."}],
 //    "max_tokens": N}
+//    "seed": N, "stop": "sequence"|["sequence", ...]}
 // Returns std::nullopt (with `error` set) for malformed JSON, a missing
 // "model", or no "user" message to answer.
 std::optional<ChatCompletionRequest>

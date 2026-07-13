@@ -60,6 +60,32 @@ TEST(OpenAiChatHandlerContractTest,
   EXPECT_TRUE(request->stream);
 }
 
+TEST(OpenAiChatHandlerContractTest, ParsesSeedAndStopSequences) {
+  std::string error;
+  const auto request = ParseChatCompletionRequestBody(
+      R"({"model":"qwen-0.5b","seed":42,"stop":["END","STOP"],)"
+      R"("messages":[{"role":"user","content":"seeded"}]})",
+      &error);
+  ASSERT_TRUE(request.has_value()) << error;
+  ASSERT_TRUE(request->seed.has_value());
+  EXPECT_EQ(*request->seed, 42U);
+  ASSERT_EQ(request->stopSequences.size(), 2U);
+  EXPECT_EQ(request->stopSequences[0], "END");
+  EXPECT_EQ(request->stopSequences[1], "STOP");
+}
+
+TEST(OpenAiChatHandlerContractTest, RejectsInvalidSeedAndStop) {
+  std::string error;
+  EXPECT_FALSE(ParseChatCompletionRequestBody(
+                   R"({"model":"qwen-0.5b","seed":-1,"messages":[])})",
+                   &error)
+                   .has_value());
+  EXPECT_FALSE(ParseChatCompletionRequestBody(
+                   R"({"model":"qwen-0.5b","stop":[""],"messages":[])})",
+                   &error)
+                   .has_value());
+}
+
 TEST(OpenAiChatHandlerContractTest, UnknownModelReturnsExplicitError) {
   ChatCompletionRequest request;
   request.model = "does-not-exist";
@@ -88,6 +114,11 @@ TEST(OpenAiChatHandlerContractTest,
   // Same external-oracle prediction as the #85 CLI/Playwright evidence:
   // embedding("alpha") one-hot over these real weights argmaxes to "delta".
   EXPECT_EQ(response.content, "delta");
+
+  request.stopSequences = {"lta"};
+  const ChatCompletionResponse stopped = HandleChatCompletion(request);
+  ASSERT_TRUE(stopped.ok) << stopped.errorMessage;
+  EXPECT_EQ(stopped.content, "de");
 
   const std::string responseJson =
       BuildChatCompletionResponseJson(response, "req-1");
