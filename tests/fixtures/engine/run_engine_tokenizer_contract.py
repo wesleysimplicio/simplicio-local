@@ -15,6 +15,7 @@ FIXTURE_DIR = Path(__file__).resolve().parent / "tokenizer"
 SOURCE = ENGINE_DIR / "tests" / "test_tok.c"
 TOKENIZER = FIXTURE_DIR / "minimal_tokenizer.json"
 CASES = FIXTURE_DIR / "minimal_cases.tsv"
+SKIP_RETURN_CODE = 77
 
 
 def compiler() -> str | None:
@@ -27,8 +28,11 @@ def compiler() -> str | None:
 def main() -> int:
     cc = compiler()
     if not cc:
+        if os.environ.get("CI"):
+            print("ERROR: a C compiler is required on CI.")
+            return 1
         print("SKIP: nenhum compilador C encontrado; contrato do tokenizer roda no runner Linux.")
-        return 0
+        return SKIP_RETURN_CODE
 
     with tempfile.TemporaryDirectory(prefix="tok-contract-") as tempdir:
         binary = Path(tempdir) / ("tok_contract.exe" if os.name == "nt" else "tok_contract")

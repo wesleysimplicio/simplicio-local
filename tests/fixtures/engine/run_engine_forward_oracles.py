@@ -17,6 +17,7 @@ DEEPSEEK_FIXTURE = FIXTURE_ROOT / "deepseek_tiny"
 REF_GLM = FIXTURE_ROOT / "ref_glm.json"
 REF_DEEPSEEK = FIXTURE_ROOT / "ref_deepseek.json"
 GLM_BIN = ENGINE_DIR / ("glm.exe" if os.name == "nt" else "glm")
+SKIP_RETURN_CODE = 77
 
 
 def run(command: list[str], *, cwd: Path, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
@@ -41,13 +42,17 @@ def require(condition: bool, message: str) -> None:
         raise SystemExit(message)
 
 
-def build_engine() -> None:
+def build_engine() -> int | None:
     make = shutil.which("make")
     if not make:
+        if os.environ.get("CI"):
+            print("ERROR: 'make' is required to run the engine forward oracle suite in CI.")
+            return 1
         print("SKIP: 'make' indisponivel neste host; suite colibri depende de runner Linux/macOS.")
-        raise SystemExit(0)
+        return SKIP_RETURN_CODE
     result = run([make, "glm"], cwd=ENGINE_DIR)
     require(result.returncode == 0 and GLM_BIN.exists(), "Falha ao compilar engine/c/glm")
+    return None
 
 
 def run_oracle_case(name: str, snap: Path, ref: Path) -> None:
@@ -69,7 +74,9 @@ def main() -> int:
     require(REF_GLM.exists(), f"Ref ausente: {REF_GLM}")
     require(REF_DEEPSEEK.exists(), f"Ref ausente: {REF_DEEPSEEK}")
 
-    build_engine()
+    skip_code = build_engine()
+    if skip_code is not None:
+        return skip_code
     run_oracle_case("glm_tiny", GLM_FIXTURE, REF_GLM)
     run_oracle_case("deepseek_tiny", DEEPSEEK_FIXTURE, REF_DEEPSEEK)
 
