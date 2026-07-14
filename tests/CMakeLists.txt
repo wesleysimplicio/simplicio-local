@@ -43,6 +43,7 @@ if(Python3_Interpreter_FOUND)
   set_tests_properties(engine_colibri_forward_oracles PROPERTIES
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     LABELS "engine;oracle;forward"
+    SKIP_RETURN_CODE 77
   )
 
   add_test(
@@ -53,5 +54,16 @@ if(Python3_Interpreter_FOUND)
   set_tests_properties(engine_colibri_tokenizer_contract PROPERTIES
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     LABELS "engine;tokenizer"
+    SKIP_RETURN_CODE 77
+  )
+
+  add_test(
+    NAME engine_colibri_runner_skip_contract
+    COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/fixtures/engine/test_runner_skip_contract.py
+  )
+  set_tests_properties(engine_colibri_runner_skip_contract PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    LABELS "engine;contract;skip"
   )
 endif()
