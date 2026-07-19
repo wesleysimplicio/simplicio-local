@@ -650,7 +650,10 @@ static int g_looka=0;    /* LOOKA=1: misura (solo contatori, zero effetti) quant
                           *     un'attention di anticipo: il punto dove il prefetch avrebbe
                           *     un intero giro di disco per lavorare in ombra). */
 static int64_t la_hit[3], la_tot[3];
-static int la_pred[2][130][16]; static signed char la_val[2][130];
+/* la_pred[][][z] e' indiciato da z<num_experts_per_tok (CKR consente fino a 64): la
+ * dimensione doveva essere >=64, non 16 (buffer-audit #122) — con topk>16 la_predict()
+ * scriveva fuori dai limiti di questo array statico. */
+static int la_pred[2][130][64]; static signed char la_val[2][130];
 static int g_pilot=0;    /* PILOT=1: prefetch pilotato dal router (vedi pilot_prefetch) */
 static int g_pilot_k=8;  /* PILOT_K=k: prefetcha solo le prime k predizioni per posizione */
 /* sceglie il formato da `bits`: >=16 f32, 5..8 int8, <=4 int4-packed */
@@ -754,10 +757,16 @@ static void load_cfg(Cfg *c, const char *snap){
     CKR("num_experts_per_tok",c->topk,1,64)      CKR("moe_intermediate_size",c->moe_inter,1,1<<20)
     CKR("intermediate_size",c->dense_inter,1,1<<24) CKR("first_k_dense_replace",c->first_dense,0,c->n_layers)
     CKR("q_lora_rank",c->q_lora,0,1<<20)         CKR("kv_lora_rank",c->kv_lora,1,1<<20)
-    CKR("qk_nope_head_dim",c->qk_nope,1,1<<16)   CKR("qk_rope_head_dim",c->qk_rope,1,1<<16)
+    CKR("qk_nope_head_dim",c->qk_nope,1,1<<16)
+    /* qk_rope_head_dim alimenta rope_interleave(), che copia in un buffer a pila
+     * `float in[256]` (buffer-audit #122): il teto reale e' 256, non 1<<16. */
+    CKR("qk_rope_head_dim",c->qk_rope,1,256)
     CKR("v_head_dim",c->v_head,1,1<<16)          CKR("n_shared_experts",c->n_shared,0,64)
     CKR("vocab_size",c->vocab,1,1<<24)           CKR("index_topk",c->index_topk,0,1<<20)
-    CKR("index_n_heads",c->index_nh,0,1024)      CKR("index_head_dim",c->index_hd,0,1<<16)
+    /* index_n_heads alimenta `float w32[64]` nell'indexer DSA (buffer-audit #122): teto reale 64
+     * (defesa em profundidade — w32 ja' e' heap-alloc dimensionado por nh desde a fix upstream,
+     * mas o teto evita um nh absurdo/hostil mesmo assim). */
+    CKR("index_n_heads",c->index_nh,0,64)        CKR("index_head_dim",c->index_hd,0,1<<16)
     /* DeepSeek-V3/R1 (issue #120): group-limited routing. n_group=1 (default GLM-5.2)
      * mantem o comportamento legado bit-a-bit (o mascaramento de grupo abaixo e' um no-op
      * com um unico grupo == todos os experts). */
@@ -766,6 +775,16 @@ static void load_cfg(Cfg *c, const char *snap){
     if(c->n_experts % c->n_group != 0){
         fprintf(stderr,"config: n_routed_experts=%d nao e' divisivel por n_group=%d\n",
             c->n_experts,c->n_group); exit(1);
+    }
+    /* rope_interleave() applica sempre qk_rope_head_dim al vettore che riceve, anche quando
+     * chiamato sul k_idx dell'indexer DSA (dimensione index_head_dim). Se index_head_dim <
+     * qk_rope_head_dim, rope_interleave legge/scrive qk_rope_head_dim float dal/nel vettore del
+     * chiamante (dimensionato index_head_dim) — un overflow di lettura/scrittura che a fix
+     * upstream (heap-alloc di `in[]` dimensionato da qk_rope) NON copre, perche' il buffer del
+     * CHIAMANTE resta piccolo (buffer-audit #122): richiede l'invariante quando la DSA e' attiva. */
+    if(c->index_nh>0 && c->index_hd>0 && c->index_hd<c->qk_rope){
+        fprintf(stderr,"config: index_head_dim=%d < qk_rope_head_dim=%d (rope_interleave "
+            "sforerebbe il buffer dell'indexer DSA)\n", c->index_hd, c->qk_rope); exit(1);
     }
     free(ar);
 }
@@ -1191,6 +1210,12 @@ static void attention(Model *m, Layer *l, int layer, float *x, int S, int pos_ba
     int absorb = g_absorb==1 || (g_absorb<0 && S<=4);
     if(absorb && c->kv_lora<=512){
         int kvl=c->kv_lora, r0v=c->qk_nope;      /* offset righe V dentro il blocco di testa */
+        /* sc[] copre lo span di attenzione (fino a Tk token di contesto): con contesti
+         * lunghi (--ctx > 8192, comune per finestre estese) un buffer a pila fisso da 8192
+         * trabocca silenziosamente la pila. Alloca sull'heap, dimensionato dal contesto
+         * REALE di questa chiamata (Tk), una volta per l'intero loop parallelo (buffer-audit
+         * #122: cada thread usa la propria fetta [s,h] senza race). */
+        float *scbuf_a=falloc((int64_t)S*H*Tk);
         #pragma omp parallel for collapse(2) schedule(static)
         for(int s=0;s<S;s++) for(int h=0;h<H;h++){
             int pos=pos_base+s;
@@ -1199,11 +1224,11 @@ static void attention(Model *m, Layer *l, int layer, float *x, int S, int pos_ba
             int rbase=h*(c->qk_nope+vh);
             float *qabs=falloc(kvl); memset(qabs,0,kvl*sizeof(float));
             for(int d=0;d<c->qk_nope;d++) qt_addrow(&l->kv_b, rbase+d, qp[d], qabs);
+            float *sc=scbuf_a+((int64_t)s*H+h)*Tk;
             int st0=m->kv_start[layer];
             int ns = (dnsel && dnsel[s]>0) ? dnsel[s] : 0;    /* DSA: lista top-k o range pieno */
             const int *tlist = ns ? dsel+(int64_t)s*dtopk : NULL;
             int nt = ns ? ns : pos+1-st0;
-            float *sc=falloc(nt);
             for(int jj=0;jj<nt;jj++){ int t = tlist ? tlist[jj] : st0+jj;
                 const float *Lt=m->Lc[layer]+(int64_t)t*kvl;
                 const float *kr=m->Rc[layer]+(int64_t)t*c->qk_rope;
@@ -1217,8 +1242,9 @@ static void attention(Model *m, Layer *l, int layer, float *x, int S, int pos_ba
                 const float *Lt=m->Lc[layer]+(int64_t)t*kvl;
                 float a=sc[jj]; for(int i=0;i<kvl;i++) clat[i]+=a*Lt[i]; }
             qt_matvec_rows(&l->kv_b, rbase+r0v, vh, clat, ctx+((int64_t)s*H+h)*vh);
-            free(qabs); free(sc); free(clat);
+            free(qabs); free(clat);
         }
+        free(scbuf_a);
         matmul_qt(out, ctx, &l->o, S);
         free(ctx); free(Q); free(QR); free(comp);
         m->t_attn += now_s()-ta0;
@@ -1230,17 +1256,19 @@ static void attention(Model *m, Layer *l, int layer, float *x, int S, int pos_ba
     float *kvb_all=falloc((int64_t)Tk*kvb_dim);
     matmul_qt(kvb_all+(int64_t)stL*kvb_dim, m->Lc[layer]+(int64_t)stL*c->kv_lora, &l->kv_b, Tk-stL);
     m->t_kvb += now_s()-tk0;
-    /* 3) attenzione causale: score = q_pass·k_nope + q_rot·k_rot */
+    /* 3) attenzione causale: score = q_pass·k_nope + q_rot·k_rot. Stesso motivo dell'heap-alloc
+     * sopra: sc[] deve coprire Tk, non un teto fisso (buffer-audit #122). */
+    float *scbuf_b=falloc((int64_t)S*H*Tk);
     #pragma omp parallel for collapse(2) schedule(static)
     for(int s=0;s<S;s++) for(int h=0;h<H;h++){
         int pos=pos_base+s;
         const float *qp=Q+(int64_t)s*H*qh+(int64_t)h*qh;          /* [qk_nope | qk_rope] */
         const float *qr=qp+c->qk_nope;
+        float *sc=scbuf_b+((int64_t)s*H+h)*Tk;
         int st0=m->kv_start[layer];
         int ns = (dnsel && dnsel[s]>0) ? dnsel[s] : 0;        /* DSA: lista top-k o range pieno */
         const int *tlist = ns ? dsel+(int64_t)s*dtopk : NULL;
         int nt = ns ? ns : pos+1-st0;
-        float *sc=falloc(nt);
         for(int jj=0;jj<nt;jj++){ int t = tlist ? tlist[jj] : st0+jj;
             const float *kn=kvb_all+(int64_t)t*kvb_dim+(int64_t)h*(c->qk_nope+vh);
             const float *kr=m->Rc[layer]+(int64_t)t*c->qk_rope;
@@ -1253,8 +1281,8 @@ static void attention(Model *m, Layer *l, int layer, float *x, int S, int pos_ba
         for(int jj=0;jj<nt;jj++){ int t = tlist ? tlist[jj] : st0+jj;
             const float *vv=kvb_all+(int64_t)t*kvb_dim+(int64_t)h*(c->qk_nope+vh)+c->qk_nope;
             float a=sc[jj]; for(int d=0;d<vh;d++) cx[d]+=a*vv[d]; }
-        free(sc);
     }
+    free(scbuf_b);
     matmul_qt(out, ctx, &l->o, S);
     free(ctx); free(Q); free(QR); free(comp); free(kvb_all);
     m->t_attn += now_s()-ta0;
@@ -1797,7 +1825,10 @@ static void forward_all(Model *m, const int *ids, int S, int *pred){
     float *x=falloc((int64_t)S*D);
     for(int s=0;s<S;s++) embed_row(m, ids[s], x+(int64_t)s*D);
     layers_forward(m,x,S,0);
-    float *lo=falloc(c->vocab), *row=falloc(D);
+    float *lo=falloc(c->vocab);
+    /* row[] normalizza un vettore hidden: hidden_size passa CKR fino a 1<<20, ben oltre un
+     * teto fisso a pila di 8192 (buffer-audit #122). Alloca sull'heap, dimensionato da D. */
+    float *row=falloc(D);
     for(int s=0;s<S;s++){
         rmsnorm(row, x+(int64_t)s*D, m->final_norm, D, c->eps);
         matmul_qt(lo, row, &m->lm_head, 1);

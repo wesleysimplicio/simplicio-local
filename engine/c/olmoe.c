@@ -132,6 +132,23 @@ static void load_cfg(Cfg *c, const char *snap) {
     jval *th = json_get(r,"rope_theta");  c->theta = th ? (float)th->num : 10000.f;
     jval *ep = json_get(r,"rms_norm_eps"); c->eps   = ep ? (float)ep->num : 1e-5f;
     jval *nt = json_get(r,"norm_topk_prob"); c->norm_topk = (nt && nt->t==J_BOOL) ? nt->boolean : 0;
+    /* VALIDAZIONE (buffer-audit #122): questo config.json arriva da un mirror non fidato,
+     * come in glm.c. Prima di questa validazione un num_experts_per_tok/num_attention_heads
+     * ostile o zero corrompeva la pila (idx[64]/val[64] in moe(), divisione per zero in
+     * head_dim = hidden/n_heads) senza mai passare da un choke point. */
+    #define CKR(name,v,lo,hi) if((v)<(lo)||(v)>(hi)){ \
+        fprintf(stderr,"config: %s=%d fuori range [%d,%d]\n",name,(int)(v),(int)(lo),(int)(hi)); exit(1); }
+    CKR("hidden_size",c->hidden,1,1<<20)          CKR("num_hidden_layers",c->n_layers,1,512)
+    CKR("num_attention_heads",c->n_heads,1,1024)  CKR("num_key_value_heads",c->n_kv_heads,1,1024)
+    CKR("num_experts",c->n_experts,1,1<<16)
+    /* topk alimenta idx[64]/val[64] a pila in moe() (buffer-audit #122): teto reale 64. */
+    CKR("num_experts_per_tok",c->topk,1,64)
+    CKR("intermediate_size",c->inter,1,1<<24)     CKR("vocab_size",c->vocab,1,1<<24)
+    #undef CKR
+    if(c->hidden % c->n_heads != 0){
+        fprintf(stderr,"config: hidden_size=%d non divisibile per num_attention_heads=%d\n",
+            c->hidden, c->n_heads); exit(1);
+    }
     free(buf); free(arena);
 }
 
@@ -237,12 +254,16 @@ static void attention(Model *m, Layer *l, int layer, float *x, int S, int pos_ba
     int Tk = pos_base + S;             /* numero di key totali disponibili */
     float scale = 1.f / sqrtf((float)hd);
     float *ctx = falloc((int64_t)S*D);
+    /* sc[] copre lo span causale (fino a Tk token): un teto fisso a pila di 4096 trabocca
+     * silenziosamente con contesti piu' lunghi (buffer-audit #122). Alloca sull'heap,
+     * dimensionato dal Tk REALE di questa chiamata, una fetta per (hh,s). */
+    float *scbuf = falloc((int64_t)H*S*Tk);
     #pragma omp parallel for collapse(2) schedule(static)
     for (int hh = 0; hh < H; hh++) {
         for (int s = 0; s < S; s++) {
             int qpos = pos_base + s;
             const float *qv = q + (int64_t)s*D + hh*hd;
-            float *sc=falloc(qpos+1);
+            float *sc = scbuf + ((int64_t)hh*S+s)*Tk;
             for (int t = 0; t <= qpos; t++) {          /* causale: t <= qpos */
                 const float *kv = m->K[layer] + ((int64_t)hh*m->max_t + t)*hd;
                 float acc = 0; for (int dd = 0; dd < hd; dd++) acc += qv[dd]*kv[dd];
@@ -256,10 +277,10 @@ static void attention(Model *m, Layer *l, int layer, float *x, int S, int pos_ba
                 float a = sc[t];
                 for (int dd = 0; dd < hd; dd++) cx[dd] += a * vrow[dd];
             }
-            free(sc);
         }
     }
     (void)Tk;
+    free(scbuf);
     matmul(out, ctx, l->o, S, D, D);
     free(q); free(k); free(vv); free(ctx);
 }

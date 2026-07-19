@@ -117,8 +117,34 @@ check:
 	$(MAKE) portable
 	$(MAKE) test
 
+# US4_ENABLE_ASAN/UBSAN (issue #122): build glm + the C test binaries with
+# AddressSanitizer and UndefinedBehaviorSanitizer, single-threaded (sanitizer
+# runtimes are not fork/OpenMP-safe by default here), then run the C test
+# suite plus the GLM and DeepSeek teacher-forcing oracles under it.
+# detect_leaks=0: json.h's parsed jval tree is process-lifetime by design
+# across this whole codebase (glm.c's own load_cfg/cfg_root only ever frees
+# the raw-text arena, never the node tree - see json_parse call sites) - a
+# one-shot config/tokenizer parse in a short-lived CLI/server process is not
+# a safety bug, and leaving leak detection on would flag this known,
+# intentional pattern instead of the overflow/UB corruption this target
+# actually exists to catch.
+SANFLAGS = -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -fno-sanitize-recover=all
+sanitize:
+	rm -f glm_asan tests/test_json_asan tests/test_st_asan tests/test_tier_asan
+	$(CC) $(SANFLAGS) -Wall -Wextra -Wno-unused-parameter -Wno-misleading-indentation -Wno-unused-function glm.c -o glm_asan -lm
+	$(CC) $(SANFLAGS) tests/test_json.c -o tests/test_json_asan -lm
+	$(CC) $(SANFLAGS) tests/test_st.c -o tests/test_st_asan -lm
+	$(CC) $(SANFLAGS) tests/test_tier.c -o tests/test_tier_asan -lm
+	ASAN_OPTIONS=detect_leaks=0 ./tests/test_json_asan
+	ASAN_OPTIONS=detect_leaks=0 ./tests/test_st_asan
+	ASAN_OPTIONS=detect_leaks=0 ./tests/test_tier_asan
+	SNAP=./glm_tiny TF=1 REF=ref_glm.json ASAN_OPTIONS=detect_leaks=0 ./glm_asan 64 16 16
+	SNAP=./deepseek_tiny TF=1 REF=ref_deepseek.json ASAN_OPTIONS=detect_leaks=0 ./glm_asan 64 16 16
+	rm -f glm_asan tests/test_json_asan tests/test_st_asan tests/test_tier_asan
+
 clean:
 	rm -f olmoe$(EXE) glm$(EXE) iobench$(EXE) backend_cuda.o backend_cuda_test$(EXE) $(TEST_BINS)
+	rm -f glm_asan tests/test_json_asan tests/test_st_asan tests/test_tier_asan
 	rm -rf tests/__pycache__
 
-.PHONY: all glm cuda-test portable test-c test-python test check clean
+.PHONY: all glm cuda-test portable test-c test-python test check sanitize clean
