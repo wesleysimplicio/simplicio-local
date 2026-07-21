@@ -6,6 +6,7 @@
 #include "adapters/adapter_registry.h"
 #include "core/hardware_probe.h"
 #include "core/json_value.h"
+#include "core/local_inference_policy.h"
 #include "core/model_asset.h"
 #include "core/runtime_context.h"
 
@@ -166,6 +167,13 @@ ChatCompletionResponse
 HandleChatCompletion(const ChatCompletionRequest &request) {
   ChatCompletionResponse response;
   response.modelName = request.model;
+
+  const LocalInferenceAdmission admission = GetLocalInferenceAdmission();
+  if (!admission.allowed) {
+    response.errorMessage = std::string(kLocalInferencePausedReason) + ": " +
+                            admission.reason;
+    return response;
+  }
 
   const IUS4V6Adapter *adapter = FindAdapterByModel(request.model);
   if (adapter == nullptr) {
