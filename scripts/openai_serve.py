@@ -95,6 +95,8 @@ DEFAULT_OLLAMA_UPSTREAM = "http://127.0.0.1:11434"
 SUPPORTED_CHAT_BACKENDS = ("mlx", "ollama", "custom")
 MAX_BODY_BYTES = 8 * 1024 * 1024
 UPSTREAM_TIMEOUT_S = 120
+LOCAL_INFERENCE_PAUSED = "LOCAL_INFERENCE_PAUSED"
+LOCAL_INFERENCE_PAUSED_EXIT_CODE = 78
 
 
 def _sanitize_path(path: str) -> str:
@@ -105,6 +107,22 @@ def _truthy(value: Optional[str]) -> bool:
     if not value:
         return False
     return value.lower() not in {"0", "false", "no", "off", ""}
+
+
+def _runtime_admission() -> tuple[bool, str]:
+    """Fail closed before imports, network access, subprocesses, or model load."""
+    lease = os.environ.get("US4_RUNTIME_LEASE", "").strip()
+    allowed = (
+        os.environ.get("US4_LOCAL_INFERENCE") == "enabled"
+        and os.environ.get("US4_RUNTIME_POLICY") == "admitted"
+        and bool(lease)
+    )
+    if allowed:
+        return True, "runtime-policy-admitted"
+    return False, (
+        "local inference is paused by default; require Runtime policy admission "
+        "and a non-empty Runtime lease"
+    )
 
 
 class Settings:
@@ -586,6 +604,10 @@ def _warn_if_non_loopback(host: str) -> None:
 
 
 def main() -> int:
+    admitted, reason = _runtime_admission()
+    if not admitted:
+        print(f"{LOCAL_INFERENCE_PAUSED}: {reason}", file=sys.stderr)
+        return LOCAL_INFERENCE_PAUSED_EXIT_CODE
     logging.basicConfig(level=SETTINGS.log_level, format="%(asctime)s %(name)s %(levelname)s %(message)s")
     if SETTINGS.chat_backend not in SUPPORTED_CHAT_BACKENDS:
         LOG.warning(
