@@ -8,6 +8,35 @@ const { spawnSync } = require('node:child_process');
 const repoRoot = path.resolve(__dirname, '..');
 const pkg = require(path.join(repoRoot, 'package.json'));
 
+const LOCAL_INFERENCE_PAUSED = 'LOCAL_INFERENCE_PAUSED';
+
+function hasRuntimeAdmission(env = process.env) {
+  return env.US4_LOCAL_INFERENCE === 'enabled'
+    && env.US4_RUNTIME_POLICY === 'admitted'
+    && typeof env.US4_RUNTIME_LEASE === 'string'
+    && env.US4_RUNTIME_LEASE.trim().length > 0;
+}
+
+function requireRuntimeAdmission(command) {
+  if (hasRuntimeAdmission()) return;
+  console.error(
+    `us4-cli ${command}: ${LOCAL_INFERENCE_PAUSED}: local inference is paused by default. `
+    + 'Re-enable only through Simplicio Runtime policy admission and a non-empty Runtime lease '
+    + '(US4_LOCAL_INFERENCE=enabled, US4_RUNTIME_POLICY=admitted, US4_RUNTIME_LEASE=<lease>).',
+  );
+  process.exit(78);
+}
+
+function printLocalInferenceStatus(json) {
+  const enabled = hasRuntimeAdmission();
+  const reason = enabled ? 'runtime-policy-admitted' : LOCAL_INFERENCE_PAUSED;
+  if (json) {
+    console.log(JSON.stringify({ local_inference: enabled ? 'enabled' : 'paused', reason }));
+    return;
+  }
+  console.log(`local_inference: ${enabled ? 'enabled' : 'paused'}\nreason: ${reason}`);
+}
+
 function exists(relPath) {
   return fs.existsSync(path.join(repoRoot, relPath));
 }
@@ -74,6 +103,7 @@ function printHelp() {
 
 Usage:
   us4-cli probe [--json]
+  us4-cli local-inference-status [--json]
   us4-cli list-models [--json]
   us4-cli run ...
   us4-cli serve [--native] [...]
@@ -161,6 +191,7 @@ function runNative(rest) {
 }
 
 function runServe(rest) {
+  requireRuntimeAdmission('serve');
   const nativeCli = resolveNativeCli();
   if (nativeCli) {
     run(nativeCli, ['serve', ...rest]);
@@ -187,6 +218,9 @@ if (args[0] === '--version' || args[0] === '-v') {
 const [command, ...rest] = args;
 
 switch (command) {
+  case 'local-inference-status':
+    printLocalInferenceStatus(rest.includes('--json'));
+    break;
   case 'doctor':
     runPythonScript('engine/c/doctor.py', rest);
     break;
@@ -209,6 +243,7 @@ switch (command) {
     runNative(['list-models', ...rest]);
     break;
   case 'run':
+    requireRuntimeAdmission('run');
     runNative(['run', ...rest]);
     break;
   default:
