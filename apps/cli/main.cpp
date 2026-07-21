@@ -22,6 +22,7 @@
 #include "core/ius4v6_adapter.h"
 #include "core/model_asset.h"
 #include "core/runtime_context.h"
+#include "core/local_inference_policy.h"
 #include "core/runtime_mode.h"
 #include "metal/command_queue.h"
 #include "metal/device_info.h"
@@ -116,6 +117,7 @@ void PrintHelp() {
             << "Usage:\n"
             << "  us4-cli --version\n"
             << "  us4-cli --probe [--json]\n"
+            << "  us4-cli local-inference-status [--json]\n"
             << "  us4-cli --mode auto [--json]\n"
             << "  us4-cli list-models [--json]\n"
             << "  us4-cli run --model <name> [--model-path <path>] [--backend "
@@ -133,6 +135,37 @@ void PrintHelp() {
                "--native, serve\n"
             << "      proxies to mlx_lm.server/Ollama via "
                "scripts/openai_serve.py.\n";
+}
+
+bool RequireLocalInferenceAdmission(const std::string_view command) {
+  const us4::LocalInferenceAdmission admission =
+      us4::GetLocalInferenceAdmission();
+  if (admission.allowed) {
+    return true;
+  }
+  std::cerr << "us4-cli " << command << ": "
+            << us4::kLocalInferencePausedReason << ": "
+            << admission.reason << "\n";
+  return false;
+}
+
+void PrintLocalInferenceStatus(const bool outputJson) {
+  const us4::LocalInferenceAdmission admission =
+      us4::GetLocalInferenceAdmission();
+  if (outputJson) {
+    std::cout << "{\"local_inference\":\""
+              << (admission.allowed ? "enabled" : "paused")
+              << "\",\"reason\":\""
+              << (admission.allowed ? admission.reason
+                                    : us4::kLocalInferencePausedReason)
+              << "\"}\n";
+    return;
+  }
+  std::cout << "local_inference: "
+            << (admission.allowed ? "enabled" : "paused") << "\nreason: "
+            << (admission.allowed ? admission.reason
+                                  : us4::kLocalInferencePausedReason)
+            << "\n";
 }
 
 int SetServeEnv(const char *name, const std::string &value) {
@@ -655,6 +688,7 @@ int main(int argc, char **argv) {
   bool showVersion = false;
   bool showHelp = false;
   bool listModels = false;
+  bool localInferenceStatus = false;
   bool runCommand = false;
   bool serveCommand = false;
   bool serveDisableChat = false;
@@ -681,6 +715,8 @@ int main(int argc, char **argv) {
       serveCommand = true;
     } else if (arg == "list-models") {
       listModels = true;
+    } else if (arg == "local-inference-status") {
+      localInferenceStatus = true;
     } else if (arg == "--host" && index + 1 < argc) {
       serveHost = argv[++index];
     } else if (arg == "--port" && index + 1 < argc) {
@@ -745,7 +781,15 @@ int main(int argc, char **argv) {
     return 0;
   }
 
+  if (localInferenceStatus) {
+    PrintLocalInferenceStatus(outputJson);
+    return 0;
+  }
+
   if (serveCommand) {
+    if (!RequireLocalInferenceAdmission("serve")) {
+      return us4::kLocalInferencePausedExitCode;
+    }
     if (serveNative) {
       us4::NativeServeOptions nativeOptions;
       if (serveHost.has_value()) {
@@ -788,6 +832,9 @@ int main(int argc, char **argv) {
   }
 
   if (runCommand) {
+    if (!RequireLocalInferenceAdmission("run")) {
+      return us4::kLocalInferencePausedExitCode;
+    }
     const std::optional<us4::BackendType> parsedBackend =
         backendValue.has_value() ? us4::ParseBackendType(*backendValue)
                                  : std::nullopt;
