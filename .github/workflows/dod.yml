@@ -1,11 +1,10 @@
 name: DoD Gate
 
 on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+    branches: [main]
   workflow_dispatch:
-# Para acoplar este gate a PR automaticamente, descomente abaixo.
-#  pull_request:
-#    types: [opened, synchronize, reopened, edited]
-#    branches: [main, develop]
 
 concurrency:
   group: dod-${{ github.workflow }}-${{ github.ref }}
