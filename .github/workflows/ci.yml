@@ -1,14 +1,13 @@
 name: CI
 
 on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
   schedule:
     - cron: '0 7 * * 1'
-# Para ligar validacao automatica em PR/push, descomente os blocos abaixo.
-#  push:
-#    branches: [main, develop]
-#  pull_request:
-#    branches: [main, develop]
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -80,6 +79,20 @@ jobs:
 
       - name: Run unit tests with coverage
         run: npm test -- --coverage
+
+      - name: Enforce starter line coverage (>=80%)
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f coverage/coverage-summary.json
+          node - <<'EOF'
+          const summary = require('./coverage/coverage-summary.json');
+          const pct = Number(summary?.total?.lines?.pct);
+          if (!Number.isFinite(pct) || pct < 80) {
+            throw new Error(`Starter line coverage must be >=80%; got ${pct}`);
+          }
+          console.log(`Starter line coverage: ${pct}%`);
+          EOF
 
       - name: Upload coverage
         if: always()
