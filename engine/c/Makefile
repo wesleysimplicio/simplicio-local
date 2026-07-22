@@ -54,6 +54,7 @@ NVCCFLAGS ?= -O3 -std=c++17 -arch=$(CUDA_ARCH) -Xcompiler=-Wall,-Wextra
 PYTHON    ?= python3
 CUDA_OBJ  =
 TEST_BINS = tests/test_json$(EXE) tests/test_st$(EXE) tests/test_tier$(EXE)
+TOKENIZER_TEST_BIN = tests/test_tok$(EXE)
 ifeq ($(CUDA),1)
 ifeq ($(UNAME_S),Darwin)
 $(error CUDA=1 is supported only on Linux)
@@ -103,13 +104,20 @@ tests/test_st$(EXE): tests/test_st.c st.h json.h compat.h
 tests/test_tier$(EXE): tests/test_tier.c tier.h
 	$(CC) $(CFLAGS) $< -o $@ $(LDFLAGS)
 
+$(TOKENIZER_TEST_BIN): tests/test_tok.c tok.h tok_unicode.h json.h
+	$(CC) $(CFLAGS) $< -o $@ $(LDFLAGS)
+
 test-c: $(TEST_BINS)
 	@for test in $(TEST_BINS); do ./$$test || exit 1; done
 
 test-python:
 	$(PYTHON) -m unittest discover -s tests -p 'test_*.py'
 
-test: test-c test-python
+test-tokenizer: $(TOKENIZER_TEST_BIN)
+	printf 'hi\t2\nhi!\t2,3\n<|special|>\t4\nhi<|special|>!\t2,4,3\n' \
+	  | ./$(TOKENIZER_TEST_BIN) ../../tests/fixtures/engine/tokenizer/minimal_tokenizer.json
+
+test: test-c test-tokenizer test-python
 
 # Local validation: one portable CPU build and dependency-free tests.
 check:
@@ -144,7 +152,8 @@ sanitize:
 
 clean:
 	rm -f olmoe$(EXE) glm$(EXE) iobench$(EXE) backend_cuda.o backend_cuda_test$(EXE) $(TEST_BINS)
+	rm -f $(TOKENIZER_TEST_BIN)
 	rm -f glm_asan tests/test_json_asan tests/test_st_asan tests/test_tier_asan
 	rm -rf tests/__pycache__
 
-.PHONY: all glm cuda-test portable test-c test-python test check sanitize clean
+.PHONY: all glm cuda-test portable test-c test-tokenizer test-python test check sanitize clean
