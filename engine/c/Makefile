@@ -128,7 +128,10 @@ check:
 # US4_ENABLE_ASAN/UBSAN (issue #122): build glm + the C test binaries with
 # AddressSanitizer and UndefinedBehaviorSanitizer, single-threaded (sanitizer
 # runtimes are not fork/OpenMP-safe by default here), then run the C test
-# suite plus the GLM and DeepSeek teacher-forcing oracles under it.
+# suite plus the GLM and DeepSeek teacher-forcing oracles under it when the
+# optional generated fixtures are available. Set SANITIZE_REQUIRE_ORACLES=1
+# to make their absence a hard failure (the default is an explicit, honest
+# skip so a dependency-light checkout can still run the sanitizer suite).
 # detect_leaks=0: json.h's parsed jval tree is process-lifetime by design
 # across this whole codebase (glm.c's own load_cfg/cfg_root only ever frees
 # the raw-text arena, never the node tree - see json_parse call sites) - a
@@ -137,6 +140,7 @@ check:
 # intentional pattern instead of the overflow/UB corruption this target
 # actually exists to catch.
 SANFLAGS = -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer -fno-sanitize-recover=all
+SANITIZE_REQUIRE_ORACLES ?= 0
 sanitize:
 	rm -f glm_asan tests/test_json_asan tests/test_st_asan tests/test_tier_asan
 	$(CC) $(SANFLAGS) -Wall -Wextra -Wno-unused-parameter -Wno-misleading-indentation -Wno-unused-function glm.c -o glm_asan -lm
@@ -146,9 +150,17 @@ sanitize:
 	ASAN_OPTIONS=detect_leaks=0 ./tests/test_json_asan
 	ASAN_OPTIONS=detect_leaks=0 ./tests/test_st_asan
 	ASAN_OPTIONS=detect_leaks=0 ./tests/test_tier_asan
-	SNAP=./glm_tiny TF=1 REF=ref_glm.json ASAN_OPTIONS=detect_leaks=0 ./glm_asan 64 16 16
-	SNAP=./deepseek_tiny TF=1 REF=ref_deepseek.json ASAN_OPTIONS=detect_leaks=0 ./glm_asan 64 16 16
-	rm -f glm_asan tests/test_json_asan tests/test_st_asan tests/test_tier_asan
+	if test -f ./glm_tiny/config.json && test -f ./glm_tiny/model.safetensors && \
+	   test -f ./deepseek_tiny/config.json && test -f ./deepseek_tiny/model.safetensors; then \
+	  SNAP=./glm_tiny TF=1 REF=ref_glm.json ASAN_OPTIONS=detect_leaks=0 ./glm_asan 64 16 16; \
+	  SNAP=./deepseek_tiny TF=1 REF=ref_deepseek.json ASAN_OPTIONS=detect_leaks=0 ./glm_asan 64 16 16; \
+	else \
+	  if test "$(SANITIZE_REQUIRE_ORACLES)" = "1"; then \
+	    echo "sanitize: oracle fixtures missing; generate glm_tiny and deepseek_tiny first" >&2; exit 2; \
+	  fi; \
+	  echo "sanitize: C sanitizer suite passed; oracle fixtures unavailable (explicitly skipped)"; \
+	fi
+	 rm -f glm_asan tests/test_json_asan tests/test_st_asan tests/test_tier_asan
 
 clean:
 	rm -f olmoe$(EXE) glm$(EXE) iobench$(EXE) backend_cuda.o backend_cuda_test$(EXE) $(TEST_BINS)
