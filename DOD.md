@@ -28,7 +28,16 @@ model/tokenizer file, see `runtime/fuzz/CMakeLists.txt` header comment
 referencing #81.13). What is **not yet covered** is the quantized-kernel
 math itself.
 
-## New: property/fuzzing layer for the quantization kernels
+## Shipped: property/fuzzing layer for the quantization kernels
+
+The follow-up implementation is now present in `runtime/fuzz/`: both
+dequantization targets use an independent scalar oracle, the CMake target can
+be built with libFuzzer or AFL++, and `scripts/seed_quant_fuzz_corpus.py`
+derives reproducible int4/int8 blocks from real safetensors weights while
+recording the source SHA-256. A local corpus smoke run covered 100 real-weight
+slices plus deterministic edge cases for each target. No mismatch or crash was
+found in that smoke run. A long AFL++ campaign remains opt-in because it
+requires the external AFL++ toolchain and is not a PR merge gate.
 
 - **Tool: AFL++ (primary) + libFuzzer (secondary, reuses the existing
   `runtime/fuzz/` harness convention)**. AFL++ for the standalone
