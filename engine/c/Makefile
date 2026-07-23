@@ -80,7 +80,7 @@ all: glm$(EXE)
 glm: glm$(EXE)
 endif
 
-glm$(EXE): glm.c st.h json.h tok.h tok_unicode.h chat_template.h chat_templates.json compat.h $(CUDA_OBJ)
+glm$(EXE): glm.c moe_route.h st.h json.h tok.h tok_unicode.h chat_template.h chat_templates.json compat.h $(CUDA_OBJ)
 	$(CC) $(CFLAGS) glm.c $(CUDA_OBJ) -o glm$(EXE) $(LDFLAGS)
 
 backend_cuda.o: backend_cuda.cu backend_cuda.h
@@ -111,7 +111,7 @@ tests/test_st$(EXE): tests/test_st.c st.h json.h compat.h
 tests/test_tier$(EXE): tests/test_tier.c tier.h
 	$(CC) $(CFLAGS) $< -o $@ $(LDFLAGS)
 
-tests/test_quant$(EXE): tests/test_quant.c glm.c st.h json.h tok.h tok_unicode.h compat.h
+tests/test_quant$(EXE): tests/test_quant.c glm.c moe_route.h st.h json.h tok.h tok_unicode.h compat.h
 	$(CC) $(CFLAGS) $< -o $@ $(LDFLAGS)
 
 $(TOKENIZER_TEST_BIN): tests/test_tok.c tok.h tok_unicode.h json.h
@@ -180,6 +180,8 @@ sanitize:
 	  fi; \
 	  echo "sanitize: C sanitizer suite passed; oracle fixtures unavailable (explicitly skipped)"; \
 	fi
+	SNAP=./fixtures/kimi_k2_tiny TF=1 REF=ref_kimi.json \
+	  ASAN_OPTIONS=detect_leaks=0 ./glm_asan 64 16 16
 	 rm -f glm_asan tests/test_json_asan tests/test_st_asan tests/test_tier_asan
 
 clean:
