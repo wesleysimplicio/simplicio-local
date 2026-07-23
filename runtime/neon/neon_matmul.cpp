@@ -7,6 +7,7 @@
 #include <arm_neon.h>
 #endif
 
+#include "cpu/int8_matmul.h"
 #include "cpu/scalar_matmul.h"
 
 namespace us4 {
@@ -112,87 +113,7 @@ void RunScalarLane4Matmul(const Tensor &lhs, const Tensor &rhs,
 }
 
 #if defined(__ARM_NEON) || defined(__ARM_NEON__)
-void RunNeonInt8Matmul(const Tensor &lhs, const Tensor &rhs, Tensor &output) {
-  const std::size_t lhsRows = lhs.Shape()[0];
-  const std::size_t lhsCols = lhs.Shape()[1];
-  const std::size_t rhsCols = rhs.Shape()[1];
-
-  const auto *lhsData = reinterpret_cast<const std::int8_t *>(lhs.Data());
-  const auto *rhsData = reinterpret_cast<const std::int8_t *>(rhs.Data());
-  float *outData = output.MutableDataAsFloat32();
-
-  constexpr std::size_t kLaneWidth = 4U;
-  for (std::size_t row = 0; row < lhsRows; ++row) {
-    std::size_t col = 0;
-    for (; col + kLaneWidth <= rhsCols; col += kLaneWidth) {
-      int32x4_t accumulator = vdupq_n_s32(0);
-      std::size_t inner = 0;
-
-#if defined(__ARM_FEATURE_DOTPROD)
-      for (; inner + kLaneWidth <= lhsCols; inner += kLaneWidth) {
-        std::int8_t rhsPacked[16];
-        std::int8_t lhsPacked[16];
-        for (std::size_t lane = 0; lane < kLaneWidth; ++lane) {
-          const std::size_t innerIndex = inner + lane;
-          const std::size_t rhsOffset = innerIndex * rhsCols + col;
-          rhsPacked[lane + 0U] = rhsData[rhsOffset + 0U];
-          rhsPacked[lane + 4U] = rhsData[rhsOffset + 1U];
-          rhsPacked[lane + 8U] = rhsData[rhsOffset + 2U];
-          rhsPacked[lane + 12U] = rhsData[rhsOffset + 3U];
-
-          const std::int8_t lhsValue = lhsData[row * lhsCols + innerIndex];
-          lhsPacked[lane + 0U] = lhsValue;
-          lhsPacked[lane + 4U] = lhsValue;
-          lhsPacked[lane + 8U] = lhsValue;
-          lhsPacked[lane + 12U] = lhsValue;
-        }
-
-        accumulator =
-            vdotq_s32(accumulator, vld1q_s8(rhsPacked), vld1q_s8(lhsPacked));
-      }
-#endif
-
-      for (; inner < lhsCols; ++inner) {
-        const std::int32_t lhsValue =
-            static_cast<std::int32_t>(lhsData[row * lhsCols + inner]);
-        const std::size_t rhsOffset = inner * rhsCols + col;
-        std::int8_t rhsPacked[8] = {
-            rhsData[rhsOffset + 0U],
-            rhsData[rhsOffset + 1U],
-            rhsData[rhsOffset + 2U],
-            rhsData[rhsOffset + 3U],
-            0,
-            0,
-            0,
-            0,
-        };
-        const int8x8_t rhsVector8 = vld1_s8(rhsPacked);
-        const int16x8_t rhsWide16 = vmovl_s8(rhsVector8);
-        const int32x4_t rhsWide32 = vmovl_s16(vget_low_s16(rhsWide16));
-        accumulator = vmlaq_n_s32(accumulator, rhsWide32, lhsValue);
-      }
-
-      vst1q_f32(outData + (row * rhsCols + col), vcvtq_f32_s32(accumulator));
-    }
-
-    for (; col < rhsCols; ++col) {
-      std::int32_t accumulator = 0;
-      for (std::size_t inner = 0; inner < lhsCols; ++inner) {
-        accumulator +=
-            static_cast<std::int32_t>(lhsData[row * lhsCols + inner]) *
-            static_cast<std::int32_t>(rhsData[inner * rhsCols + col]);
-      }
-      outData[row * rhsCols + col] = static_cast<float>(accumulator);
-    }
-  }
-}
-
 void RunNeonLane4Matmul(const Tensor &lhs, const Tensor &rhs, Tensor &output) {
-  if (lhs.dtype() == DType::kInt8 && rhs.dtype() == DType::kInt8) {
-    RunNeonInt8Matmul(lhs, rhs, output);
-    return;
-  }
-
   if (lhs.dtype() != DType::kFloat32 || rhs.dtype() != DType::kFloat32) {
     RunScalarLane4Matmul(lhs, rhs, output);
     return;
@@ -237,7 +158,7 @@ void RunNeonLane4Matmul(const Tensor &lhs, const Tensor &rhs, Tensor &output) {
 } // namespace
 
 bool NeonMatmul(const Tensor &lhs, const Tensor &rhs, Tensor &output,
-                std::string *error) {
+                std::string *error, CpuInt8Dispatch *int8Dispatch) {
   if (!ValidateMatrix(lhs, error) || !ValidateMatrix(rhs, error)) {
     return false;
   }
@@ -257,6 +178,14 @@ bool NeonMatmul(const Tensor &lhs, const Tensor &rhs, Tensor &output,
   }
   if (output.Shape()[0] != lhsRows || output.Shape()[1] != rhsCols) {
     return WriteError(error, "output shape does not match matmul result");
+  }
+
+  if (lhs.dtype() == DType::kInt8 && rhs.dtype() == DType::kInt8) {
+    CpuInt8Matmul(
+        reinterpret_cast<const std::int8_t *>(lhs.Data()),
+        reinterpret_cast<const std::int8_t *>(rhs.Data()), lhsRows, lhsCols,
+        rhsCols, output.MutableDataAsFloat32(), int8Dispatch);
+    return true;
   }
 
 #if defined(__ARM_NEON) || defined(__ARM_NEON__)

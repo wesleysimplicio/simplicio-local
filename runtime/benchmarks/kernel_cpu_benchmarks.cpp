@@ -15,6 +15,7 @@
 #include "benchmarks/kernel_benchmark_observability.h"
 #include "core/hardware_probe.h"
 #include "core/tensor.h"
+#include "cpu/int8_matmul.h"
 #include "cpu/scalar_attention.h"
 #include "cpu/scalar_matmul.h"
 #include "neon/kernel_profile.h"
@@ -172,11 +173,21 @@ void PrintMatmulRow(const us4::HardwareProbeResult &probe,
                                            profile);
 
   std::string error;
+  us4::CpuInt8Dispatch int8Dispatch;
   const auto runner = [&]() {
     if (benchmarkCase.requestedBackend == us4::BackendType::kScalarCpu) {
+      if (benchmarkCase.dtype == us4::DType::kInt8) {
+        us4::ScalarInt8Matmul(
+            reinterpret_cast<const std::int8_t *>(lhs.Data()),
+            reinterpret_cast<const std::int8_t *>(rhs.Data()),
+            benchmarkCase.lhsRows, benchmarkCase.lhsCols,
+            benchmarkCase.rhsCols, output.MutableDataAsFloat32());
+        int8Dispatch = {};
+        return true;
+      }
       return us4::ScalarMatmul(lhs, rhs, output, &error);
     }
-    return us4::NeonMatmul(lhs, rhs, output, &error);
+    return us4::NeonMatmul(lhs, rhs, output, &error, &int8Dispatch);
   };
 
   if (!runner()) {
@@ -205,6 +216,11 @@ void PrintMatmulRow(const us4::HardwareProbeResult &probe,
             << (profile.usesDotProduct ? "true" : "false") << "\n";
   std::cout << "uses_accelerate_fallback="
             << (profile.usesAccelerateFallback ? "true" : "false") << "\n";
+  std::cout << "cpu_int8_kernel="
+            << (benchmarkCase.dtype == us4::DType::kInt8
+                    ? us4::ToString(int8Dispatch.kernel)
+                    : "n/a")
+            << "\n";
   std::cout << "lhs_rows=" << benchmarkCase.lhsRows << "\n";
   std::cout << "lhs_cols=" << benchmarkCase.lhsCols << "\n";
   std::cout << "rhs_cols=" << benchmarkCase.rhsCols << "\n";
@@ -305,7 +321,7 @@ int main() {
   const us4::HardwareProbeResult probe = us4::HardwareProbe::Detect();
   PrintHeader(probe);
 
-  const std::array<MatmulCase, 5> matmulCases = {{
+  const std::array<MatmulCase, 6> matmulCases = {{
       {"matmul-fp32/scalar", us4::DType::kFloat32,
        us4::BackendType::kScalarCpu, 128U, 256U, 128U},
       {"matmul-fp32/neon", us4::DType::kFloat32, us4::BackendType::kNeon, 128U,
@@ -314,6 +330,8 @@ int main() {
        256U, 128U},
       {"matmul-bf16/neon", us4::DType::kBFloat16, us4::BackendType::kNeon,
        128U, 256U, 128U},
+      {"matmul-int8/scalar", us4::DType::kInt8,
+       us4::BackendType::kScalarCpu, 128U, 256U, 128U},
       {"matmul-int8/neon", us4::DType::kInt8, us4::BackendType::kNeon, 128U,
        256U, 128U},
   }};

@@ -45,6 +45,7 @@ add_executable(kernel_cpu_benchmarks
   ../core/hardware_probe.cpp
   ../core/runtime_mode.cpp
   ../core/tensor.cpp
+  ../cpu/int8_matmul.cpp
   ../cpu/scalar_matmul.cpp
   ../cpu/scalar_attention.cpp
   ../neon/kernel_profile.cpp
