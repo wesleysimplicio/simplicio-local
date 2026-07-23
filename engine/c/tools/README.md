@@ -9,6 +9,8 @@ not runtime dependencies of the C engine.
 - `make_glm_oracle.py`, `make_kimi_oracle.py`, `make_glm_bench_model.py`:
   deterministic fixtures
 - `benchmark_cuda_fixture.py`, `eval_glm.py`, `fetch_benchmarks.py`: benchmarks
+- `perplexity_matrix.py`: matriz fail-closed de perplexity por quantização, com
+  hashes e receipts versionados
 - `gen_unicode.py`: tokenizer table generation
 - `make_tokenizer_vectors.py`: real HF parity vectors from a local snapshot,
   including tokenizer hashes and without network access

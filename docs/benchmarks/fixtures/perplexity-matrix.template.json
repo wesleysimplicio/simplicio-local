@@ -1,0 +1,57 @@
+{
+  "schema": "simplicio-local/perplexity-matrix-manifest-v1",
+  "suite_id": "glm52-quality-matrix-v1",
+  "family": "glm-5.2",
+  "corpus": {
+    "id": "replace-with-versioned-real-corpus",
+    "path": "${QUALITY_CORPUS}",
+    "format": "text-jsonl",
+    "max_tokens_per_document": 2048,
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "variants": [
+    {
+      "id": "bf16-oracle",
+      "checkpoint": "${GLM52_BF16_CHECKPOINT}",
+      "checkpoint_manifest": "${GLM52_BF16_MANIFEST}",
+      "checkpoint_manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "checkpoint_id": "replace-with-model-revision",
+      "engine": "${COLI_GLM_BIN}",
+      "expert_cache_cap": 64,
+      "quantization": {
+        "label": "bf16-oracle",
+        "expert_bits": 16,
+        "dense_bits": 16
+      }
+    },
+    {
+      "id": "int4",
+      "checkpoint": "${GLM52_INT4_CHECKPOINT}",
+      "checkpoint_manifest": "${GLM52_INT4_MANIFEST}",
+      "checkpoint_manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "checkpoint_id": "replace-with-model-revision",
+      "engine": "${COLI_GLM_BIN}",
+      "expert_cache_cap": 64,
+      "quantization": {
+        "label": "int4",
+        "expert_bits": 4,
+        "dense_bits": 4
+      }
+    },
+    {
+      "id": "mixed-16gb",
+      "checkpoint": "${GLM52_MIXED_CHECKPOINT}",
+      "checkpoint_manifest": "${GLM52_MIXED_MANIFEST}",
+      "checkpoint_manifest_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "checkpoint_id": "replace-with-model-revision-and-dtype-map-hash",
+      "engine": "${COLI_GLM_BIN}",
+      "expert_cache_cap": 8,
+      "profile": "16gb",
+      "quantization": {
+        "label": "mixed-16gb",
+        "expert_bits": 4,
+        "dense_bits": 2
+      }
+    }
+  ]
+}

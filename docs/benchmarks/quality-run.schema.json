@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "simplicio-local/perplexity-matrix-receipt-v1",
+  "title": "Perplexity matrix receipt",
+  "type": "object",
+  "required": [
+    "schema",
+    "suite_id",
+    "family",
+    "generated_at",
+    "status",
+    "manifest_sha256",
+    "host",
+    "corpus",
+    "variants"
+  ],
+  "properties": {
+    "schema": {
+      "const": "simplicio-local/perplexity-matrix-receipt-v1"
+    },
+    "suite_id": {
+      "type": ["string", "null"],
+      "minLength": 1
+    },
+    "family": {
+      "type": ["string", "null"],
+      "minLength": 1
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "status": {
+      "enum": ["completed", "failed"]
+    },
+    "failure_reason": {
+      "type": ["string", "null"]
+    },
+    "source_revision": {
+      "type": ["string", "null"],
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "manifest_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "host": {
+      "type": "object",
+      "required": ["platform", "platform_release", "machine", "python"]
+    },
+    "corpus": {
+      "type": "object",
+      "required": ["id", "format", "sha256"],
+      "properties": {
+        "id": {"type": ["string", "null"]},
+        "format": {"enum": ["text-jsonl", "token-ids-jsonl", null]},
+        "sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "variants": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "checkpoint_id",
+          "quantization",
+          "status",
+          "inputs",
+          "command_receipt",
+          "metrics"
+        ],
+        "properties": {
+          "id": {"type": "string"},
+          "checkpoint_id": {"type": "string"},
+          "quantization": {
+            "type": "object",
+            "required": ["label", "expert_bits", "dense_bits"]
+          },
+          "profile": {"type": ["string", "null"]},
+          "status": {"enum": ["completed", "failed"]},
+          "failure_reason": {"type": ["string", "null"]},
+          "inputs": {
+            "type": "object",
+            "required": [
+              "config_sha256",
+              "checkpoint_manifest_sha256",
+              "engine_sha256",
+              "tokenizer_sha256",
+              "documents",
+              "expected_predicted_tokens"
+            ]
+          },
+          "command_receipt": {
+            "type": "object",
+            "required": [
+              "argv",
+              "started_at",
+              "duration_ms",
+              "exit_code",
+              "stdout",
+              "stderr",
+              "stdout_sha256",
+              "stderr_sha256"
+            ]
+          },
+          "metrics": {
+            "type": "object",
+            "required": [
+              "negative_log_likelihood",
+              "predicted_tokens",
+              "perplexity",
+              "unavailable_reason"
+            ],
+            "properties": {
+              "negative_log_likelihood": {"type": ["number", "null"]},
+              "mean_negative_log_likelihood": {"type": ["number", "null"]},
+              "predicted_tokens": {"type": ["integer", "null"], "minimum": 1},
+              "perplexity": {"type": ["number", "null"], "exclusiveMinimum": 0},
+              "unavailable_reason": {"type": ["string", "null"]}
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}
