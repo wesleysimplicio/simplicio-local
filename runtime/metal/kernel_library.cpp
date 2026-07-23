@@ -7,16 +7,16 @@ namespace {
 constexpr std::string_view kMatmulSource = R"(#include <metal_stdlib>
 using namespace metal;
 
-kernel void us4_matmul_fp16(
-    device const half* lhs [[buffer(0)]],
-    device const half* rhs [[buffer(1)]],
-    device half* out [[buffer(2)]],
+kernel void us4_matmul_fp32(
+    device const float* lhs [[buffer(0)]],
+    device const float* rhs [[buffer(1)]],
+    device float* out [[buffer(2)]],
     constant uint& inner [[buffer(3)]],
     constant uint& width [[buffer(4)]],
     uint gid [[thread_position_in_grid]]) {
   const uint row = gid / width;
   const uint col = gid % width;
-  half value = half(0.0h);
+  float value = 0.0f;
   for (uint k = 0; k < inner; ++k) {
     value += lhs[row * inner + k] * rhs[k * width + col];
   }
@@ -72,7 +72,7 @@ kernel void us4_rmsnorm_fp32(
 constexpr MetalKernelCatalog kCatalog = {{
     {
         .kind = MetalKernelKind::kMatmul,
-        .entryPoint = "us4_matmul_fp16",
+        .entryPoint = "us4_matmul_fp32",
         .relativePath = "runtime/metal/kernels/matmul.metal",
         .source = kMatmulSource,
         .preferredThreadsPerGroup = 32,

@@ -40,7 +40,6 @@ add_library(us4_runtime_core
   kv/ssd_cold_store.cpp
   kv/summarizer.cpp
   memory/unified_allocator.cpp
-  metal/autorelease_scope.cpp
   metal/command_queue.cpp
   metal/device_info.cpp
   metal/dense_dispatch.cpp
@@ -75,6 +74,53 @@ add_library(us4_runtime_core
   tuning/profile_cache.cpp
   tuning/thermal_monitor.cpp
 )
+
+if(APPLE)
+  enable_language(OBJCXX)
+  target_sources(us4_runtime_core PRIVATE
+    metal/autorelease_scope.mm
+    metal/native_metal_backend.mm
+  )
+  set_source_files_properties(
+    metal/native_metal_backend.mm
+    PROPERTIES COMPILE_OPTIONS "-fobjc-arc"
+  )
+  target_link_libraries(us4_runtime_core PRIVATE
+    "-framework Foundation"
+    "-framework Metal"
+  )
+
+  find_package(MLX CONFIG QUIET)
+  if(TARGET mlx OR TARGET MLX::mlx)
+    target_sources(us4_runtime_core PRIVATE mlx/native_mlx_backend.cpp)
+    if(TARGET MLX::mlx)
+      target_link_libraries(us4_runtime_core PRIVATE MLX::mlx)
+    else()
+      target_link_libraries(us4_runtime_core PRIVATE mlx)
+    endif()
+    target_compile_definitions(us4_runtime_core PUBLIC US4_HAS_NATIVE_MLX=1)
+    message(STATUS "US4 native MLX backend enabled")
+  else()
+    find_path(US4_MLX_INCLUDE_DIR mlx/mlx.h)
+    find_library(US4_MLX_LIBRARY NAMES mlx)
+    if(US4_MLX_INCLUDE_DIR AND US4_MLX_LIBRARY)
+      target_sources(us4_runtime_core PRIVATE mlx/native_mlx_backend.cpp)
+      target_include_directories(us4_runtime_core PRIVATE ${US4_MLX_INCLUDE_DIR})
+      target_link_libraries(us4_runtime_core PRIVATE ${US4_MLX_LIBRARY})
+      target_compile_definitions(us4_runtime_core PUBLIC US4_HAS_NATIVE_MLX=1)
+      message(STATUS "US4 native MLX backend enabled")
+    else()
+      target_sources(us4_runtime_core PRIVATE mlx/native_mlx_backend_stub.cpp)
+      message(STATUS "US4 native MLX backend disabled: MLX package not found")
+    endif()
+  endif()
+else()
+  target_sources(us4_runtime_core PRIVATE
+    metal/autorelease_scope.cpp
+    metal/native_metal_backend_stub.cpp
+    mlx/native_mlx_backend_stub.cpp
+  )
+endif()
 
 target_include_directories(us4_runtime_core
   PUBLIC

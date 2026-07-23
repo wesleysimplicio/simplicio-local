@@ -24,6 +24,7 @@ private:
   bool requested_ = false;
   bool active_ = false;
   AutoreleaseBoundaryKind kind_ = AutoreleaseBoundaryKind::kNoop;
+  void *pool_ = nullptr;
 };
 
 } // namespace us4

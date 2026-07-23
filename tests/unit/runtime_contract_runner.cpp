@@ -362,37 +362,17 @@ int main() {
     probe.hasMetal = true;
     probe.hasMlx = true;
     us4::RuntimeContext context(probe);
-    ok &= Expect(context.metalQueue().Available(),
-                 "metal queue should be available on metal probe");
-    ok &= Expect(context.metalQueue().Profile().stage ==
-                     us4::MetalInitializationStage::kQueueReady,
-                 "metal queue should surface queue-ready init stage");
-    ok &= Expect(context.metalQueue().Profile().queueCreated,
-                 "metal queue should mark queue creation");
+    ok &= Expect(context.metalQueue().Available() ==
+                     context.metalQueue().Profile().nativeBackendAvailable,
+                 "metal queue should require a native backend");
     ok &= Expect(
         context.metalQueue().Profile().requiresAutoreleaseBoundary,
         "metal queue should request autorelease boundary on macos probe");
-    ok &=
-        Expect(context.metalQueue().Device().queueLabel == "us4.metal.default",
-               "metal queue should expose queue label");
-    ok &= Expect(context.metalQueue().Device().supportsUnifiedMemory,
-                 "metal queue should expose unified memory support");
-    ok &= Expect(context.mlxBridge().Available(),
-                 "mlx bridge should be available on mlx probe");
-    ok &= Expect(context.metalQueue().Dispatch(us4::MetalKernelKind::kSoftmax,
-                                               2, 64, shared),
-                 "metal queue should record dispatch contract");
-    ok &= Expect(context.metalQueue().DispatchCount() == 1U,
-                 "metal queue should count dispatches");
-    ok &= Expect(context.metalQueue().Dispatches().front().entryPoint ==
-                     "us4_softmax_rows",
-                 "metal queue should surface dispatch entry point");
-    ok &= Expect(context.metalQueue().Dispatches().front().relativePath ==
-                     "runtime/metal/kernels/softmax.metal",
-                 "metal queue should surface dispatch kernel path");
-    ok &= Expect(
-        context.metalQueue().Dispatches().front().autoreleaseBoundaryRequested,
-        "metal queue should record autorelease boundary request");
+    ok &= Expect(!context.metalQueue().Dispatch(
+                     us4::MetalKernelKind::kSoftmax, 2, 64, shared),
+                 "metal queue should reject unbound dispatches");
+    ok &= Expect(context.metalQueue().DispatchCount() == 0U,
+                 "metal queue should not count unexecuted dispatches");
     const us4::DenseMetalDispatchPlan densePlan =
         us4::BuildDenseMetalDispatchPlan(8, 8, 16);
     ok &= Expect(densePlan.steps.size() == 3U,
@@ -400,13 +380,18 @@ int main() {
     const us4::MlxDensePlan mlxPlan = us4::BuildMlxDensePlan(8, 8, 16);
     ok &= Expect(mlxPlan.operations.size() == 3U,
                  "mlx dense plan should keep 3 operations");
-    ok &= Expect(context.mlxBridge().BuildDensePlan("llama", 32, shared),
-                 "mlx bridge should build dense plan");
-    ok &= Expect(context.mlxBridge().EvaluateLastPlan(),
-                 "mlx bridge should evaluate last plan");
-    ok &= Expect(context.mlxBridge().LastPlan().has_value() &&
-                     context.mlxBridge().LastPlan()->operations.size() == 3U,
-                 "mlx bridge should surface 3 recorded operations");
+    if (context.mlxBridge().Available()) {
+      ok &= Expect(context.mlxBridge().BuildDensePlan("llama", 32, shared),
+                   "mlx bridge should build dense plan");
+      ok &= Expect(context.mlxBridge().EvaluateLastPlan(),
+                   "mlx bridge should evaluate last plan");
+      ok &= Expect(context.mlxBridge().LastPlan().has_value() &&
+                       context.mlxBridge().LastPlan()->operations.size() == 3U,
+                   "mlx bridge should surface 3 recorded operations");
+    } else {
+      ok &= Expect(!context.mlxBridge().BuildDensePlan("llama", 32, shared),
+                   "mlx bridge should reject plans without native MLX");
+    }
     ok &= Expect(us4::GetMetalKernelCatalog().size() == 3U,
                  "metal kernel catalog should keep 3 kernels");
     ok &=
@@ -764,18 +749,18 @@ int main() {
                         acceleratedContext);
     ok &= Expect(llamaResult.backend == "metal",
                  "llama should keep metal backend when available");
-    ok &= Expect(acceleratedContext.metalQueue().DispatchCount() == 3U,
-                 "llama generation should touch the metal scaffold");
+    ok &= Expect(acceleratedContext.metalQueue().DispatchCount() == 0U,
+                 "llama generation must not count unexecuted metal work");
     ok &= Expect(acceleratedContext.allocator().SharedAllocationCount() == 1U,
                  "metal scaffold should allocate unified-shared memory");
     ok &= Expect(llamaResult.sharedAllocations == 1U,
                  "result should surface shared allocation count");
-    ok &= Expect(llamaResult.metalDispatches == 3U,
+    ok &= Expect(llamaResult.metalDispatches == 0U,
                  "result should surface metal dispatch count");
     ok &= Expect(llamaResult.mlxOperationCount == 0U,
                  "metal path should not report mlx operations");
-    ok &= Expect(llamaResult.metalQueueLabel == "us4.metal.default",
-                 "result should surface metal queue label");
+    ok &= Expect(!llamaResult.metalQueueLabel.empty(),
+                 "result should surface metal queue state");
     ok &= Expect(qwen->SupportsMetalBackend(),
                  "qwen should declare metal support");
 

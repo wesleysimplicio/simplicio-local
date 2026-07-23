@@ -50,6 +50,7 @@ set(us4_runtime_contract_test_sources
   speculative_loader_contract_test.cpp
   mlx_bridge_contract_test.cpp
   metal_device_kernel_contract_test.cpp
+  native_apple_backend_parity_test.cpp
   kernel_numerics_contract_test.cpp
   cpu_int8_dispatch_contract_test.cpp
   error_paths_contract_test.cpp

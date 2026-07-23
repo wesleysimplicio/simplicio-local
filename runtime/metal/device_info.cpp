@@ -1,14 +1,29 @@
 #include "metal/device_info.h"
 
+#include "metal/native_metal_backend.h"
+
 namespace us4 {
 
 MetalDeviceInfo ProbeMetalDevice(const HardwareProbeResult& hardware) {
   MetalDeviceInfo device;
-  device.available = hardware.hasMetal;
-  device.supportsUnifiedMemory = hardware.hasMetal && hardware.isAppleSilicon;
-  device.maxThreadsPerThreadgroup = hardware.hasMetal ? 1024U : 0U;
-  device.deviceName = hardware.hasMetal ? (hardware.chip.empty() ? "apple-gpu" : hardware.chip + "-gpu") : "unavailable";
-  device.queueLabel = hardware.hasMetal ? "us4.metal.default" : "disabled";
+  if (!hardware.hasMetal || !hardware.isAppleSilicon) {
+    device.deviceName = "unavailable";
+    device.queueLabel = "disabled";
+    return device;
+  }
+
+  NativeMetalBackend backend;
+  if (!backend.Available()) {
+    device.deviceName = "unavailable";
+    device.queueLabel = "disabled";
+    return device;
+  }
+
+  device.available = true;
+  device.supportsUnifiedMemory = backend.Device().supportsUnifiedMemory;
+  device.maxThreadsPerThreadgroup = backend.Device().maxThreadsPerThreadgroup;
+  device.deviceName = backend.Device().name;
+  device.queueLabel = "us4.metal.default";
   return device;
 }
 

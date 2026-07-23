@@ -1,5 +1,7 @@
 #include "metal/autorelease_scope.h"
 
+#import <Foundation/Foundation.h>
+
 namespace us4 {
 
 std::string_view ToString(const AutoreleaseBoundaryKind kind) {
@@ -13,9 +15,20 @@ std::string_view ToString(const AutoreleaseBoundaryKind kind) {
 }
 
 ScopedAutoreleasePool::ScopedAutoreleasePool(const bool requested)
-    : requested_(requested) {}
+    : requested_(requested) {
+  if (requested_) {
+    pool_ = (void *)[[NSAutoreleasePool alloc] init];
+    active_ = pool_ != nullptr;
+    kind_ = active_ ? AutoreleaseBoundaryKind::kObjectiveC
+                    : AutoreleaseBoundaryKind::kNoop;
+  }
+}
 
-ScopedAutoreleasePool::~ScopedAutoreleasePool() = default;
+ScopedAutoreleasePool::~ScopedAutoreleasePool() {
+  if (pool_ != nullptr) {
+    [(NSAutoreleasePool *)pool_ drain];
+  }
+}
 
 bool ScopedAutoreleasePool::Requested() const { return requested_; }
 

@@ -9,6 +9,7 @@ MlxDensePlan BuildMlxDensePlan(const std::size_t tokenCount,
       .tokenCount = tokenCount,
       .hiddenSize = hiddenSize,
       .vocabularySize = vocabularySize,
+      .operations = {},
   };
 
   if (tokenCount == 0 || hiddenSize == 0 || vocabularySize == 0) {
