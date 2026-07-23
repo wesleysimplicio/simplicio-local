@@ -56,6 +56,7 @@ set(us4_runtime_contract_test_sources
   kernel_numerics_contract_test.cpp
   cpu_int8_dispatch_contract_test.cpp
   error_paths_contract_test.cpp
+  dense_layer_stream_contract_test.cpp
   runtime_context_contract_test.cpp
 )
 
@@ -72,6 +73,21 @@ target_include_directories(us4_runtime_smoke_test
 )
 
 add_test(NAME us4_runtime_smoke_test COMMAND us4_runtime_smoke_test)
+
+add_executable(dense_layer_stream_smoke_test
+  dense_layer_stream_smoke_test.cpp
+)
+
+target_link_libraries(dense_layer_stream_smoke_test PRIVATE us4_runtime_core)
+
+target_include_directories(dense_layer_stream_smoke_test
+  PRIVATE
+    ${CMAKE_SOURCE_DIR}/runtime
+    ${CMAKE_BINARY_DIR}/generated
+)
+
+add_test(NAME dense_layer_stream_smoke_test
+         COMMAND dense_layer_stream_smoke_test)
 
 add_executable(us4_runtime_contract_runner
   ${us4_runtime_native_contract_runner_sources}

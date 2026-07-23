@@ -12,6 +12,18 @@ target_include_directories(dense_baseline
     ${CMAKE_BINARY_DIR}/generated
 )
 
+add_executable(dense_stream_demo
+  dense_stream_demo.cpp
+)
+
+target_link_libraries(dense_stream_demo PRIVATE us4_runtime_core)
+
+target_include_directories(dense_stream_demo
+  PRIVATE
+    ${CMAKE_SOURCE_DIR}/runtime
+    ${CMAKE_BINARY_DIR}/generated
+)
+
 add_executable(matrix_runner
   matrix_runner.cpp
 )
