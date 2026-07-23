@@ -26,6 +26,7 @@ test('prints product help and version', () => {
   assert.match(help.stdout, /convert/);
   assert.match(help.stdout, /chat/);
   assert.match(help.stdout, /serve/);
+  assert.match(help.stdout, /backend/);
 
   const version = runCli(['--version']);
   assert.equal(version.status, 0, version.stderr);
@@ -59,6 +60,16 @@ test('doctor fails clearly when python is unavailable', () => {
   const result = runCli(['doctor', '--help'], { env: { PATH: '' } });
   assert.equal(result.status, 1);
   assert.match(result.stderr, /Python 3 was not found/);
+});
+
+test('backend probe is read-only and versioned', () => {
+  const result = runCli(['backend', 'probe', '--json']);
+  assert.equal(result.status, 0, result.stderr);
+  const report = JSON.parse(result.stdout);
+  assert.equal(report.protocol, 'simplicio.local-inference-backend/v1');
+  assert.equal(report.read_only, true);
+  assert.equal(report.model_payload_read, false);
+  assert.equal(report.capabilities.tool_execution, 'forbidden');
 });
 
 test('chat fails clearly when npm is unavailable', () => {
