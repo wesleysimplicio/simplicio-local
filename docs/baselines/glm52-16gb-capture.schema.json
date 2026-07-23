@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "simplicio-local/glm52-16gb-capture-v1",
+  "title": "GLM-5.2 int4 baseline capture on a 16 GB host",
+  "type": "object",
+  "required": ["schema", "session_id", "created_at", "source", "host", "checkpoint", "preflight", "cases", "verdict"],
+  "properties": {
+    "schema": {"const": "simplicio-local/glm52-16gb-capture-v1"},
+    "session_id": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string"},
+    "source": {
+      "type": "object",
+      "required": ["git_commit", "git_dirty"],
+      "properties": {
+        "git_commit": {"type": ["string", "null"]},
+        "git_dirty": {"type": ["boolean", "null"]}
+      }
+    },
+    "host": {
+      "type": "object",
+      "required": ["platform", "machine", "logical_cpus", "physical_memory_bytes", "effective_memory_bytes", "memory_limit_source", "disk"],
+      "properties": {
+        "platform": {"type": "string"},
+        "machine": {"type": "string"},
+        "logical_cpus": {"type": ["integer", "null"]},
+        "physical_memory_bytes": {"type": ["integer", "null"]},
+        "effective_memory_bytes": {"type": ["integer", "null"]},
+        "memory_limit_source": {"type": ["string", "null"]},
+        "disk": {"type": "object"}
+      }
+    },
+    "checkpoint": {
+      "type": "object",
+      "required": ["path", "config_sha256", "tokenizer_sha256", "safetensors_files", "safetensors_bytes", "manifest_sha256"],
+      "properties": {
+        "path": {"type": "string"},
+        "config_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "tokenizer_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "safetensors_files": {"type": "integer", "minimum": 0},
+        "safetensors_bytes": {"type": "integer", "minimum": 0},
+        "manifest_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "preflight": {
+      "type": "object",
+      "required": ["status", "blockers", "plan", "doctor"],
+      "properties": {
+        "status": {"enum": ["ready", "blocked"]},
+        "blockers": {"type": "array", "items": {"type": "string"}},
+        "plan": {"$ref": "#/$defs/commandReceipt"},
+        "doctor": {"$ref": "#/$defs/commandReceipt"}
+      }
+    },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/case"}
+    },
+    "verdict": {
+      "type": "object",
+      "required": ["status", "reasons"],
+      "properties": {
+        "status": {"enum": ["incomplete", "runs", "runs_degraded", "does_not_run"]},
+        "reasons": {"type": "array", "items": {"type": "string"}}
+      }
+    }
+  },
+  "$defs": {
+    "commandReceipt": {
+      "type": "object",
+      "required": ["argv", "exit_code", "stdout_path", "stderr_path", "stdout_sha256", "stderr_sha256"],
+      "properties": {
+        "argv": {"type": "array", "items": {"type": "string"}},
+        "exit_code": {"type": ["integer", "null"]},
+        "stdout_path": {"type": ["string", "null"]},
+        "stderr_path": {"type": ["string", "null"]},
+        "stdout_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+        "stderr_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "metric": {
+      "type": "object",
+      "required": ["value", "unit", "unavailable_reason"],
+      "properties": {
+        "value": {"type": ["number", "integer", "boolean", "null"]},
+        "unit": {"type": ["string", "null"]},
+        "unavailable_reason": {"type": ["string", "null"]}
+      }
+    },
+    "case": {
+      "type": "object",
+      "required": ["id", "prompt_id", "cache_state", "repetition", "variant", "environment", "status", "receipt", "metrics"],
+      "properties": {
+        "id": {"type": "string"},
+        "prompt_id": {"enum": ["short", "medium", "long"]},
+        "cache_state": {"enum": ["cold", "warm"]},
+        "repetition": {"type": "integer", "minimum": 1},
+        "variant": {"enum": ["baseline", "topp-0.7", "mtp-on", "direct-on"]},
+        "environment": {"type": "object", "additionalProperties": {"type": "string"}},
+        "cold_cache_attestation": {"type": ["string", "null"]},
+        "status": {"enum": ["planned", "passed", "failed", "blocked", "invalid"]},
+        "receipt": {"$ref": "#/$defs/commandReceipt"},
+        "metrics": {
+          "type": "object",
+          "additionalProperties": {"$ref": "#/$defs/metric"}
+        }
+      }
+    }
+  }
+}
