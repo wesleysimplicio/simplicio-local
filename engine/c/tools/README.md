@@ -8,6 +8,7 @@ not runtime dependencies of the C engine.
   resumable shards atomically.
 - `make_glm_oracle.py`, `make_kimi_oracle.py`, `make_glm_bench_model.py`:
   deterministic fixtures
+- `shard_safetensors.py`: deterministic, dependency-free safetensors splitting
 - `benchmark_cuda_fixture.py`, `eval_glm.py`, `fetch_benchmarks.py`: benchmarks
 - `perplexity_matrix.py`: matriz fail-closed de perplexity por quantização, com
   hashes e receipts versionados
