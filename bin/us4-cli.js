@@ -104,6 +104,8 @@ function printHelp() {
 Usage:
   us4-cli probe [--json]
   us4-cli local-inference-status [--json]
+  us4-cli backend probe [--json]
+  us4-cli backend estimate [...]
   us4-cli list-models [--json]
   us4-cli run ...
   us4-cli serve [--native] [...]
@@ -114,6 +116,7 @@ Usage:
 
 Product commands:
   probe        delegate to the native runtime probe
+  backend      read-only capability and admission contract for Runtime/Loop
   list-models  delegate to the native adapter registry
   run          delegate to the native single-shot runtime
   serve        delegate to the native runtime when built; otherwise
@@ -220,6 +223,9 @@ const [command, ...rest] = args;
 switch (command) {
   case 'local-inference-status':
     printLocalInferenceStatus(rest.includes('--json'));
+    break;
+  case 'backend':
+    runPythonScript('engine/c/backend.py', rest);
     break;
   case 'doctor':
     runPythonScript('engine/c/doctor.py', rest);
