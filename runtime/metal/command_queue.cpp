@@ -1,5 +1,7 @@
 #include "metal/command_queue.h"
 
+#include <algorithm>
+
 #include "metal/autorelease_scope.h"
 #include "metal/kernel_library.h"
 
@@ -30,29 +32,40 @@ std::string_view ToString(const MetalInitializationStage stage) {
 }
 
 MetalCommandQueue::MetalCommandQueue(const HardwareProbeResult &hardware)
-    : available_(hardware.hasMetal), device_(ProbeMetalDevice(hardware)) {
+    : nativeBackend_(std::make_shared<NativeMetalBackend>()) {
   profile_.requiresAutoreleaseBoundary =
       hardware.platform == "macos" || hardware.platform == "ios";
 #if defined(__APPLE__)
   profile_.hostSupportsObjectiveCBoundary = true;
 #endif
 
-  if (!hardware.hasMetal || !device_.available) {
+  profile_.nativeBackendCompiled = nativeBackend_->Compiled();
+  profile_.nativeBackendAvailable = nativeBackend_->Available();
+
+  if (!hardware.hasMetal || !hardware.isAppleSilicon) {
     available_ = false;
     reason_ = "metal-unavailable";
     profile_.stage = MetalInitializationStage::kUnavailable;
     return;
   }
 
-  profile_.stage = MetalInitializationStage::kDeviceReady;
-  reason_ = "metal-device-ready";
-
-  if (!device_.queueLabel.empty() && device_.queueLabel != "disabled") {
-    profile_.queueCreated = true;
-    profile_.stage = MetalInitializationStage::kQueueReady;
-    reason_ = "metal-queue-ready";
+  if (!nativeBackend_->Available()) {
+    available_ = false;
+    reason_ = std::string(nativeBackend_->Reason());
+    profile_.stage = MetalInitializationStage::kUnavailable;
+    return;
   }
-  available_ = profile_.queueCreated;
+
+  const NativeMetalDevice &nativeDevice = nativeBackend_->Device();
+  device_.available = true;
+  device_.supportsUnifiedMemory = nativeDevice.supportsUnifiedMemory;
+  device_.maxThreadsPerThreadgroup = nativeDevice.maxThreadsPerThreadgroup;
+  device_.deviceName = nativeDevice.name;
+  device_.queueLabel = "us4.metal.default";
+  profile_.stage = MetalInitializationStage::kQueueReady;
+  profile_.queueCreated = true;
+  available_ = true;
+  reason_ = "metal-native-ready";
 }
 
 bool MetalCommandQueue::Available() const { return available_; }
@@ -67,31 +80,56 @@ bool MetalCommandQueue::Dispatch(
     const MetalKernelKind kernel, const std::size_t threadgroups,
     const std::size_t threadsPerGroup,
     const std::shared_ptr<UnifiedAllocation> &allocation) {
-  if (!available_ || !profile_.queueCreated || threadgroups == 0 ||
-      threadsPerGroup == 0) {
+  (void)kernel;
+  (void)threadgroups;
+  (void)threadsPerGroup;
+  (void)allocation;
+  reason_ = available_ ? "metal-dispatch-requires-bound-buffers"
+                       : std::string(nativeBackend_ != nullptr
+                                         ? nativeBackend_->Reason()
+                                         : std::string_view("metal-unavailable"));
+  return false;
+}
+
+bool MetalCommandQueue::Matmul(const std::span<const float> lhs,
+                               const std::span<const float> rhs,
+                               const std::size_t rows,
+                               const std::size_t inner,
+                               const std::size_t columns,
+                               std::vector<float> &output) {
+  if (!available_ || nativeBackend_ == nullptr) {
+    reason_ = nativeBackend_ != nullptr ? std::string(nativeBackend_->Reason())
+                                        : "metal-unavailable";
     return false;
   }
 
-  const MetalKernelDescriptor *descriptor = FindMetalKernel(kernel);
-  if (descriptor == nullptr) {
-    reason_ = "metal-kernel-missing";
+  NativeMetalMatmulResult result =
+      nativeBackend_->Matmul(lhs, rhs, rows, inner, columns);
+  reason_ = result.reason;
+  if (!result.succeeded) {
     return false;
   }
 
-  const ScopedAutoreleasePool pool(profile_.requiresAutoreleaseBoundary);
-
+  const MetalKernelDescriptor *descriptor =
+      FindMetalKernel(MetalKernelKind::kMatmul);
+  output = std::move(result.values);
+  const std::size_t threadsPerGroup =
+      std::min<std::size_t>(device_.maxThreadsPerThreadgroup, 256U);
   dispatches_.push_back(MetalDispatchRecord{
-      .kernel = kernel,
-      .entryPoint = descriptor->entryPoint,
-      .relativePath = descriptor->relativePath,
-      .threadgroups = threadgroups,
+      .kernel = MetalKernelKind::kMatmul,
+      .entryPoint = descriptor != nullptr ? descriptor->entryPoint
+                                          : std::string_view{},
+      .relativePath = descriptor != nullptr ? descriptor->relativePath
+                                            : std::string_view{},
+      .threadgroups =
+          (rows * columns + threadsPerGroup - 1U) / threadsPerGroup,
       .threadsPerGroup = threadsPerGroup,
-      .usesSharedAllocation = allocation != nullptr && allocation->gpuVisible,
-      .autoreleaseBoundaryRequested = pool.Requested(),
-      .autoreleasePoolActive = pool.Active(),
-      .autoreleaseBoundaryKind = ToString(pool.Kind()),
+      .usesSharedAllocation = true,
+      .autoreleaseBoundaryRequested = true,
+      .autoreleasePoolActive = true,
+      .autoreleaseBoundaryKind = "objective-c-autorelease",
+      .executed = true,
   });
-  reason_ = "metal-dispatch-recorded";
   return true;
 }
 

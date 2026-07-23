@@ -50,16 +50,22 @@ TEST(RuntimeAccelerationContractTest,
      RuntimeContextExposesMetalQueueAndMlxBridge) {
   us4::RuntimeContext context(MakeAppleProbe());
 
-  EXPECT_TRUE(context.metalQueue().Available());
-  EXPECT_EQ(context.metalQueue().Reason(), "metal-queue-ready");
-  EXPECT_EQ(context.metalQueue().Profile().stage,
-            us4::MetalInitializationStage::kQueueReady);
-  EXPECT_TRUE(context.metalQueue().Profile().queueCreated);
+  EXPECT_EQ(context.metalQueue().Available(),
+            context.metalQueue().Profile().nativeBackendAvailable);
   EXPECT_TRUE(context.metalQueue().Profile().requiresAutoreleaseBoundary);
-  EXPECT_EQ(context.metalQueue().Device().queueLabel, "us4.metal.default");
-  EXPECT_TRUE(context.metalQueue().Device().supportsUnifiedMemory);
-  EXPECT_TRUE(context.mlxBridge().Available());
-  EXPECT_EQ(context.mlxBridge().Reason(), "mlx-bridge-ready");
+  if (context.metalQueue().Available()) {
+    EXPECT_EQ(context.metalQueue().Reason(), "metal-native-ready");
+    EXPECT_EQ(context.metalQueue().Profile().stage,
+              us4::MetalInitializationStage::kQueueReady);
+    EXPECT_TRUE(context.metalQueue().Profile().queueCreated);
+    EXPECT_EQ(context.metalQueue().Device().queueLabel, "us4.metal.default");
+    EXPECT_TRUE(context.metalQueue().Device().supportsUnifiedMemory);
+  } else {
+    EXPECT_EQ(context.metalQueue().Profile().stage,
+              us4::MetalInitializationStage::kUnavailable);
+  }
+  EXPECT_EQ(context.mlxBridge().Available(),
+            context.mlxBridge().NativeBackendCompiled());
   EXPECT_FALSE(context.aneBackend().Available());
   EXPECT_EQ(context.aneBackend().Reason(), "ane-unavailable");
 }
@@ -206,21 +212,13 @@ TEST(RuntimeAccelerationContractTest,
   }
 }
 
-TEST(RuntimeAccelerationContractTest, MetalQueueRecordsSharedDispatches) {
+TEST(RuntimeAccelerationContractTest, MetalQueueRejectsUnboundDispatches) {
   us4::RuntimeContext context(MakeAppleProbe());
   const auto shared = context.allocator().Allocate(512, true);
 
-  EXPECT_TRUE(context.metalQueue().Dispatch(us4::MetalKernelKind::kMatmul, 4,
-                                            32, shared));
-  ASSERT_EQ(context.metalQueue().DispatchCount(), 1U);
-  EXPECT_EQ(context.metalQueue().Dispatches().front().entryPoint,
-            "us4_matmul_fp16");
-  EXPECT_EQ(context.metalQueue().Dispatches().front().relativePath,
-            "runtime/metal/kernels/matmul.metal");
-  EXPECT_TRUE(context.metalQueue().Dispatches().front().usesSharedAllocation);
-  EXPECT_TRUE(
-      context.metalQueue().Dispatches().front().autoreleaseBoundaryRequested);
-  EXPECT_EQ(context.metalQueue().Reason(), "metal-dispatch-recorded");
+  EXPECT_FALSE(context.metalQueue().Dispatch(us4::MetalKernelKind::kMatmul, 4,
+                                             32, shared));
+  EXPECT_EQ(context.metalQueue().DispatchCount(), 0U);
 }
 
 TEST(RuntimeAccelerationContractTest, MetalKernelCatalogExposesKernelMetadata) {
@@ -250,6 +248,10 @@ TEST(RuntimeAccelerationContractTest, MlxBridgeBuildsAndEvaluatesDensePlan) {
   us4::RuntimeContext context(MakeAppleProbe());
   const auto shared = context.allocator().Allocate(1024, true);
 
+  if (!context.mlxBridge().Available()) {
+    EXPECT_FALSE(context.mlxBridge().BuildDensePlan("llama", 64, shared));
+    return;
+  }
   EXPECT_TRUE(context.mlxBridge().BuildDensePlan("llama", 64, shared));
   ASSERT_TRUE(context.mlxBridge().LastPlan().has_value());
   EXPECT_EQ(context.mlxBridge().LastPlan()->family, "llama");
@@ -289,9 +291,9 @@ TEST(RuntimeAccelerationContractTest,
 
   EXPECT_EQ(result.backend, "metal");
   EXPECT_EQ(result.sharedAllocations, 1U);
-  EXPECT_EQ(result.metalDispatches, 3U);
+  EXPECT_EQ(result.metalDispatches, 0U);
   EXPECT_FALSE(result.mlxPlanBuilt);
-  EXPECT_EQ(context.metalQueue().DispatchCount(), 3U);
+  EXPECT_EQ(context.metalQueue().DispatchCount(), 0U);
   EXPECT_EQ(context.allocator().SharedAllocationCount(), 1U);
 }
 

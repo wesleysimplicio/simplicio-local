@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -9,6 +10,7 @@
 #include "core/hardware_probe.h"
 #include "memory/unified_allocator.h"
 #include "metal/device_info.h"
+#include "metal/native_metal_backend.h"
 
 namespace us4 {
 
@@ -34,6 +36,7 @@ struct MetalDispatchRecord {
   bool autoreleaseBoundaryRequested = false;
   bool autoreleasePoolActive = false;
   std::string_view autoreleaseBoundaryKind;
+  bool executed = false;
 };
 
 struct MetalQueueProfile {
@@ -41,6 +44,8 @@ struct MetalQueueProfile {
   bool queueCreated = false;
   bool requiresAutoreleaseBoundary = false;
   bool hostSupportsObjectiveCBoundary = false;
+  bool nativeBackendCompiled = false;
+  bool nativeBackendAvailable = false;
 };
 
 std::string_view ToString(MetalKernelKind kernel);
@@ -58,6 +63,9 @@ public:
   bool Dispatch(MetalKernelKind kernel, std::size_t threadgroups,
                 std::size_t threadsPerGroup,
                 const std::shared_ptr<UnifiedAllocation> &allocation = nullptr);
+  bool Matmul(std::span<const float> lhs, std::span<const float> rhs,
+              std::size_t rows, std::size_t inner, std::size_t columns,
+              std::vector<float> &output);
   void Reset();
   std::size_t DispatchCount() const;
   const std::vector<MetalDispatchRecord> &Dispatches() const;
@@ -68,6 +76,7 @@ private:
   MetalDeviceInfo device_;
   MetalQueueProfile profile_;
   std::vector<MetalDispatchRecord> dispatches_;
+  std::shared_ptr<NativeMetalBackend> nativeBackend_;
 };
 
 } // namespace us4

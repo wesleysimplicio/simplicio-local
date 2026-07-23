@@ -93,16 +93,16 @@ int main() {
   ok &= Expect(allocator.SharedAllocationCount() == 1,
                "unified allocator should count shared allocations");
 
-  ok &= Expect(context.metalQueue().Available() == probe.hasMetal,
-               "metal queue should mirror probe availability");
-  ok &= Expect(context.mlxBridge().Available() == probe.hasMlx,
-               "mlx bridge should mirror probe availability");
-  if (probe.hasMetal) {
-    ok &= Expect(context.metalQueue().Dispatch(us4::MetalKernelKind::kMatmul, 2,
-                                               32, sharedAllocation),
-                 "metal queue should record dispatches when available");
+  ok &= Expect(!context.metalQueue().Available() || probe.hasMetal,
+               "metal queue requires probe and native availability");
+  ok &= Expect(!context.mlxBridge().Available() || probe.hasMlx,
+               "mlx bridge requires probe and native availability");
+  if (context.metalQueue().Available()) {
+    ok &= Expect(!context.metalQueue().Dispatch(
+                     us4::MetalKernelKind::kMatmul, 2, 32, sharedAllocation),
+                 "metal queue should reject dispatches without bound tensors");
   }
-  if (probe.hasMlx) {
+  if (context.mlxBridge().Available()) {
     ok &=
         Expect(context.mlxBridge().BuildDensePlan("qwen", 16, sharedAllocation),
                "mlx bridge should build plan when available");

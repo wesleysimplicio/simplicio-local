@@ -21,8 +21,14 @@ us4::HardwareProbeResult MlxCapableProbe() {
 TEST(MlxBridgeContractTest, AvailableBridgeBuildsAndEvaluatesPlan) {
   us4::MlxBridge bridge(MlxCapableProbe());
 
-  EXPECT_TRUE(bridge.Available());
-  EXPECT_EQ(bridge.Reason(), "mlx-bridge-ready");
+  if (!bridge.Available()) {
+    EXPECT_FALSE(bridge.NativeBackendCompiled());
+    EXPECT_EQ(bridge.Reason(), "mlx-not-built-for-host");
+    EXPECT_FALSE(bridge.BuildDensePlan("qwen", 12U));
+    return;
+  }
+  EXPECT_TRUE(bridge.NativeBackendCompiled());
+  EXPECT_EQ(bridge.Reason(), "mlx-native-ready");
 
   ASSERT_TRUE(bridge.BuildDensePlan("qwen", 12U));
   ASSERT_TRUE(bridge.LastPlan().has_value());
@@ -38,6 +44,10 @@ TEST(MlxBridgeContractTest, AvailableBridgeBuildsAndEvaluatesPlan) {
 
 TEST(MlxBridgeContractTest, GpuVisibleAllocationMarksUnifiedUse) {
   us4::MlxBridge bridge(MlxCapableProbe());
+  if (!bridge.Available()) {
+    EXPECT_FALSE(bridge.BuildDensePlan("llama", 8U));
+    return;
+  }
   us4::UnifiedAllocator allocator;
   const auto shared = allocator.Allocate(256U, true);
 
@@ -62,6 +72,22 @@ TEST(MlxBridgeContractTest, BuildPlanRejectsDegenerateInputs) {
   us4::MlxBridge bridge(MlxCapableProbe());
   EXPECT_FALSE(bridge.BuildDensePlan("", 4U));
   EXPECT_FALSE(bridge.BuildDensePlan("qwen", 0U));
+}
+
+TEST(MlxBridgeContractTest, LinuxFallbackRejectsSyntheticAppleCapability) {
+#if defined(__APPLE__)
+  GTEST_SKIP() << "Linux fallback contract only";
+#else
+  us4::MlxBridge bridge(MlxCapableProbe());
+  EXPECT_FALSE(bridge.Available());
+  EXPECT_FALSE(bridge.NativeBackendCompiled());
+  EXPECT_EQ(bridge.Reason(), "mlx-not-built-for-host");
+  const std::vector<float> lhs = {1.0F};
+  const std::vector<float> rhs = {1.0F};
+  std::vector<float> output;
+  EXPECT_FALSE(bridge.Matmul(lhs, rhs, 1U, 1U, 1U, output));
+  EXPECT_TRUE(output.empty());
+#endif
 }
 
 TEST(MlxDensePlanContractTest, BuildsThreeStageGraphWithExpectedExtents) {

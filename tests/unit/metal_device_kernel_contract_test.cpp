@@ -3,20 +3,28 @@
 #include "core/hardware_probe.h"
 #include "metal/device_info.h"
 #include "metal/kernel_library.h"
+#include "metal/native_metal_backend.h"
 
-TEST(MetalDeviceContractTest, AppleSiliconProbeReportsUnifiedMemory) {
+TEST(MetalDeviceContractTest, ProbeCannotInventNativeMetalAvailability) {
   us4::HardwareProbeResult probe;
   probe.hasMetal = true;
   probe.isAppleSilicon = true;
   probe.chip = "Apple M3";
 
   const us4::MetalDeviceInfo device = us4::ProbeMetalDevice(probe);
+  us4::NativeMetalBackend backend;
 
-  EXPECT_TRUE(device.available);
-  EXPECT_TRUE(device.supportsUnifiedMemory);
-  EXPECT_EQ(device.maxThreadsPerThreadgroup, 1024U);
-  EXPECT_EQ(device.queueLabel, "us4.metal.default");
-  EXPECT_EQ(device.deviceName, "Apple M3-gpu");
+  EXPECT_EQ(device.available, backend.Available());
+  if (backend.Available()) {
+    EXPECT_TRUE(device.supportsUnifiedMemory);
+    EXPECT_GT(device.maxThreadsPerThreadgroup, 0U);
+    EXPECT_EQ(device.queueLabel, "us4.metal.default");
+    EXPECT_FALSE(device.deviceName.empty());
+  } else {
+    EXPECT_EQ(device.maxThreadsPerThreadgroup, 0U);
+    EXPECT_EQ(device.queueLabel, "disabled");
+    EXPECT_EQ(device.deviceName, "unavailable");
+  }
 }
 
 TEST(MetalDeviceContractTest, NonAppleMetalHasNoUnifiedMemory) {
@@ -26,7 +34,7 @@ TEST(MetalDeviceContractTest, NonAppleMetalHasNoUnifiedMemory) {
 
   const us4::MetalDeviceInfo device = us4::ProbeMetalDevice(probe);
 
-  EXPECT_TRUE(device.available);
+  EXPECT_FALSE(device.available);
   EXPECT_FALSE(device.supportsUnifiedMemory);
 }
 
@@ -60,4 +68,6 @@ TEST(MetalKernelLibraryContractTest, FindResolvesEveryKernelKind) {
     ASSERT_NE(descriptor, nullptr);
     EXPECT_EQ(descriptor->kind, kind);
   }
+  EXPECT_EQ(us4::FindMetalKernel(us4::MetalKernelKind::kMatmul)->entryPoint,
+            "us4_matmul_fp32");
 }
