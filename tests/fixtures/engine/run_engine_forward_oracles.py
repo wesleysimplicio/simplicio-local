@@ -92,7 +92,7 @@ def run_oracle_case(name: str, snap: Path, ref: Path) -> None:
 
 def optional_checkpoint(name: str, snap: Path, ref: Path) -> bool:
     present = snap.is_dir() and (snap / "config.json").is_file() \
-        and (snap / "model.safetensors").is_file() and ref.is_file()
+        and any(snap.glob("*.safetensors")) and ref.is_file()
     if not present:
         try:
             snap_label = snap.relative_to(REPO_ROOT)
