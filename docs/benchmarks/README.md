@@ -5,6 +5,10 @@ Este diretório junta o que faltava para medir sem inventar:
 - um harness de captura em `runtime/benchmarks/repro_harness.py`;
 - um template versionado em `docs/benchmarks/fixtures/issue-118-126.template.json`;
 - um schema formal do artefato de saída em `docs/benchmarks/repro-bench-run.schema.json`;
+- um runner de perplexity por quantização em
+  `engine/c/tools/perplexity_matrix.py`;
+- schema de receipt de qualidade em `docs/benchmarks/quality-run.schema.json`;
+- metodologia completa em `docs/benchmarks/METHODOLOGY.md`;
 - documentação explícita do que é:
   - contrato/fixture local;
   - benchmark real em host de 16 GB;
@@ -65,7 +69,31 @@ Em host não-16 GB, os casos que exigem 16 GB ficam com
 
 ### 3. Rodar perplexity/evals reproduzíveis
 
-O repo já traz utilitários reaproveitáveis em `engine/c/tools/`:
+Copie `fixtures/perplexity-matrix.template.json`, substitua o hash e as
+identidades do corpus/checkpoint, configure os três caminhos e execute:
+
+```bash
+export QUALITY_CORPUS=/dados/wikitext2-fixed.jsonl
+export GLM52_BF16_CHECKPOINT=/modelos/glm52-bf16
+export GLM52_BF16_MANIFEST=/modelos/glm52-bf16/model.safetensors.index.json
+export GLM52_INT4_CHECKPOINT=/modelos/glm52-int4
+export GLM52_INT4_MANIFEST=/modelos/glm52-int4/model.safetensors.index.json
+export GLM52_MIXED_CHECKPOINT=/modelos/glm52-mixed-16gb
+export GLM52_MIXED_MANIFEST=/modelos/glm52-mixed-16gb/model.safetensors.index.json
+export COLI_GLM_BIN="$PWD/engine/c/glm"
+
+python engine/c/tools/perplexity_matrix.py validate \
+  --manifest out/glm52-quality.json
+python engine/c/tools/perplexity_matrix.py run \
+  --manifest out/glm52-quality.json \
+  --output out/glm52-quality.receipt.json
+```
+
+O runner valida todos os hashes e caminhos antes de iniciar a primeira
+variante. Se qualquer execução falhar, o receipt preserva retorno e logs e a
+métrica fica `null` com motivo.
+
+O repo também traz utilitários reaproveitáveis em `engine/c/tools/`:
 
 - `fetch_benchmarks.py` baixa e normaliza datasets para JSONL offline;
 - `eval_glm.py` mede accuracy/acc_norm por log-likelihood múltipla escolha.
@@ -76,6 +104,9 @@ O template já aponta para esse fluxo, mas ele continua dependente de:
 - `tokenizers` instalado;
 - datasets baixados localmente;
 - host desbloqueado para o experimento que se quer medir.
+
+O corpus `fixtures/perplexity-smoke.token_ids.jsonl` valida somente a matemática
+e o protocolo sem instalar `tokenizers`; ele não é evidência linguística.
 
 ## Leitura dos status
 
