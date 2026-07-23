@@ -9,4 +9,5 @@ tests/test_json
 tests/test_st
 tests/test_tier
 tests/test_tok
+tests/test_quant
 tests/audit_win_shims

@@ -15,8 +15,8 @@ GLM_FIXTURE = FIXTURE_ROOT / "glm_tiny"
 DEEPSEEK_FIXTURE = FIXTURE_ROOT / "deepseek_tiny"
 REF_GLM = FIXTURE_ROOT / "ref_glm.json"
 REF_DEEPSEEK = FIXTURE_ROOT / "ref_deepseek.json"
-KIMI_FIXTURE = FIXTURE_ROOT / "kimi_tiny"
-REF_KIMI = FIXTURE_ROOT / "ref_kimi.json"
+KIMI_FIXTURE = ENGINE_DIR / "fixtures" / "kimi_k2_tiny"
+REF_KIMI = ENGINE_DIR / "ref_kimi.json"
 GLM_BIN = ENGINE_DIR / ("glm.exe" if os.name == "nt" else "glm")
 
 
@@ -115,8 +115,9 @@ def main() -> int:
     build_engine()
     run_oracle_case("glm_tiny", GLM_FIXTURE, REF_GLM)
     run_oracle_case("deepseek_tiny", DEEPSEEK_FIXTURE, REF_DEEPSEEK)
-    if optional_checkpoint("kimi_tiny", KIMI_FIXTURE, REF_KIMI):
-        run_oracle_case("kimi_tiny", KIMI_FIXTURE, REF_KIMI)
+    require(optional_checkpoint("kimi_k2_tiny", KIMI_FIXTURE, REF_KIMI),
+            "Fixture Kimi K2 tiny commitada esta ausente")
+    run_oracle_case("kimi_k2_tiny", KIMI_FIXTURE, REF_KIMI)
 
     print("engine forward oracle suite: PASS")
     return 0
