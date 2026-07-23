@@ -298,10 +298,13 @@ TEST(NeonContractTest, NeonMatmulExecutesInt8AndMatchesScalarReference) {
   }
 
   std::string error;
-  ASSERT_TRUE(us4::NeonMatmul(lhs, rhs, neonOutput, &error)) << error;
+  us4::CpuInt8Dispatch dispatch;
+  ASSERT_TRUE(us4::NeonMatmul(lhs, rhs, neonOutput, &error, &dispatch))
+      << error;
   ASSERT_TRUE(us4::ScalarMatmul(scalarLhs, scalarRhs, scalarOutput, &error))
       << error;
 
+  EXPECT_FALSE(us4::ToString(dispatch.kernel).empty());
   const float *neonValues = neonOutput.DataAsFloat32();
   const float *scalarValues = scalarOutput.DataAsFloat32();
   ASSERT_NE(neonValues, nullptr);

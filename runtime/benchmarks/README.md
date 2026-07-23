@@ -24,7 +24,9 @@ que sustentam comparacoes honestas entre backends.
   (`scalar_matmul`, `neon_matmul`, `scalar_attention`, `neon_attention`) e
   explicita `requested_backend`, `observed_backend`, `backend_reason`,
   `kernel_flavor`, dimensoes, repeats, `elapsed_ms_(mean|min|max)`,
-  `throughput_gops` e `output_checksum`.
+  `throughput_gops` e `output_checksum`. INT8 inclui casos pareados
+  `matmul-int8/scalar` e `matmul-int8/neon`; o campo `cpu_int8_kernel`
+  distingue `scalar`, `neon-sdot`, `neon-i8mm` e `x86-vnni`.
 
 ## Evidencia minima para o vertical Llama
 

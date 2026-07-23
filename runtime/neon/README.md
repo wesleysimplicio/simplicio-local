@@ -20,6 +20,10 @@ What already exists:
 - `neon_matmul.cpp` now also executes `fp16` and `bf16` inputs by decoding
   16-bit storage and accumulating into `fp32`, which finally makes the
   advertised `fp16-lane8` / `bf16-lane8` planning surface executable
+- INT8 matmul delegates to the shared CPU dispatcher in `runtime/cpu/`.
+  Builds with `__ARM_FEATURE_MATMUL_INT8` prefer the 2x2 i8mm microkernel,
+  builds with `__ARM_FEATURE_DOTPROD` use SDOT, and all other ARM builds keep
+  the scalar fallback explicit
 - `neon_attention.cpp` now has its first real fp32 NEON dot-product path for
   rank-2 attention, still preserving scalar fallback off ARM plus causal/cache
   contract compatibility
@@ -29,7 +33,7 @@ What already exists:
 
 Backend implementation gaps:
 
-- real ARM intrinsics and Accelerate hot paths behind those profiles
+- Accelerate hot paths behind the floating-point profiles
 - fused or intrinsic-backed dequantization kernels for INT8 and INT4
 
 Low-bit observability that already exists:
