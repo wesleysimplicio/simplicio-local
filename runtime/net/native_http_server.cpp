@@ -14,12 +14,16 @@
 #include <unistd.h>
 #endif
 
+#include <atomic>
 #include <cctype>
+#include <cerrno>
+#include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <sstream>
+#include <thread>
 #include <vector>
 
 #include "adapters/adapter_registry.h"
@@ -252,6 +256,39 @@ std::string BuildModelsListJson() {
   return json.str();
 }
 
+bool PeerDisconnected(const SocketHandle clientFd) {
+  fd_set readSet;
+  FD_ZERO(&readSet);
+  FD_SET(clientFd, &readSet);
+  timeval timeout{};
+  const int ready = select(static_cast<int>(clientFd) + 1, &readSet, nullptr,
+                           nullptr, &timeout);
+  if (ready <= 0 || !FD_ISSET(clientFd, &readSet)) {
+    return false;
+  }
+  char probe = '\0';
+#ifdef _WIN32
+  const int bytes = recv(clientFd, &probe, 1, MSG_PEEK);
+  if (bytes == 0) {
+    return true;
+  }
+  if (bytes < 0) {
+    const int error = WSAGetLastError();
+    return error != WSAEWOULDBLOCK && error != WSAEINPROGRESS;
+  }
+#else
+  const ssize_t bytes = recv(clientFd, &probe, 1, MSG_PEEK | MSG_DONTWAIT);
+  if (bytes == 0) {
+    return true;
+  }
+  if (bytes < 0) {
+    return errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR;
+  }
+#endif
+  return false;
+}
+
+
 void HandleClient(const SocketHandle clientFd, std::size_t requestCounter,
                   const NativeServeOptions &options) {
   ParsedRequest request;
@@ -289,8 +326,21 @@ void HandleClient(const SocketHandle clientFd, std::size_t requestCounter,
                         "{\"error\":{\"message\":\"" + parseError + "\"}}");
       return;
     }
+    std::stop_source cancellation;
+    std::atomic_bool monitorStop = false;
+    std::thread monitor([&]() {
+      while (!monitorStop.load(std::memory_order_relaxed)) {
+        if (PeerDisconnected(clientFd)) {
+          cancellation.request_stop();
+          return;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      }
+    });
     const ChatCompletionResponse chatResponse =
-        HandleChatCompletion(*chatRequest);
+        HandleChatCompletion(*chatRequest, cancellation.get_token());
+    monitorStop.store(true, std::memory_order_relaxed);
+    monitor.join();
     const std::string requestId =
         "us4-native-" + std::to_string(requestCounter);
     if (chatRequest->stream && chatResponse.ok) {

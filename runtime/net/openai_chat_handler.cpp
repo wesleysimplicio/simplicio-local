@@ -1,5 +1,6 @@
 #include "net/openai_chat_handler.h"
 
+#include <chrono>
 #include <cmath>
 #include <limits>
 
@@ -164,9 +165,16 @@ ParseChatCompletionRequestBody(const std::string &jsonBody,
 }
 
 ChatCompletionResponse
-HandleChatCompletion(const ChatCompletionRequest &request) {
+HandleChatCompletion(const ChatCompletionRequest &request,
+                     const std::stop_token stopToken) {
+  const auto started = std::chrono::steady_clock::now();
   ChatCompletionResponse response;
   response.modelName = request.model;
+  if (stopToken.stop_requested()) {
+    response.cancelled = true;
+    response.errorMessage = "request cancelled before generation";
+    return response;
+  }
 
   const LocalInferenceAdmission admission = GetLocalInferenceAdmission();
   if (!admission.allowed) {
@@ -200,11 +208,23 @@ HandleChatCompletion(const ChatCompletionRequest &request) {
       adapter->Generate({.prompt = request.prompt,
                          .maxTokens = request.maxTokens,
                          .asset = assetPtr,
-                         .seed = request.seed},
+                         .seed = request.seed,
+                         .stopToken = stopToken},
                         context);
 
-  response.ok = true;
+  response.ok = !stopToken.stop_requested();
+  response.cancelled = stopToken.stop_requested() || result.speculativeCancelled;
+  response.errorMessage = response.cancelled ? "request cancelled" : "";
   response.content = result.text;
+  response.promptTokens = result.promptTokens.size();
+  response.completionTokens = result.generatedTokens.size();
+  const double elapsedMs = std::chrono::duration<double, std::milli>(
+      std::chrono::steady_clock::now() - started).count();
+  response.latencyMs = elapsedMs;
+  response.tokensPerSecond =
+      elapsedMs > 0.0
+          ? static_cast<double>(response.completionTokens) / (elapsedMs / 1000.0)
+          : 0.0;
   std::size_t stopPosition = std::string::npos;
   for (const std::string &stop : request.stopSequences) {
     const std::size_t position = response.content.find(stop);
@@ -241,6 +261,22 @@ BuildChatCompletionResponseJson(const ChatCompletionResponse &response,
          "\"used_real_weights\":" +
          (response.usedRealWeights ? "true" : "false") +
          ","
+         "\"usage\":{\"prompt_tokens\":" +
+         std::to_string(response.promptTokens) +
+         ",\"completion_tokens\":" +
+         std::to_string(response.completionTokens) +
+         ",\"total_tokens\":" +
+         std::to_string(response.promptTokens + response.completionTokens) +
+         "},"
+         "\"metrics\":{\"latency_ms\":" +
+         std::to_string(response.latencyMs) +
+         ",\"tokens_per_second\":" +
+         std::to_string(response.tokensPerSecond) +
+         "},"
+         "\"receipt\":{\"schema\":\"simplicio.local-inference-receipt/v1\","
+         "\"status\":\"completed\",\"used_real_weights\":" +
+         (response.usedRealWeights ? "true" : "false") +
+         "},"
          "\"choices\":[{"
          "\"index\":0,"
          "\"message\":{\"role\":\"assistant\",\"content\":\"" +
