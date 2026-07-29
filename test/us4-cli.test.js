@@ -84,6 +84,10 @@ test('prototype doctor preserves offline and no-effect policy', () => {
   assert.equal(report.offline, true);
   assert.equal(report.prompt_logging, false);
   assert.equal(report.effect_authority, 'none');
+  assert.equal(report.receipt.protocol, 'simplicio.prototype-worker-receipt/v1');
+  assert.equal(report.receipt.metrics_observed, false);
+  assert.equal(report.receipt.metrics.latency_ms, null);
+  assert.equal(report.receipt.metrics_unobserved_reason, 'doctor-does-not-run-inference');
 });
 
 test('prototype generate escalates without a Runtime inference lease', () => {
@@ -94,6 +98,10 @@ test('prototype generate escalates without a Runtime inference lease', () => {
   const report = JSON.parse(result.stdout);
   assert.equal(report.status, 'escalate_remote');
   assert.equal(report.reason, 'runtime-inference-lease-required');
+  assert.equal(report.receipt.status, 'escalated');
+  assert.equal(report.receipt.failure_reason, 'runtime-inference-lease-required');
+  assert.equal(report.receipt.metrics.tokens_per_second, null);
+  assert.equal(report.receipt.metrics_unobserved_reason, 'runtime-inference-not-admitted');
 });
 
 test('chat fails clearly when npm is unavailable', () => {

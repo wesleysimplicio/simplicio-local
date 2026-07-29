@@ -1,7 +1,8 @@
 import unittest
 
-from prototype_worker import (PROTOTYPE_PROTOCOL, WorkerPolicy, evaluate,
-                              fit_task, generate_without_runtime, manifest,
+from prototype_worker import (PROTOTYPE_PROTOCOL, RECEIPT_PROTOCOL,
+                              WorkerPolicy, evaluate, fit_task,
+                              generate_without_runtime, manifest,
                               validate_candidate)
 
 
@@ -69,6 +70,23 @@ class PrototypeWorkerTest(unittest.TestCase):
         report = generate_without_runtime("plan", self.policy)
         self.assertEqual(report["status"], "escalate_remote")
         self.assertEqual(report["reason"], "runtime-inference-lease-required")
+
+    def test_receipt_reconstructs_decision_without_fake_metrics(self):
+        report = evaluate("plan", self.plan, self.policy)
+        receipt = report["receipt"]
+        self.assertEqual(receipt["protocol"], RECEIPT_PROTOCOL)
+        self.assertEqual(receipt["status"], "accepted")
+        self.assertEqual(receipt["decision"], "accept")
+        self.assertEqual(receipt["candidate_sha256"], report["candidate_sha256"])
+        self.assertFalse(receipt["metrics_observed"])
+        self.assertEqual(receipt["metrics_unobserved_reason"],
+                         "candidate-validation-only")
+        self.assertTrue(all(value is None for value in receipt["metrics"].values()))
+
+    def test_invalid_candidate_receipt_is_rejected(self):
+        report = evaluate("plan", {"name": "missing"}, self.policy)
+        self.assertEqual(report["receipt"]["status"], "rejected")
+        self.assertEqual(report["receipt"]["failure_reason"], "missing:steps")
 
 
 if __name__ == "__main__":
