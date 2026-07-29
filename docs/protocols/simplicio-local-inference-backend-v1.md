@@ -17,8 +17,10 @@ latency and throughput are emitted as `null` with a reason.
 The reference `LeaseRegistry` defines single-flight `(model, profile)` leases,
 monotonic fencing and validated lifecycle transitions. Runtime remains the
 durable authority; the registry is an adapter contract, not a second
-coordinator. Receipts identify requested/effective models, hash output, expose
+coordinator. Receipts identify requested/effective models, preserve the caller's optional
+idempotency key alongside the request/lease/fence tuple, hash output, expose
 only an allowlisted metrics set and always declare `effect_authority: none`.
+An invalid non-empty idempotency key is rejected before a receipt is emitted.
 
 
 ## Opt-in LiteRT-LM package provisioning

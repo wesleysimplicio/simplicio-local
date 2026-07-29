@@ -55,10 +55,15 @@ class BackendContractTest(unittest.TestCase):
         receipt = build_receipt(
             lease, "request-a", "glm", "glm-int4", "completed", b"answer",
             {"peak_rss_bytes": 12 * GB},
+            idempotency_key="request-a-idempotent",
         )
         self.assertEqual(receipt["effect_authority"], "none")
+        self.assertEqual(receipt["idempotency_key"], "request-a-idempotent")
         self.assertEqual(len(receipt["output_sha256"]), 64)
         self.assertIsNone(receipt["metrics"]["tokens_per_second"])
+        with self.assertRaisesRegex(ValueError, "idempotency_key"):
+            build_receipt(lease, "request-b", "glm", "glm-int4", "failed",
+                          idempotency_key=" ")
         json.dumps(receipt)
 
 

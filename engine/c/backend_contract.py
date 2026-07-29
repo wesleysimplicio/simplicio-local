@@ -170,11 +170,15 @@ class LeaseRegistry:
 
 
 def build_receipt(lease, request_id, requested_model, effective_model,
-                  status, output=b"", metrics=None, failure_reason=None):
+                  status, output=b"", metrics=None, failure_reason=None,
+                  idempotency_key=None):
     if status not in ("completed", "cancelled", "timeout", "failed"):
         raise ValueError("invalid receipt status")
     if not request_id:
         raise ValueError("request_id is required")
+    if idempotency_key is not None and (
+            not isinstance(idempotency_key, str) or not idempotency_key.strip()):
+        raise ValueError("idempotency_key must be a non-empty string")
     metrics = dict(metrics or {})
     allowed_metrics = {
         "peak_rss_bytes", "swap_bytes", "read_bytes", "cache_hit_ratio",
@@ -184,6 +188,7 @@ def build_receipt(lease, request_id, requested_model, effective_model,
     return {
         "protocol": PROTOCOL,
         "request_id": request_id,
+        "idempotency_key": idempotency_key,
         "lease": {"id": lease.lease_id, "fence": lease.fence},
         "requested_model": requested_model,
         "effective_model": effective_model,
