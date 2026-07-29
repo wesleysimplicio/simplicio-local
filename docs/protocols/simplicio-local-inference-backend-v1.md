@@ -19,3 +19,14 @@ monotonic fencing and validated lifecycle transitions. Runtime remains the
 durable authority; the registry is an adapter contract, not a second
 coordinator. Receipts identify requested/effective models, hash output, expose
 only an allowlisted metrics set and always declare `effect_authority: none`.
+
+
+## Opt-in LiteRT-LM package provisioning
+
+us4-cli backend install litert --dry-run --json resolves the pinned simplicio.local-litert-package/v1 manifest without network or filesystem effects. The plan exposes the component versions, Apache-2.0 license, selected platform artifact, byte size, SHA-256, cache destination, and runtime_effect: package-cache-only.
+
+An actual install requires the explicit --yes flag. It streams either the pinned HTTPS artifact or a caller-supplied local fixture into an external managed cache, verifies size and SHA-256, rejects unsafe archive members and symlinks, then publishes the artifact and install-receipt.json atomically. The checkout is rejected as a cache destination. This operation does not start inference, acquire a lease, or replace an external server; Runtime remains the authority for those effects.
+
+The LiteRT-LM package manifest is pinned to LiteRT-LM 0.11.0 and LiteRT 2.0.2 in this slice. A successful package receipt is not evidence of a real model completion, stream/cancel behavior, throughput, NPU readiness, or the full platform matrix; those #177 DoD items require separate measured evidence.
+
+us4-cli doctor --json reports accelerator configuration separately from observed host capability. Configuration alone is never promoted to observed hardware readiness; absent GPU/NPU evidence remains not-observed.
