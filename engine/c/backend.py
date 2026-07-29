@@ -5,8 +5,10 @@ import argparse
 import json
 from pathlib import Path
 
-from backend_contract import (GB, admission_estimate, capability_probe,
-                              host_resources)
+from backend_contract import (GB, LITERT_INSTALL_PLAN_SCHEMA,
+                              admission_estimate, build_litert_install_plan,
+                              capability_probe, host_resources,
+                              install_litert_package)
 
 
 def parser():
@@ -28,14 +30,57 @@ def parser():
                           default="deep-offline")
     estimate.add_argument("--allow-interactive", action="store_true")
     estimate.add_argument("--json", action="store_true")
+
+    install = commands.add_parser("install")
+    install_commands = install.add_subparsers(dest="install_command", required=True)
+    litert = install_commands.add_parser("litert")
+    mode = litert.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--dry-run", action="store_true")
+    mode.add_argument("--yes", action="store_true")
+    litert.add_argument("--manifest")
+    litert.add_argument("--artifact")
+    litert.add_argument("--cache-dir")
+    litert.add_argument("--platform")
+    litert.add_argument("--json", action="store_true")
     return result
+
+
+def _install_report(args):
+    repo_root = Path(__file__).resolve().parents[2]
+    try:
+        if args.dry_run:
+            report = build_litert_install_plan(
+                repo_root=repo_root,
+                manifest_path=args.manifest,
+                cache_dir=args.cache_dir,
+                platform_key=args.platform,
+                artifact_path=args.artifact,
+            )
+            report["status"] = "planned"
+            return report, 0
+        return install_litert_package(
+            repo_root=repo_root,
+            manifest_path=args.manifest,
+            cache_dir=args.cache_dir,
+            platform_key=args.platform,
+            artifact_path=args.artifact,
+            yes=args.yes,
+        ), 0
+    except (OSError, ValueError, KeyError, json.JSONDecodeError) as error:
+        return {
+            "schema": LITERT_INSTALL_PLAN_SCHEMA,
+            "status": "failed",
+            "writes": False,
+            "failure_reason": str(error),
+        }, 1
 
 
 def main(argv=None):
     args = parser().parse_args(argv)
     if args.command == "probe":
         report = capability_probe(model=args.model)
-    else:
+        status = 0
+    elif args.command == "estimate":
         memory, disk = host_resources(Path.cwd())
         report = admission_estimate(
             model_bytes=args.model_bytes,
@@ -49,9 +94,12 @@ def main(argv=None):
             workload=args.workload,
             explicit_interactive=args.allow_interactive,
         )
+        status = 0 if report.get("decision") != "deny" else 78
+    else:
+        report, status = _install_report(args)
     print(json.dumps(report, sort_keys=True) if args.json
           else json.dumps(report, indent=2, sort_keys=True))
-    return 0 if report.get("decision") != "deny" else 78
+    return status
 
 
 if __name__ == "__main__":

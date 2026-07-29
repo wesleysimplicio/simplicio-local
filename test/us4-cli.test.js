@@ -1,6 +1,9 @@
 'use strict';
 
 const assert = require('node:assert/strict');
+const crypto = require('node:crypto');
+const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
 const { spawnSync } = require('node:child_process');
@@ -138,4 +141,147 @@ test('unknown commands are rejected', () => {
   const result = runCli(['produto']);
   assert.equal(result.status, 1);
   assert.match(result.stderr, /unknown command/);
+});
+
+
+test('LiteRT dry-run is pinned, hash-verifiable, and has no write effect', () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'simplicio-litert-plan-'));
+  try {
+    const artifact = path.join(temp, 'fixture.bin');
+    const bytes = Buffer.from('litert fixture\n');
+    fs.writeFileSync(artifact, bytes);
+    const sha256 = crypto.createHash('sha256').update(bytes).digest('hex');
+    const manifest = {
+      schema: 'simplicio.local-litert-package/v1',
+      package: 'litert-lm-fixture',
+      version: 'test.1',
+      license: 'Apache-2.0',
+      components: { litert_lm: 'test.1', litert: 'test.1' },
+      artifacts: {
+        'darwin-arm64': {
+          name: 'fixture.bin',
+          source: 'https://invalid.example.invalid/never-downloaded',
+          size_bytes: bytes.length,
+          sha256,
+          executable: false,
+        },
+      },
+    };
+    const manifestPath = path.join(temp, 'manifest.json');
+    const cache = path.join(temp, 'cache');
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+    const result = runCli([
+      'backend', 'install', 'litert', '--dry-run', '--json',
+      '--manifest', manifestPath, '--artifact', artifact,
+      '--cache-dir', cache, '--platform', 'darwin-arm64',
+    ]);
+    assert.equal(result.status, 0, result.stderr);
+    const report = JSON.parse(result.stdout);
+    assert.equal(report.status, 'planned');
+    assert.equal(report.writes, false);
+    assert.equal(report.network, false);
+    assert.equal(report.license, 'Apache-2.0');
+    assert.equal(report.components.litert_lm, 'test.1');
+    assert.equal(report.artifact.size_bytes, bytes.length);
+    assert.equal(report.artifact.sha256, sha256);
+    assert.match(report.manifest_sha256, /^[0-9a-f]{64}$/);
+    assert.equal(fs.existsSync(cache), false);
+  } finally {
+    fs.rmSync(temp, { recursive: true, force: true });
+  }
+});
+
+test('LiteRT yes install publishes atomically and records a receipt outside checkout', () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'simplicio-litert-install-'));
+  try {
+    const artifact = path.join(temp, 'fixture.bin');
+    const bytes = Buffer.from('litert install fixture\n');
+    fs.writeFileSync(artifact, bytes);
+    const sha256 = crypto.createHash('sha256').update(bytes).digest('hex');
+    const manifest = {
+      schema: 'simplicio.local-litert-package/v1',
+      package: 'litert-lm-fixture',
+      version: 'test.1',
+      license: 'Apache-2.0',
+      components: { litert_lm: 'test.1', litert: 'test.1' },
+      artifacts: {
+        'darwin-arm64': {
+          name: 'fixture.bin',
+          source: 'https://invalid.example.invalid/never-downloaded',
+          size_bytes: bytes.length,
+          sha256,
+          executable: false,
+        },
+      },
+    };
+    const manifestPath = path.join(temp, 'manifest.json');
+    const cache = path.join(temp, 'cache');
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+    const result = runCli([
+      'backend', 'install', 'litert', '--yes', '--json',
+      '--manifest', manifestPath, '--artifact', artifact,
+      '--cache-dir', cache, '--platform', 'darwin-arm64',
+    ]);
+    assert.equal(result.status, 0, result.stderr);
+    const receipt = JSON.parse(result.stdout);
+    assert.equal(receipt.status, 'completed');
+    assert.equal(receipt.artifact.observed_sha256, sha256);
+    assert.equal(receipt.artifact.observed_size_bytes, bytes.length);
+    assert.equal(receipt.runtime_effect, 'package-cache-only');
+    assert.equal(fs.readFileSync(receipt.destination, 'utf8'), bytes.toString());
+    assert.equal(JSON.parse(fs.readFileSync(
+      path.join(path.dirname(receipt.destination), 'install-receipt.json'), 'utf8',
+    )).status, 'completed');
+    assert.equal(path.resolve(receipt.destination).startsWith(path.resolve(root)), false);
+  } finally {
+    fs.rmSync(temp, { recursive: true, force: true });
+  }
+});
+
+test('LiteRT install fails closed on hash mismatch and checkout cache', () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'simplicio-litert-fail-'));
+  try {
+    const artifact = path.join(temp, 'fixture.bin');
+    const bytes = Buffer.from('tampered fixture\n');
+    fs.writeFileSync(artifact, bytes);
+    const manifest = {
+      schema: 'simplicio.local-litert-package/v1',
+      package: 'litert-lm-fixture',
+      version: 'test.1',
+      license: 'Apache-2.0',
+      components: { litert_lm: 'test.1' },
+      artifacts: {
+        'darwin-arm64': {
+          name: 'fixture.bin',
+          source: artifact,
+          size_bytes: bytes.length,
+          sha256: '0'.repeat(64),
+          executable: false,
+        },
+      },
+    };
+    const manifestPath = path.join(temp, 'manifest.json');
+    const cache = path.join(temp, 'cache');
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+    const mismatch = runCli([
+      'backend', 'install', 'litert', '--yes', '--json',
+      '--manifest', manifestPath, '--artifact', artifact,
+      '--cache-dir', cache, '--platform', 'darwin-arm64',
+    ]);
+    assert.equal(mismatch.status, 1);
+    assert.equal(JSON.parse(mismatch.stdout).status, 'failed');
+    assert.equal(fs.existsSync(path.join(
+      cache, 'litert-lm-fixture', 'test.1', 'darwin-arm64', 'fixture.bin',
+    )), false);
+
+    const checkoutCache = runCli([
+      'backend', 'install', 'litert', '--dry-run', '--json',
+      '--manifest', manifestPath, '--artifact', artifact,
+      '--cache-dir', root, '--platform', 'darwin-arm64',
+    ]);
+    assert.equal(checkoutCache.status, 1);
+    assert.match(JSON.parse(checkoutCache.stdout).failure_reason, /outside the checkout/);
+  } finally {
+    fs.rmSync(temp, { recursive: true, force: true });
+  }
 });
