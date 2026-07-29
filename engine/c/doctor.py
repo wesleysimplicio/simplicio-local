@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Read-only installation diagnostics for colibri."""
 
+import argparse
 import os
 import json
 import subprocess
@@ -32,7 +33,7 @@ def cuda_linkage(engine_path):
 
 def run_doctor(model, ram_gb=0, context=4096, gpu_indices=None, vram_gb=0, *,
                engine_path, available_memory=None, available_disk=None, gpus=None,
-               linkage=None):
+               linkage=None, configured_accelerators=None):
     """Collect a complete report. No model payload, engine, or CUDA context is loaded."""
     model = Path(model).expanduser().resolve()
     checks = []
@@ -132,7 +133,8 @@ def run_doctor(model, ram_gb=0, context=4096, gpu_indices=None, vram_gb=0, *,
     statuses = {item["status"] for item in checks}
     status = "error" if "fail" in statuses else "warning" if "warn" in statuses else "ok"
     return {"schema_version": 1, "status": status, "model": str(model),
-            "checks": checks, "plan": plan}
+            "checks": checks, "plan": plan,
+            "accelerators": accelerator_states(configured_accelerators, detected_gpus)}
 
 
 def format_doctor(report):
@@ -148,3 +150,70 @@ def format_doctor(report):
 
 def exit_code(report):
     return 1 if report["status"] == "error" else 0
+
+
+def accelerator_states(configured_accelerators, detected_gpus):
+    source = "argument"
+    configured = configured_accelerators
+    if configured is None:
+        raw = os.environ.get("US4_ACCELERATORS") or os.environ.get("SIMPLICIO_ACCELERATORS", "")
+        source = "environment" if raw.strip() else "unset"
+        configured = [item.strip().lower() for item in raw.split(",") if item.strip()]
+    elif isinstance(configured, str):
+        configured = [item.strip().lower() for item in configured.split(",") if item.strip()]
+    configured = sorted(set(configured))
+    observed = {
+        "cpu": "observed",
+        "cuda": "observed" if detected_gpus else "not-observed",
+        "metal": "not-observed",
+        "npu": "not-observed",
+    }
+    return {
+        "configured": {name: "configured" for name in configured},
+        "configured_source": source,
+        "observed": observed,
+        "observed_gpu_devices": [dict(gpu) for gpu in detected_gpus],
+        "claim_policy": "configuration-never-proves-observation",
+    }
+
+
+def _parse_gpu_argument(value):
+    if value is None or str(value).strip().lower() in ("", "none", "cpu"):
+        return []
+    return [int(item.strip()) for item in str(value).split(",") if item.strip()]
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(prog="us4-cli doctor")
+    parser.add_argument("--model", required=True)
+    parser.add_argument("--engine", default=str(Path(__file__).with_name("glm")))
+    parser.add_argument("--ram", type=float, default=0)
+    parser.add_argument("--ctx", type=int, default=4096)
+    parser.add_argument("--vram", type=float, default=0)
+    parser.add_argument("--gpu")
+    parser.add_argument("--accelerator", action="append")
+    parser.add_argument("--json", action="store_true")
+    args = parser.parse_args(argv)
+    configured = None
+    if args.accelerator:
+        configured = [
+            item.strip().lower()
+            for value in args.accelerator
+            for item in value.split(",")
+            if item.strip()
+        ]
+    report = run_doctor(
+        args.model,
+        args.ram,
+        args.ctx,
+        _parse_gpu_argument(args.gpu) if args.gpu is not None else None,
+        args.vram,
+        engine_path=args.engine,
+        configured_accelerators=configured,
+    )
+    print(json.dumps(report, indent=2, sort_keys=True) if args.json else format_doctor(report))
+    return exit_code(report)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -163,5 +163,19 @@ class DoctorTest(unittest.TestCase):
         self.assertTrue(run.stdout.rstrip().endswith("}"))
 
 
+    def test_configured_accelerators_are_not_observed_hardware_claims(self):
+        report = self.report(configured_accelerators=["cuda", "npu"])
+        accelerators = report["accelerators"]
+        self.assertEqual(accelerators["configured"], {
+            "cuda": "configured",
+            "npu": "configured",
+        })
+        self.assertEqual(accelerators["observed"]["cuda"], "not-observed")
+        self.assertEqual(accelerators["observed"]["npu"], "not-observed")
+        self.assertEqual(
+            accelerators["claim_policy"],
+            "configuration-never-proves-observation",
+        )
+
 if __name__ == "__main__":
     unittest.main()
