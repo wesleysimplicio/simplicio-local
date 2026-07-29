@@ -14,7 +14,10 @@ Runtime inference lease returns `runtime-inference-lease-required`, preserving
 the paused local-model policy. Judge execution is rejected unless policy
 explicitly permits a distinct judge model.
 
-Use `us4-cli prototype doctor --json` for the capability manifest. The
-`critic`, `judge` and `summarize` commands validate supplied candidate JSON
-without loading a model. Actual inference remains behind Runtime admission,
-budget, lease and fencing.
+Use `us4-cli prototype doctor --json` for the capability manifest. Every
+operation returns a `simplicio.prototype-worker-receipt/v1` receipt with the
+decision, candidate hash, offline/effect policy and failure reason. Metrics are
+explicitly `null` with `metrics_unobserved_reason` when no Runtime inference was
+run; the worker never estimates them. The `critic`, `judge` and `summarize`
+commands validate supplied candidate JSON without loading a model. Actual
+inference remains behind Runtime admission, budget, lease and fencing.

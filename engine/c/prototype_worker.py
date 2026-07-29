@@ -9,6 +9,9 @@ from backend_contract import PROTOCOL, admission_estimate, capability_probe
 
 
 PROTOTYPE_PROTOCOL = "simplicio.prototype-worker/v1"
+RECEIPT_PROTOCOL = "simplicio.prototype-worker-receipt/v1"
+METRIC_NAMES = ("latency_ms", "prompt_tokens", "completion_tokens",
+                "tokens_per_second", "peak_rss_bytes", "cache_hit_ratio")
 ARTIFACT_FIELDS = {
     "wireframe": frozenset(("name", "screens")),
     "schema": frozenset(("name", "fields")),
@@ -17,6 +20,28 @@ ARTIFACT_FIELDS = {
     "plan": frozenset(("name", "steps")),
     "prompt-candidate": frozenset(("name", "prompt")),
 }
+
+
+def build_receipt(operation, status, artifact_type, decision, *,
+                  candidate_sha256=None, failure_reason=None,
+                  metrics_reason="inference-not-executed"):
+    if status not in ("completed", "accepted", "escalated", "rejected"):
+        raise ValueError("invalid receipt status")
+    return {
+        "protocol": RECEIPT_PROTOCOL,
+        "operation": operation,
+        "artifact_type": artifact_type,
+        "status": status,
+        "decision": decision,
+        "failure_reason": failure_reason,
+        "candidate_sha256": candidate_sha256,
+        "metrics": {name: None for name in METRIC_NAMES},
+        "metrics_observed": False,
+        "metrics_unobserved_reason": metrics_reason,
+        "offline": True,
+        "prompt_logged": False,
+        "effect_authority": "none",
+    }
 
 
 @dataclass(frozen=True)
@@ -46,6 +71,10 @@ def manifest(repo_root=None):
         "artifact_types": sorted(ARTIFACT_FIELDS),
         "commands": ["generate", "critic", "judge", "summarize", "doctor"],
         "backend": backend,
+        "receipt": build_receipt(
+            "doctor", "completed", None, "capability_only",
+            metrics_reason="doctor-does-not-run-inference",
+        ),
     }
 
 
@@ -90,6 +119,9 @@ def evaluate(artifact_type, candidate, policy, *, candidate_model=None,
     if score < policy.quality_floor:
         reasons.append("below-quality-floor")
     status = "accept" if not reasons else "escalate_remote"
+    receipt_status = "accepted" if status == "accept" else (
+        "rejected" if not valid else "escalated"
+    )
     digest = hashlib.sha256(
         json.dumps(candidate, sort_keys=True, separators=(",", ":")).encode()
         if isinstance(candidate, dict) else b"invalid"
@@ -105,6 +137,12 @@ def evaluate(artifact_type, candidate, policy, *, candidate_model=None,
         "candidate_sha256": digest,
         "effect_authority": "none",
         "prompt_logged": False,
+        "receipt": build_receipt(
+            role, receipt_status, artifact_type, status,
+            candidate_sha256=digest,
+            failure_reason=reasons[0] if reasons else None,
+            metrics_reason="candidate-validation-only",
+        ),
     }
 
 
@@ -131,4 +169,9 @@ def generate_without_runtime(artifact_type, policy):
         "quality_floor": policy.quality_floor,
         "effect_authority": "none",
         "prompt_logged": False,
+        "receipt": build_receipt(
+            "generate", "escalated", artifact_type, "escalate_remote",
+            failure_reason="runtime-inference-lease-required",
+            metrics_reason="runtime-inference-not-admitted",
+        ),
     }
