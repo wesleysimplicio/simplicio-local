@@ -448,3 +448,162 @@ def install_litert_package(*, repo_root=None, manifest_path=None,
         return receipt
     finally:
         shutil.rmtree(staging, ignore_errors=True)
+
+
+LITERT_VERIFY_SCHEMA = "simplicio.local-litert-verify/v1"
+LITERT_ROLLBACK_SCHEMA = "simplicio.local-litert-rollback/v1"
+
+
+def _litert_receipt_path(plan):
+    destination = Path(plan["destination"]).resolve()
+    cache = Path(plan["cache_dir"]).resolve()
+    if cache not in destination.parents:
+        raise ValueError("LiteRT receipt destination is outside the managed cache")
+    return destination.parent / "install-receipt.json"
+
+
+def _offline_failure(schema, plan, reason, **details):
+    return {
+        "schema": schema,
+        "status": "failed",
+        "offline": True,
+        "network": False,
+        "writes": False,
+        "package": plan["package"],
+        "version": plan["version"],
+        "platform": plan["platform"],
+        "cache_dir": plan["cache_dir"],
+        "destination": plan["destination"],
+        "failure_reason": reason,
+        **details,
+    }
+
+
+def verify_litert_package(*, repo_root=None, manifest_path=None,
+                          cache_dir=None, platform_key=None):
+    plan = build_litert_install_plan(
+        repo_root=repo_root, manifest_path=manifest_path,
+        cache_dir=cache_dir, platform_key=platform_key,
+    )
+    receipt_path = _litert_receipt_path(plan)
+    if receipt_path.is_symlink() or not receipt_path.is_file():
+        return _offline_failure(
+            LITERT_VERIFY_SCHEMA, plan, "offline-cache-miss",
+            receipt_path=str(receipt_path),
+        )
+    try:
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as error:
+        return _offline_failure(
+            LITERT_VERIFY_SCHEMA, plan, "offline-receipt-invalid",
+            receipt_path=str(receipt_path), detail=str(error),
+        )
+    destination = Path(plan["destination"])
+    if receipt.get("schema") != LITERT_RECEIPT_SCHEMA:
+        return _offline_failure(
+            LITERT_VERIFY_SCHEMA, plan, "offline-receipt-schema-mismatch",
+            receipt_path=str(receipt_path),
+        )
+    if receipt.get("status") != "completed":
+        return _offline_failure(
+            LITERT_VERIFY_SCHEMA, plan, "offline-receipt-not-completed",
+            receipt_path=str(receipt_path),
+        )
+    if Path(str(receipt.get("destination", ""))).resolve() != destination.resolve():
+        return _offline_failure(
+            LITERT_VERIFY_SCHEMA, plan, "offline-receipt-destination-mismatch",
+            receipt_path=str(receipt_path),
+        )
+    if receipt.get("manifest_sha256") != plan["manifest_sha256"]:
+        return _offline_failure(
+            LITERT_VERIFY_SCHEMA, plan, "offline-manifest-mismatch",
+            receipt_path=str(receipt_path),
+        )
+    if destination.is_symlink() or not destination.is_file():
+        return _offline_failure(
+            LITERT_VERIFY_SCHEMA, plan, "offline-cache-miss",
+            receipt_path=str(receipt_path),
+        )
+    observed_size = destination.stat().st_size
+    observed_sha256 = _sha256_file(destination)
+    expected_size = plan["artifact"]["size_bytes"]
+    expected_sha256 = plan["artifact"]["sha256"]
+    if observed_size != expected_size or observed_sha256 != expected_sha256:
+        return _offline_failure(
+            LITERT_VERIFY_SCHEMA, plan, "offline-integrity-failure",
+            receipt_path=str(receipt_path), expected_size_bytes=expected_size,
+            observed_size_bytes=observed_size, expected_sha256=expected_sha256,
+            observed_sha256=observed_sha256,
+        )
+    return {
+        "schema": LITERT_VERIFY_SCHEMA,
+        "status": "verified",
+        "offline": True,
+        "network": False,
+        "writes": False,
+        "package": plan["package"],
+        "version": plan["version"],
+        "platform": plan["platform"],
+        "cache_dir": plan["cache_dir"],
+        "destination": str(destination),
+        "receipt_path": str(receipt_path),
+        "artifact": {
+            **plan["artifact"],
+            "observed_size_bytes": observed_size,
+            "observed_sha256": observed_sha256,
+        },
+        "manifest_sha256": plan["manifest_sha256"],
+        "runtime_effect": "package-cache-only",
+    }
+
+
+def rollback_litert_package(*, repo_root=None, manifest_path=None,
+                            cache_dir=None, platform_key=None, yes=False):
+    if not yes:
+        raise ValueError("LiteRT rollback requires explicit --yes")
+    plan = build_litert_install_plan(
+        repo_root=repo_root, manifest_path=manifest_path,
+        cache_dir=cache_dir, platform_key=platform_key,
+    )
+    receipt_path = _litert_receipt_path(plan)
+    if receipt_path.is_symlink() or not receipt_path.is_file():
+        raise ValueError("managed LiteRT receipt not found")
+    try:
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as error:
+        raise ValueError(f"managed LiteRT receipt is invalid: {error}") from error
+    destination = Path(plan["destination"])
+    if Path(str(receipt.get("destination", ""))).resolve() != destination.resolve():
+        raise ValueError("managed LiteRT receipt destination mismatch")
+    if destination.is_symlink() or not destination.is_file():
+        raise ValueError("managed LiteRT artifact is missing or unsafe")
+    if receipt.get("manifest_sha256") != plan["manifest_sha256"]:
+        raise ValueError("managed LiteRT receipt manifest mismatch")
+    removed = []
+    for path in (destination, receipt_path):
+        if path.is_symlink() or not path.is_file():
+            raise ValueError(f"managed LiteRT path is missing or unsafe: {path}")
+        path.unlink()
+        removed.append(str(path))
+    cache = Path(plan["cache_dir"]).resolve()
+    directory = destination.parent
+    while directory != cache and cache in directory.parents:
+        try:
+            directory.rmdir()
+        except OSError:
+            break
+        directory = directory.parent
+    return {
+        "schema": LITERT_ROLLBACK_SCHEMA,
+        "status": "rolled_back",
+        "offline": True,
+        "network": False,
+        "writes": True,
+        "package": plan["package"],
+        "version": plan["version"],
+        "platform": plan["platform"],
+        "cache_dir": str(cache),
+        "removed": removed,
+        "preserved": "unmanaged cache files, models, and configuration",
+        "runtime_effect": "package-cache-only",
+    }

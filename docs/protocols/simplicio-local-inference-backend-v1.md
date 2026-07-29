@@ -30,3 +30,6 @@ An actual install requires the explicit --yes flag. It streams either the pinned
 The LiteRT-LM package manifest is pinned to LiteRT-LM 0.11.0 and LiteRT 2.0.2 in this slice. A successful package receipt is not evidence of a real model completion, stream/cancel behavior, throughput, NPU readiness, or the full platform matrix; those #177 DoD items require separate measured evidence.
 
 us4-cli doctor --json reports accelerator configuration separately from observed host capability. Configuration alone is never promoted to observed hardware readiness; absent GPU/NPU evidence remains not-observed.
+
+
+Offline verification and rollback are explicit package-cache operations. us4-cli backend install litert --verify --json reads only the managed install-receipt.json and artifact, checks the pinned manifest, size and SHA-256, and returns verified, offline: true, or a typed cache miss/integrity failure without network access or writes. us4-cli backend install litert --rollback --yes --json (with --uninstall as an alias) removes only the artifact and receipt named by that managed receipt; it refuses missing confirmation and preserves unmanaged files, models, and configuration. This is not yet proof of a real LiteRT-LM model completion or execution receipt for the full #177 DoD.
