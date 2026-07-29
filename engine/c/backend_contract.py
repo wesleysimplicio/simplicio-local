@@ -607,3 +607,224 @@ def rollback_litert_package(*, repo_root=None, manifest_path=None,
         "preserved": "unmanaged cache files, models, and configuration",
         "runtime_effect": "package-cache-only",
     }
+
+
+LITERT_MODEL_PLAN_SCHEMA = "simplicio.local-litert-model-plan/v1"
+LITERT_MODEL_RECEIPT_SCHEMA = "simplicio.local-litert-model-receipt/v1"
+LITERT_MODEL_VERIFY_SCHEMA = "simplicio.local-litert-model-verify/v1"
+LITERT_MODEL_ROLLBACK_SCHEMA = "simplicio.local-litert-model-rollback/v1"
+
+
+def _validate_digest(digest):
+    digest = str(digest or "").lower()
+    if len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest):
+        raise ValueError("model SHA-256 must be exactly 64 lowercase hexadecimal characters")
+    return digest
+
+
+def build_litert_model_plan(*, repo_root=None, source=None, sha256=None,
+                            size_bytes=None, cache_dir=None):
+    digest = _validate_digest(sha256)
+    if size_bytes is not None and (isinstance(size_bytes, bool)
+                                   or not isinstance(size_bytes, int)
+                                   or size_bytes < 0):
+        raise ValueError("model size must be a non-negative integer")
+    source_value = None
+    source_kind = None
+    if source:
+        parsed = urllib.parse.urlparse(str(source))
+        source_path = parsed.path if parsed.scheme == "file" else str(source)
+        suffix = Path(source_path).suffix.lower()
+        if suffix != ".litertlm":
+            raise ValueError("LiteRT model source must use the .litertlm format")
+        source_value = str(Path(source).expanduser().resolve()) if parsed.scheme == "" else str(source)
+        source_kind = "local" if parsed.scheme in ("", "file") else "remote"
+    cache = _cache_outside_checkout(cache_dir or _default_litert_cache(), repo_root)
+    destination = cache / "models" / "sha256" / digest[:2] / f"{digest}.litertlm"
+    return {
+        "schema": LITERT_MODEL_PLAN_SCHEMA,
+        "content_addressed": True,
+        "sha256": digest,
+        "size_bytes": size_bytes,
+        "source": source_value,
+        "source_kind": source_kind,
+        "cache_dir": str(cache),
+        "destination": str(destination),
+        "receipt_path": str(destination.with_name(f"{digest}.receipt.json")),
+        "writes": False,
+        "network": False,
+        "runtime_effect": "model-cache-only",
+    }
+
+
+def _model_failure(plan, reason, **details):
+    return {
+        "schema": LITERT_MODEL_VERIFY_SCHEMA,
+        "status": "failed",
+        "content_addressed": True,
+        "offline": True,
+        "network": False,
+        "writes": False,
+        "sha256": plan["sha256"],
+        "cache_dir": plan["cache_dir"],
+        "destination": plan["destination"],
+        "failure_reason": reason,
+        **details,
+    }
+
+
+def install_litert_model(*, repo_root=None, source=None, sha256=None,
+                         size_bytes=None, cache_dir=None, yes=False):
+    if not yes:
+        raise ValueError("LiteRT model installation requires explicit --yes")
+    if not source:
+        raise ValueError("LiteRT model installation requires --source")
+    if size_bytes is None:
+        raise ValueError("LiteRT model installation requires --size-bytes")
+    plan = build_litert_model_plan(
+        repo_root=repo_root, source=source, sha256=sha256,
+        size_bytes=size_bytes, cache_dir=cache_dir,
+    )
+    cache = Path(plan["cache_dir"])
+    destination = Path(plan["destination"])
+    cache.mkdir(parents=True, exist_ok=True)
+    staging = Path(tempfile.mkdtemp(prefix=".litert-model-", dir=str(cache)))
+    staged = staging / destination.name
+    try:
+        _copy_litert_source(plan["source"], staged)
+        observed_size = staged.stat().st_size
+        observed_sha256 = _sha256_file(staged)
+        if observed_size != plan["size_bytes"]:
+            raise ValueError(
+                f"LiteRT model size mismatch: expected {plan['size_bytes']}, "
+                f"observed {observed_size}"
+            )
+        if observed_sha256 != plan["sha256"]:
+            raise ValueError(
+                f"LiteRT model SHA-256 mismatch: expected {plan['sha256']}, "
+                f"observed {observed_sha256}"
+            )
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        os.replace(staged, destination)
+        receipt = {
+            "schema": LITERT_MODEL_RECEIPT_SCHEMA,
+            "status": "completed",
+            "content_addressed": True,
+            "sha256": plan["sha256"],
+            "size_bytes": plan["size_bytes"],
+            "observed_sha256": observed_sha256,
+            "observed_size_bytes": observed_size,
+            "source": plan["source"],
+            "source_kind": plan["source_kind"],
+            "destination": str(destination),
+            "receipt_path": plan["receipt_path"],
+            "cache_dir": plan["cache_dir"],
+            "runtime_effect": "model-cache-only",
+            "created_unix_ms": int(time.time() * 1000),
+        }
+        receipt_path = Path(plan["receipt_path"])
+        temporary_receipt = receipt_path.with_name(
+            f".{receipt_path.name}.{uuid.uuid4().hex}.tmp"
+        )
+        temporary_receipt.write_text(
+            json.dumps(receipt, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        os.replace(temporary_receipt, receipt_path)
+        return receipt
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
+
+
+def verify_litert_model(*, repo_root=None, sha256=None, cache_dir=None):
+    plan = build_litert_model_plan(
+        repo_root=repo_root, sha256=sha256, cache_dir=cache_dir,
+    )
+    destination = Path(plan["destination"])
+    receipt_path = Path(plan["receipt_path"])
+    if receipt_path.is_symlink() or not receipt_path.is_file():
+        return _model_failure(plan, "offline-model-cache-miss")
+    try:
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as error:
+        return _model_failure(plan, "offline-model-receipt-invalid", detail=str(error))
+    if receipt.get("schema") != LITERT_MODEL_RECEIPT_SCHEMA:
+        return _model_failure(plan, "offline-model-receipt-schema-mismatch")
+    if receipt.get("status") != "completed" or receipt.get("sha256") != plan["sha256"]:
+        return _model_failure(plan, "offline-model-receipt-digest-mismatch")
+    if Path(str(receipt.get("destination", ""))).resolve() != destination.resolve():
+        return _model_failure(plan, "offline-model-receipt-destination-mismatch")
+    if destination.is_symlink() or not destination.is_file():
+        return _model_failure(plan, "offline-model-cache-miss")
+    observed_size = destination.stat().st_size
+    observed_sha256 = _sha256_file(destination)
+    if (observed_size != receipt.get("size_bytes")
+            or observed_sha256 != plan["sha256"]):
+        return _model_failure(
+            plan, "offline-model-integrity-failure",
+            expected_size_bytes=receipt.get("size_bytes"),
+            observed_size_bytes=observed_size,
+            expected_sha256=plan["sha256"],
+            observed_sha256=observed_sha256,
+        )
+    return {
+        "schema": LITERT_MODEL_VERIFY_SCHEMA,
+        "status": "verified",
+        "content_addressed": True,
+        "offline": True,
+        "network": False,
+        "writes": False,
+        "sha256": plan["sha256"],
+        "size_bytes": observed_size,
+        "destination": str(destination),
+        "receipt_path": str(receipt_path),
+        "cache_dir": plan["cache_dir"],
+        "runtime_effect": "model-cache-only",
+    }
+
+
+def rollback_litert_model(*, repo_root=None, sha256=None, cache_dir=None, yes=False):
+    if not yes:
+        raise ValueError("LiteRT model rollback requires explicit --yes")
+    plan = build_litert_model_plan(
+        repo_root=repo_root, sha256=sha256, cache_dir=cache_dir,
+    )
+    destination = Path(plan["destination"])
+    receipt_path = Path(plan["receipt_path"])
+    if receipt_path.is_symlink() or not receipt_path.is_file():
+        raise ValueError("managed LiteRT model receipt not found")
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    if receipt.get("schema") != LITERT_MODEL_RECEIPT_SCHEMA:
+        raise ValueError("managed LiteRT model receipt schema mismatch")
+    if receipt.get("sha256") != plan["sha256"]:
+        raise ValueError("managed LiteRT model receipt digest mismatch")
+    if destination.is_symlink() or not destination.is_file():
+        raise ValueError("managed LiteRT model is missing or unsafe")
+    removed = []
+    for path in (destination, receipt_path):
+        if path.is_symlink() or not path.is_file():
+            raise ValueError(f"managed LiteRT model path is missing: {path}")
+        path.unlink()
+        removed.append(str(path))
+    cache = Path(plan["cache_dir"]).resolve()
+    model_root = cache / "models"
+    directory = destination.parent
+    while directory != model_root and model_root in directory.parents:
+        try:
+            directory.rmdir()
+        except OSError:
+            break
+        directory = directory.parent
+    return {
+        "schema": LITERT_MODEL_ROLLBACK_SCHEMA,
+        "status": "rolled_back",
+        "content_addressed": True,
+        "offline": True,
+        "network": False,
+        "writes": True,
+        "sha256": plan["sha256"],
+        "cache_dir": str(cache),
+        "removed": removed,
+        "preserved": "other content-addressed models and unmanaged files",
+        "runtime_effect": "model-cache-only",
+    }
