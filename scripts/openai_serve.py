@@ -257,6 +257,21 @@ class EmbeddingsBackend:
 
 EMBED_BACKEND: Optional[EmbeddingsBackend] = None
 
+CHAT_BACKEND_READY = SETTINGS.disable_chat
+_CHAT_READINESS_LOCK = threading.Lock()
+
+
+def _set_chat_backend_ready(ready: bool) -> None:
+    global CHAT_BACKEND_READY
+    with _CHAT_READINESS_LOCK:
+        CHAT_BACKEND_READY = ready
+
+
+def _chat_backend_ready() -> bool:
+    with _CHAT_READINESS_LOCK:
+        return CHAT_BACKEND_READY
+
+
 
 def _apply_cors(handler: BaseHTTPRequestHandler) -> None:
     handler.send_header("Access-Control-Allow-Origin", "*")
@@ -281,6 +296,9 @@ def _send_error(handler: BaseHTTPRequestHandler, status: int, message: str, code
 def _proxy_upstream(handler: BaseHTTPRequestHandler, path: str, raw_body: bytes) -> None:
     if SETTINGS.disable_chat:
         _send_error(handler, 503, "chat backend disabled (US4_SERVE_DISABLE_CHAT)", "service_unavailable")
+        return
+    if not _chat_backend_ready():
+        _send_error(handler, 503, "chat backend is not ready", "service_unavailable")
         return
     url = f"{SETTINGS.upstream_url}{path}"
     method = handler.command
@@ -391,7 +409,19 @@ class Us4Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         path = self.path.split("?", 1)[0]
         if path in ("/health", "/v1/health"):
-            _send_json(self, 200, {"status": "ok", "chat": not SETTINGS.disable_chat, "embed": not SETTINGS.disable_embed})
+            chat_ready = _chat_backend_ready()
+            ready = chat_ready
+            _send_json(
+                self,
+                200 if ready else 503,
+                {
+                    "status": "ok" if ready else "degraded",
+                    "ready": ready,
+                    "chat": not SETTINGS.disable_chat,
+                    "chat_ready": chat_ready,
+                    "embed": not SETTINGS.disable_embed,
+                },
+            )
             return
         if path in ("/v1/models", "/models"):
             _send_json(self, 200, _build_models_payload())
@@ -630,7 +660,10 @@ def main() -> int:
     _warn_if_non_loopback(SETTINGS.host)
     _init_embeddings()
     upstream = _spawn_upstream()
-    _wait_upstream_ready()
+    chat_ready = _wait_upstream_ready()
+    _set_chat_backend_ready(chat_ready)
+    if not chat_ready:
+        LOG.warning("chat backend is not ready; serving degraded health until it becomes available")
     server = ThreadingHTTPServer((SETTINGS.host, SETTINGS.port), Us4Handler)
     _install_signal_handlers(server, upstream)
     LOG.info("listening on http://%s:%d", SETTINGS.host, SETTINGS.port)
