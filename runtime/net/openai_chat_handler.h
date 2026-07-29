@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <optional>
+#include <stop_token>
 #include <string>
 #include <vector>
 
@@ -37,6 +38,11 @@ struct ChatCompletionResponse {
   std::string content;
   std::vector<std::string> generatedTokens;
   bool usedRealWeights = false;
+  bool cancelled = false;
+  std::size_t promptTokens = 0;
+  std::size_t completionTokens = 0;
+  double latencyMs = 0.0;
+  double tokensPerSecond = 0.0;
 };
 
 // Parses an OpenAI-shaped request body:
@@ -53,7 +59,8 @@ ParseChatCompletionRequestBody(const std::string &jsonBody, std::string *error);
 // #81.4/#81.5; the runtime's own explicit-fallback rules apply otherwise --
 // this handler never fabricates a response when the model is unknown).
 ChatCompletionResponse
-HandleChatCompletion(const ChatCompletionRequest &request);
+HandleChatCompletion(const ChatCompletionRequest &request,
+                     std::stop_token stopToken = {});
 
 // Serializes a response into the OpenAI chat-completions JSON shape.
 std::string

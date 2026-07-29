@@ -1,4 +1,5 @@
 #include <filesystem>
+#include <stop_token>
 #include <string>
 
 #include <gtest/gtest.h>
@@ -111,6 +112,10 @@ TEST(OpenAiChatHandlerContractTest,
   const ChatCompletionResponse response = HandleChatCompletion(request);
   ASSERT_TRUE(response.ok) << response.errorMessage;
   EXPECT_TRUE(response.usedRealWeights);
+  EXPECT_EQ(response.promptTokens, 1U);
+  EXPECT_EQ(response.completionTokens, 1U);
+  EXPECT_GE(response.latencyMs, 0.0);
+  EXPECT_GE(response.tokensPerSecond, 0.0);
   // Same external-oracle prediction as the #85 CLI/Playwright evidence:
   // embedding("alpha") one-hot over these real weights argmaxes to "delta".
   EXPECT_EQ(response.content, "delta");
@@ -123,7 +128,17 @@ TEST(OpenAiChatHandlerContractTest,
   const std::string responseJson =
       BuildChatCompletionResponseJson(response, "req-1");
   EXPECT_NE(responseJson.find("\"used_real_weights\":true"), std::string::npos);
+  EXPECT_NE(responseJson.find("\"prompt_tokens\":1"), std::string::npos);
+  EXPECT_NE(responseJson.find("\"tokens_per_second\""), std::string::npos);
+  EXPECT_NE(responseJson.find("simplicio.local-inference-receipt/v1"), std::string::npos);
   EXPECT_NE(responseJson.find("\"content\":\"delta\""), std::string::npos);
+
+  std::stop_source cancelled;
+  cancelled.request_stop();
+  const ChatCompletionResponse cancelledResponse =
+      HandleChatCompletion(request, cancelled.get_token());
+  EXPECT_TRUE(cancelledResponse.cancelled);
+  EXPECT_FALSE(cancelledResponse.ok);
 
   const std::string chunkJson =
       BuildChatCompletionChunkJson("req-1", response.modelName, "delta", false);
