@@ -285,3 +285,166 @@ test('LiteRT install fails closed on hash mismatch and checkout cache', () => {
     fs.rmSync(temp, { recursive: true, force: true });
   }
 });
+
+
+test('LiteRT verify is offline and detects cache tampering', () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'simplicio-litert-verify-'));
+  try {
+    const artifact = path.join(temp, 'fixture.bin');
+    const bytes = Buffer.from('offline fixture\n');
+    fs.writeFileSync(artifact, bytes);
+    const sha256 = crypto.createHash('sha256').update(bytes).digest('hex');
+    const manifest = {
+      schema: 'simplicio.local-litert-package/v1',
+      package: 'litert-lm-fixture',
+      version: 'test.2',
+      license: 'Apache-2.0',
+      components: { litert_lm: 'test.2' },
+      artifacts: {
+        'darwin-arm64': {
+          name: 'fixture.bin',
+          source: 'https://invalid.example.invalid/must-not-download',
+          size_bytes: bytes.length,
+          sha256,
+          executable: false,
+        },
+      },
+    };
+    const manifestPath = path.join(temp, 'manifest.json');
+    const cache = path.join(temp, 'cache');
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+    const install = runCli([
+      'backend', 'install', 'litert', '--yes', '--json',
+      '--manifest', manifestPath, '--artifact', artifact,
+      '--cache-dir', cache, '--platform', 'darwin-arm64',
+    ]);
+    assert.equal(install.status, 0, install.stderr);
+    const receipt = JSON.parse(install.stdout);
+    const verify = runCli([
+      'backend', 'install', 'litert', '--verify', '--json',
+      '--manifest', manifestPath, '--cache-dir', cache,
+      '--platform', 'darwin-arm64',
+    ]);
+    assert.equal(verify.status, 0, verify.stderr);
+    const report = JSON.parse(verify.stdout);
+    assert.equal(report.status, 'verified');
+    assert.equal(report.offline, true);
+    assert.equal(report.network, false);
+    assert.equal(report.writes, false);
+    fs.writeFileSync(receipt.destination, 'tampered\n');
+    const tampered = runCli([
+      'backend', 'install', 'litert', '--verify', '--json',
+      '--manifest', manifestPath, '--cache-dir', cache,
+      '--platform', 'darwin-arm64',
+    ]);
+    assert.equal(tampered.status, 0);
+    const failure = JSON.parse(tampered.stdout);
+    assert.equal(failure.status, 'failed');
+    assert.equal(failure.failure_reason, 'offline-integrity-failure');
+    assert.equal(failure.offline, true);
+  } finally {
+    fs.rmSync(temp, { recursive: true, force: true });
+  }
+});
+
+test('LiteRT rollback requires yes and preserves unmanaged cache files', () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'simplicio-litert-rollback-'));
+  try {
+    const artifact = path.join(temp, 'fixture.bin');
+    const bytes = Buffer.from('rollback fixture\n');
+    fs.writeFileSync(artifact, bytes);
+    const sha256 = crypto.createHash('sha256').update(bytes).digest('hex');
+    const manifest = {
+      schema: 'simplicio.local-litert-package/v1',
+      package: 'litert-lm-fixture',
+      version: 'test.3',
+      license: 'Apache-2.0',
+      components: { litert_lm: 'test.3' },
+      artifacts: {
+        'darwin-arm64': {
+          name: 'fixture.bin',
+          source: 'https://invalid.example.invalid/must-not-download',
+          size_bytes: bytes.length,
+          sha256,
+          executable: false,
+        },
+      },
+    };
+    const manifestPath = path.join(temp, 'manifest.json');
+    const cache = path.join(temp, 'cache');
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+    const install = runCli([
+      'backend', 'install', 'litert', '--yes', '--json',
+      '--manifest', manifestPath, '--artifact', artifact,
+      '--cache-dir', cache, '--platform', 'darwin-arm64',
+    ]);
+    assert.equal(install.status, 0, install.stderr);
+    const receipt = JSON.parse(install.stdout);
+    const unmanaged = path.join(cache, 'unmanaged-model.litertlm');
+    fs.writeFileSync(unmanaged, 'do not remove');
+    const denied = runCli([
+      'backend', 'install', 'litert', '--rollback', '--json',
+      '--manifest', manifestPath, '--cache-dir', cache,
+      '--platform', 'darwin-arm64',
+    ]);
+    assert.equal(denied.status, 1);
+    assert.equal(fs.existsSync(receipt.destination), true);
+    assert.match(JSON.parse(denied.stdout).failure_reason, /requires explicit --yes/);
+
+    const rollback = runCli([
+      'backend', 'install', 'litert', '--rollback', '--yes', '--json',
+      '--manifest', manifestPath, '--cache-dir', cache,
+      '--platform', 'darwin-arm64',
+    ]);
+    assert.equal(rollback.status, 0, rollback.stderr);
+    const report = JSON.parse(rollback.stdout);
+    assert.equal(report.status, 'rolled_back');
+    assert.equal(report.offline, true);
+    assert.equal(report.writes, true);
+    assert.equal(fs.existsSync(receipt.destination), false);
+    assert.equal(fs.existsSync(path.join(
+      path.dirname(receipt.destination), 'install-receipt.json',
+    )), false);
+    assert.equal(fs.readFileSync(unmanaged, 'utf8'), 'do not remove');
+  } finally {
+    fs.rmSync(temp, { recursive: true, force: true });
+  }
+});
+
+test('LiteRT verify reports an offline cache miss without network access', () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'simplicio-litert-miss-'));
+  try {
+    const manifestPath = path.join(temp, 'manifest.json');
+    const cache = path.join(temp, 'cache');
+    fs.writeFileSync(manifestPath, JSON.stringify({
+      schema: 'simplicio.local-litert-package/v1',
+      package: 'litert-lm-fixture',
+      version: 'test.4',
+      license: 'Apache-2.0',
+      components: { litert_lm: 'test.4' },
+      artifacts: {
+        'darwin-arm64': {
+          name: 'fixture.bin',
+          source: 'https://invalid.example.invalid/must-not-download',
+          size_bytes: 1,
+          sha256: '0'.repeat(64),
+          executable: false,
+        },
+      },
+    }));
+    const result = runCli([
+      'backend', 'install', 'litert', '--verify', '--json',
+      '--manifest', manifestPath, '--cache-dir', cache,
+      '--platform', 'darwin-arm64',
+    ]);
+    assert.equal(result.status, 0);
+    const report = JSON.parse(result.stdout);
+    assert.equal(report.status, 'failed');
+    assert.equal(report.failure_reason, 'offline-cache-miss');
+    assert.equal(report.offline, true);
+    assert.equal(report.network, false);
+    assert.equal(fs.existsSync(cache), false);
+  } finally {
+    fs.rmSync(temp, { recursive: true, force: true });
+  }
+});

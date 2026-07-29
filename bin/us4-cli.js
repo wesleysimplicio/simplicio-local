@@ -106,6 +106,7 @@ Usage:
   us4-cli local-inference-status [--json]
   us4-cli backend probe [--json]
   us4-cli backend estimate [...]
+  us4-cli backend install litert --dry-run|--yes|--verify|--rollback [--json]
   us4-cli prototype doctor [--json]
   us4-cli prototype generate|critic|judge|summarize [...]
   us4-cli list-models [--json]

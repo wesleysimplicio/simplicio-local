@@ -6,9 +6,11 @@ import json
 from pathlib import Path
 
 from backend_contract import (GB, LITERT_INSTALL_PLAN_SCHEMA,
+                              LITERT_ROLLBACK_SCHEMA, LITERT_VERIFY_SCHEMA,
                               admission_estimate, build_litert_install_plan,
                               capability_probe, host_resources,
-                              install_litert_package)
+                              install_litert_package, rollback_litert_package,
+                              verify_litert_package)
 
 
 def parser():
@@ -34,9 +36,11 @@ def parser():
     install = commands.add_parser("install")
     install_commands = install.add_subparsers(dest="install_command", required=True)
     litert = install_commands.add_parser("litert")
-    mode = litert.add_mutually_exclusive_group(required=True)
-    mode.add_argument("--dry-run", action="store_true")
-    mode.add_argument("--yes", action="store_true")
+    litert.add_argument("--dry-run", action="store_true")
+    litert.add_argument("--yes", action="store_true")
+    litert.add_argument("--verify", action="store_true")
+    litert.add_argument("--rollback", action="store_true")
+    litert.add_argument("--uninstall", action="store_true")
     litert.add_argument("--manifest")
     litert.add_argument("--artifact")
     litert.add_argument("--cache-dir")
@@ -48,6 +52,21 @@ def parser():
 def _install_report(args):
     repo_root = Path(__file__).resolve().parents[2]
     try:
+        if args.verify:
+            return verify_litert_package(
+                repo_root=repo_root,
+                manifest_path=args.manifest,
+                cache_dir=args.cache_dir,
+                platform_key=args.platform,
+            ), 0
+        if args.rollback or args.uninstall:
+            return rollback_litert_package(
+                repo_root=repo_root,
+                manifest_path=args.manifest,
+                cache_dir=args.cache_dir,
+                platform_key=args.platform,
+                yes=args.yes,
+            ), 0
         if args.dry_run:
             report = build_litert_install_plan(
                 repo_root=repo_root,
@@ -58,18 +77,27 @@ def _install_report(args):
             )
             report["status"] = "planned"
             return report, 0
+        if not args.yes:
+            raise ValueError("choose exactly one of --dry-run, --verify, or --yes")
         return install_litert_package(
             repo_root=repo_root,
             manifest_path=args.manifest,
             cache_dir=args.cache_dir,
             platform_key=args.platform,
             artifact_path=args.artifact,
-            yes=args.yes,
+            yes=True,
         ), 0
     except (OSError, ValueError, KeyError, json.JSONDecodeError) as error:
+        if args.verify:
+            schema = LITERT_VERIFY_SCHEMA
+        elif args.rollback or args.uninstall:
+            schema = LITERT_ROLLBACK_SCHEMA
+        else:
+            schema = LITERT_INSTALL_PLAN_SCHEMA
         return {
-            "schema": LITERT_INSTALL_PLAN_SCHEMA,
+            "schema": schema,
             "status": "failed",
+            "offline": bool(args.verify or args.rollback or args.uninstall),
             "writes": False,
             "failure_reason": str(error),
         }, 1
