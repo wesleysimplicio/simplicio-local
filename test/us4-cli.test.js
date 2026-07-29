@@ -448,3 +448,115 @@ test('LiteRT verify reports an offline cache miss without network access', () =>
     fs.rmSync(temp, { recursive: true, force: true });
   }
 });
+
+
+test('LiteRT model cache dry-run is content-addressed and offline', () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'simplicio-model-plan-'));
+  try {
+    const source = path.join(temp, 'fixture.litertlm');
+    const bytes = Buffer.from('model plan fixture\n');
+    fs.writeFileSync(source, bytes);
+    const sha256 = crypto.createHash('sha256').update(bytes).digest('hex');
+    const cache = path.join(temp, 'cache');
+    const result = runCli([
+      'backend', 'model-cache', 'litert', '--dry-run', '--json',
+      '--source', source, '--sha256', sha256, '--size-bytes', String(bytes.length),
+      '--cache-dir', cache,
+    ]);
+    assert.equal(result.status, 0, result.stderr);
+    const report = JSON.parse(result.stdout);
+    assert.equal(report.schema, 'simplicio.local-litert-model-plan/v1');
+    assert.equal(report.status, 'planned');
+    assert.equal(report.content_addressed, true);
+    assert.equal(report.offline, true);
+    assert.equal(report.writes, false);
+    assert.match(report.destination, new RegExp(`${sha256}\\.litertlm$`));
+    assert.equal(fs.existsSync(cache), false);
+  } finally {
+    fs.rmSync(temp, { recursive: true, force: true });
+  }
+});
+
+test('LiteRT model cache installs, verifies tampering, and rolls back only managed content', () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'simplicio-model-cache-'));
+  try {
+    const source = path.join(temp, 'fixture.litertlm');
+    const bytes = Buffer.from('model cache fixture\n');
+    fs.writeFileSync(source, bytes);
+    const sha256 = crypto.createHash('sha256').update(bytes).digest('hex');
+    const cache = path.join(temp, 'cache');
+    const install = runCli([
+      'backend', 'model-cache', 'litert', '--yes', '--json',
+      '--source', source, '--sha256', sha256, '--size-bytes', String(bytes.length),
+      '--cache-dir', cache,
+    ]);
+    assert.equal(install.status, 0, install.stderr);
+    const receipt = JSON.parse(install.stdout);
+    assert.equal(receipt.schema, 'simplicio.local-litert-model-receipt/v1');
+    assert.equal(receipt.status, 'completed');
+    assert.equal(fs.readFileSync(receipt.destination, 'utf8'), bytes.toString());
+    assert.equal(path.resolve(receipt.destination).startsWith(path.resolve(root)), false);
+
+    const verify = runCli([
+      'backend', 'model-cache', 'litert', '--verify', '--json',
+      '--sha256', sha256, '--cache-dir', cache,
+    ]);
+    assert.equal(verify.status, 0, verify.stderr);
+    assert.equal(JSON.parse(verify.stdout).status, 'verified');
+    fs.writeFileSync(receipt.destination, 'tampered model\n');
+    const tampered = runCli([
+      'backend', 'model-cache', 'litert', '--verify', '--json',
+      '--sha256', sha256, '--cache-dir', cache,
+    ]);
+    assert.equal(tampered.status, 0, tampered.stderr);
+    const failure = JSON.parse(tampered.stdout);
+    assert.equal(failure.status, 'failed');
+    assert.equal(failure.failure_reason, 'offline-model-integrity-failure');
+
+    fs.writeFileSync(path.join(cache, 'unmanaged.txt'), 'preserve');
+    const denied = runCli([
+      'backend', 'model-cache', 'litert', '--rollback', '--json',
+      '--sha256', sha256, '--cache-dir', cache,
+    ]);
+    assert.equal(denied.status, 1);
+    assert.match(JSON.parse(denied.stdout).failure_reason, /requires explicit --yes/);
+
+    const rollback = runCli([
+      'backend', 'model-cache', 'litert', '--rollback', '--yes', '--json',
+      '--sha256', sha256, '--cache-dir', cache,
+    ]);
+    assert.equal(rollback.status, 0, rollback.stderr);
+    const report = JSON.parse(rollback.stdout);
+    assert.equal(report.schema, 'simplicio.local-litert-model-rollback/v1');
+    assert.equal(report.status, 'rolled_back');
+    assert.equal(report.writes, true);
+    assert.equal(fs.existsSync(receipt.destination), false);
+    assert.equal(fs.existsSync(receipt.receipt_path), false);
+    assert.equal(fs.readFileSync(path.join(cache, 'unmanaged.txt'), 'utf8'), 'preserve');
+  } finally {
+    fs.rmSync(temp, { recursive: true, force: true });
+  }
+});
+
+test('LiteRT model cache rejects mismatched digest without publishing a partial artifact', () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'simplicio-model-fail-'));
+  try {
+    const source = path.join(temp, 'fixture.litertlm');
+    const bytes = Buffer.from('wrong digest\n');
+    fs.writeFileSync(source, bytes);
+    const digest = '0'.repeat(64);
+    const cache = path.join(temp, 'cache');
+    const result = runCli([
+      'backend', 'model-cache', 'litert', '--yes', '--json',
+      '--source', source, '--sha256', digest, '--size-bytes', String(bytes.length),
+      '--cache-dir', cache,
+    ]);
+    assert.equal(result.status, 1);
+    assert.equal(JSON.parse(result.stdout).status, 'failed');
+    assert.equal(fs.existsSync(path.join(
+      cache, 'models', 'sha256', '00', `${digest}.litertlm`,
+    )), false);
+  } finally {
+    fs.rmSync(temp, { recursive: true, force: true });
+  }
+});

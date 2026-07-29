@@ -6,10 +6,15 @@ import json
 from pathlib import Path
 
 from backend_contract import (GB, LITERT_INSTALL_PLAN_SCHEMA,
+                              LITERT_MODEL_PLAN_SCHEMA,
+                              LITERT_MODEL_ROLLBACK_SCHEMA,
+                              LITERT_MODEL_VERIFY_SCHEMA,
                               LITERT_ROLLBACK_SCHEMA, LITERT_VERIFY_SCHEMA,
                               admission_estimate, build_litert_install_plan,
-                              capability_probe, host_resources,
-                              install_litert_package, rollback_litert_package,
+                              build_litert_model_plan, capability_probe,
+                              host_resources, install_litert_model,
+                              install_litert_package, rollback_litert_model,
+                              rollback_litert_package, verify_litert_model,
                               verify_litert_package)
 
 
@@ -46,6 +51,19 @@ def parser():
     litert.add_argument("--cache-dir")
     litert.add_argument("--platform")
     litert.add_argument("--json", action="store_true")
+
+    model_cache = commands.add_parser("model-cache")
+    model_commands = model_cache.add_subparsers(dest="model_command", required=True)
+    model_litert = model_commands.add_parser("litert")
+    model_litert.add_argument("--dry-run", action="store_true")
+    model_litert.add_argument("--yes", action="store_true")
+    model_litert.add_argument("--verify", action="store_true")
+    model_litert.add_argument("--rollback", action="store_true")
+    model_litert.add_argument("--source")
+    model_litert.add_argument("--sha256", required=True)
+    model_litert.add_argument("--size-bytes", type=int)
+    model_litert.add_argument("--cache-dir")
+    model_litert.add_argument("--json", action="store_true")
     return result
 
 
@@ -103,6 +121,50 @@ def _install_report(args):
         }, 1
 
 
+def _model_cache_report(args):
+    repo_root = Path(__file__).resolve().parents[2]
+    selected = sum(bool(value) for value in
+                   (args.dry_run, args.verify, args.rollback))
+    try:
+        if selected > 1 or (selected == 0 and not args.yes):
+            raise ValueError("choose exactly one operation and use --yes for installation")
+        if args.verify:
+            return verify_litert_model(
+                repo_root=repo_root, sha256=args.sha256, cache_dir=args.cache_dir,
+            ), 0
+        if args.rollback:
+            return rollback_litert_model(
+                repo_root=repo_root, sha256=args.sha256, cache_dir=args.cache_dir,
+                yes=args.yes,
+            ), 0
+        if args.dry_run:
+            report = build_litert_model_plan(
+                repo_root=repo_root, source=args.source, sha256=args.sha256,
+                size_bytes=args.size_bytes, cache_dir=args.cache_dir,
+            )
+            report.update({"status": "planned", "offline": True})
+            return report, 0
+        return install_litert_model(
+            repo_root=repo_root, source=args.source, sha256=args.sha256,
+            size_bytes=args.size_bytes, cache_dir=args.cache_dir, yes=True,
+        ), 0
+    except (OSError, ValueError, KeyError, json.JSONDecodeError) as error:
+        if args.verify:
+            schema = LITERT_MODEL_VERIFY_SCHEMA
+        elif args.rollback:
+            schema = LITERT_MODEL_ROLLBACK_SCHEMA
+        else:
+            schema = LITERT_MODEL_PLAN_SCHEMA
+        return {
+            "schema": schema,
+            "status": "failed",
+            "offline": bool(args.dry_run or args.verify or args.rollback),
+            "network": False,
+            "writes": False,
+            "failure_reason": str(error),
+        }, 1
+
+
 def main(argv=None):
     args = parser().parse_args(argv)
     if args.command == "probe":
@@ -124,7 +186,10 @@ def main(argv=None):
         )
         status = 0 if report.get("decision") != "deny" else 78
     else:
-        report, status = _install_report(args)
+        if args.command == "model-cache":
+            report, status = _model_cache_report(args)
+        else:
+            report, status = _install_report(args)
     print(json.dumps(report, sort_keys=True) if args.json
           else json.dumps(report, indent=2, sort_keys=True))
     return status
