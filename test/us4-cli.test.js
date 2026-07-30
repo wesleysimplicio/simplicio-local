@@ -246,6 +246,26 @@ test('LiteRT yes install publishes atomically and records a receipt outside chec
   }
 });
 
+test('LiteRT runtime probe prevents publishing a broken executable', () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'simplicio-litert-probe-'));
+  try {
+    const artifact = path.join(temp, 'fixture.sh');
+    const bytes = Buffer.from('#!/bin/sh\necho broken >&2\nexit 42\n');
+    fs.writeFileSync(artifact, bytes, { mode: 0o755 });
+    const sha256 = crypto.createHash('sha256').update(bytes).digest('hex');
+    const manifest = { schema: 'simplicio.local-litert-package/v1', package: 'litert-probe-fixture', version: 'test.1', license: 'Apache-2.0', components: { litert_lm: 'test.1' }, artifacts: { 'darwin-arm64': { name: 'fixture.sh', source: artifact, size_bytes: bytes.length, sha256, executable: true } } };
+    const manifestPath = path.join(temp, 'manifest.json');
+    const cache = path.join(temp, 'cache');
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest));
+    const install = runCli(['backend', 'install', 'litert', '--yes', '--json', '--manifest', manifestPath, '--artifact', artifact, '--cache-dir', cache, '--platform', 'darwin-arm64']);
+    assert.equal(install.status, 1);
+    assert.match(JSON.parse(install.stdout).failure_reason, /runtime probe failed: runtime-probe-exit-nonzero/);
+    assert.equal(fs.existsSync(path.join(cache, 'litert-probe-fixture', 'test.1', 'darwin-arm64', 'fixture.sh')), false);
+  } finally {
+    fs.rmSync(temp, { recursive: true, force: true });
+  }
+});
+
 test('LiteRT install fails closed on hash mismatch and checkout cache', () => {
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'simplicio-litert-fail-'));
   try {
