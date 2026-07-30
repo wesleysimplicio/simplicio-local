@@ -8,6 +8,7 @@ import os
 import platform
 from pathlib import Path
 import shutil
+import subprocess
 import tempfile
 import tarfile
 import time
@@ -354,6 +355,8 @@ def build_litert_install_plan(*, repo_root=None, manifest_path=None,
             "source": source,
             "source_kind": source_kind,
             "executable": bool(artifact.get("executable", False)),
+            "runtime_probe": ({"args": ["--help"], "timeout_seconds": 10}
+                              if artifact.get("executable") else None),
         },
         "manifest_sha256": hashlib.sha256(canonical_json(manifest).encode()).hexdigest(),
         "cache_dir": str(cache),
@@ -398,6 +401,21 @@ def _copy_litert_source(source, destination):
         shutil.copyfileobj(response, stream, length=1024 * 1024)
 
 
+def _run_litert_runtime_probe(path, artifact):
+    probe = artifact.get("runtime_probe")
+    if not probe:
+        return {"checked": False}
+    try:
+        result = subprocess.run([str(path), *probe["args"]], check=False, capture_output=True, text=True, timeout=probe["timeout_seconds"])
+    except subprocess.TimeoutExpired:
+        return {"checked": True, "passed": False, "failure_reason": "runtime-probe-timeout", "args": probe["args"], "timeout_seconds": probe["timeout_seconds"]}
+    except OSError as error:
+        return {"checked": True, "passed": False, "failure_reason": "runtime-probe-launch-failed", "detail": str(error), "args": probe["args"], "timeout_seconds": probe["timeout_seconds"]}
+    if result.returncode != 0:
+        return {"checked": True, "passed": False, "failure_reason": "runtime-probe-exit-nonzero", "returncode": result.returncode, "stderr": result.stderr[-1024:], "args": probe["args"], "timeout_seconds": probe["timeout_seconds"]}
+    return {"checked": True, "passed": True, "args": probe["args"], "timeout_seconds": probe["timeout_seconds"]}
+
+
 def install_litert_package(*, repo_root=None, manifest_path=None,
                            cache_dir=None, platform_key=None,
                            artifact_path=None, yes=False):
@@ -423,10 +441,13 @@ def install_litert_package(*, repo_root=None, manifest_path=None,
         if observed_sha256 != expected_sha256:
             raise ValueError(f"LiteRT artifact SHA-256 mismatch: expected {expected_sha256}, observed {observed_sha256}")
         _validate_archive_members(staged)
+        if plan["artifact"]["executable"] and os.name != "nt":
+            staged.chmod(0o755)
+        runtime_probe = _run_litert_runtime_probe(staged, plan["artifact"])
+        if runtime_probe.get("checked") and not runtime_probe.get("passed"):
+            raise ValueError(f"LiteRT runtime probe failed: {runtime_probe['failure_reason']}")
         destination.parent.mkdir(parents=True, exist_ok=True)
         os.replace(staged, destination)
-        if plan["artifact"]["executable"] and os.name != "nt":
-            destination.chmod(0o755)
         receipt = {
             "schema": LITERT_RECEIPT_SCHEMA,
             "status": "completed",
@@ -445,6 +466,7 @@ def install_litert_package(*, repo_root=None, manifest_path=None,
             "cache_dir": str(cache),
             "runtime_effect": "package-cache-only",
             "created_unix_ms": int(time.time() * 1000),
+            "runtime_probe": runtime_probe,
         }
         receipt_path = destination.parent / "install-receipt.json"
         temporary_receipt = receipt_path.with_name(f".{receipt_path.name}.{uuid.uuid4().hex}.tmp")
@@ -540,6 +562,9 @@ def verify_litert_package(*, repo_root=None, manifest_path=None,
             observed_size_bytes=observed_size, expected_sha256=expected_sha256,
             observed_sha256=observed_sha256,
         )
+    runtime_probe = _run_litert_runtime_probe(destination, plan["artifact"])
+    if runtime_probe.get("checked") and not runtime_probe.get("passed"):
+        return _offline_failure(LITERT_VERIFY_SCHEMA, plan, runtime_probe["failure_reason"], receipt_path=str(receipt_path), runtime_probe=runtime_probe)
     return {
         "schema": LITERT_VERIFY_SCHEMA,
         "status": "verified",
