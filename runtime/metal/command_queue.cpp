@@ -45,6 +45,8 @@ MetalCommandQueue::MetalCommandQueue(const HardwareProbeResult &hardware)
   if (!hardware.hasMetal || !hardware.isAppleSilicon) {
     available_ = false;
     reason_ = "metal-unavailable";
+    device_.deviceName = "unavailable";
+    device_.queueLabel = "disabled";
     profile_.stage = MetalInitializationStage::kUnavailable;
     return;
   }
@@ -52,6 +54,8 @@ MetalCommandQueue::MetalCommandQueue(const HardwareProbeResult &hardware)
   if (!nativeBackend_->Available()) {
     available_ = false;
     reason_ = std::string(nativeBackend_->Reason());
+    device_.deviceName = "unavailable";
+    device_.queueLabel = "unavailable:" + reason_;
     profile_.stage = MetalInitializationStage::kUnavailable;
     return;
   }

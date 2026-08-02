@@ -1,12 +1,12 @@
-<h1 align="center">US4 V6 Apple Edition</h1>
+<h1 align="center">Simplicio Local</h1>
 
 <p align="center">
-  <strong>Universal State Runtime para inferência local de LLM em Apple Silicon: MLX, Metal, NEON, caminho ANE e CLI prático.</strong><br />
+  <strong>Runtime local-first para inferência any-LLM em CPU e aceleração Apple Silicon, com CLI prática.</strong><br />
   <em>Os comandos ficam em inglês para poder copiar exatamente.</em>
 </p>
 
 <p align="center">
-<a href="https://github.com/wesleysimplicio/ds4-simplicio-apple-v6/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/wesleysimplicio/ds4-simplicio-apple-v6?style=flat-square" /></a>
+<a href="https://github.com/wesleysimplicio/simplicio-local/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/wesleysimplicio/simplicio-local?style=flat-square" /></a>
 <img alt="Apple Silicon" src="https://img.shields.io/badge/Apple%20Silicon-M1--M5-111827?style=flat-square" />
 <img alt="CMake" src="https://img.shields.io/badge/CMake-3.27+-064f8c?style=flat-square" />
 </p>
@@ -16,18 +16,22 @@
 </p>
 
 <p align="center">
-  <img src="assets/us4-v6-apple-edition-promo.png" alt="US4 V6 Apple Edition preview" width="860" />
+  <img src="assets/us4-v6-apple-edition-promo.png" alt="Simplicio Local preview" width="860" />
 </p>
 
 ---
 
 ## Resumo direto
 
-Universal State Runtime para inferência local de LLM em Apple Silicon: MLX, Metal, NEON, caminho ANE e CLI prático.
+Runtime local-first para inferência any-LLM em CPU e aceleração Apple Silicon, com CLI prática.
 
 ## DNA do projeto
 
-us4-v6-simplicio-apple e a borda desktop do ecossistema: launchers nativos, scripts de bootstrap, metadados CMake/package e o caminho Apple para uma experiencia Simplicio local. O README revisado agora mantem o polimento global e preserva as notas praticas de instalacao e build do guia anterior.
+`simplicio-local` é a borda de inferência local do ecossistema: um engine
+CPU vendorizado para workloads profundos/offline, o runtime C++ nativo e o
+caminho Apple Silicon. Os nomes históricos US4 continuam em flags, variáveis
+de ambiente e caminhos de implementação por compatibilidade; não são mais a
+identidade do repositório.
 
 A primeira tela nova e a porta de entrada; o guia restaurado abaixo e a oficina. Este README precisa convencer rapido sem perder a memoria operacional que ja existia no projeto.
 
@@ -62,7 +66,7 @@ cmake --build build --config Release
 ```mermaid
 flowchart LR
   mapper["simplicio-mapper
-repo context"] --> current["US4 V6 Apple Edition
+repo context"] --> current["Simplicio Local
 this project"]
   prompt["simplicio-prompt
 reasoning runtime"] --> current
@@ -76,12 +80,12 @@ delivery loop"]
 
 - Changelog tracks CMake project version and starter package version separately.
 - Playwright CLI smoke tests are the high-signal E2E path.
-- Repo currently resolves on GitHub as wesleysimplicio/ds4-simplicio-apple-v6.
+- Repo atualmente resolve no GitHub como wesleysimplicio/simplicio-local.
 
 ## Ecossistema Simplicio
 
 - [simplicio-mapper](https://github.com/wesleysimplicio/simplicio-mapper) supplies repo context before interpretation.
-- [simplicio-cli](https://github.com/wesleysimplicio/simplicio-dev-cli) executes focused code tasks with verification.
+- [simplicio-dev-cli](https://github.com/wesleysimplicio/simplicio-dev-cli) executa tarefas focadas com verificação.
 - [simplicio-prompt](https://github.com/wesleysimplicio/simplicio-prompt) provides fan-out and consensus runtime patterns.
 - [simplicio-sprint](https://github.com/wesleysimplicio/simplicio-sprint) turns cards into draft PR delivery loops.
 
@@ -91,7 +95,7 @@ delivery loop"]
 - [CHANGELOG.md](CHANGELOG.md)
 - [docs/readme-globalization-standard.md](docs/readme-globalization-standard.md)
 
-## Guia original restaurado
+## Guia histórico US4/Apple restaurado
 
 A secao abaixo recupera o material especifico que existia em `README.pt-BR.md` antes da passada de globalizacao. A regra daqui para frente e simples: melhorar a capa, acrescentar contexto e nunca apagar a memoria operacional.
 
@@ -109,8 +113,8 @@ Este e o caminho mais direto para clonar, compilar, executar e validar o projeto
 #### 1. Clone
 
 ```bash
-git clone https://github.com/wesleysimplicio/us4-v6-simplicio-apple.git
-cd us4-v6-simplicio-apple
+git clone https://github.com/wesleysimplicio/simplicio-local.git
+cd simplicio-local
 ```
 
 #### 2. Instale as ferramentas
@@ -238,7 +242,9 @@ Se o GoogleTest nao estiver instalado localmente, o CMake ainda compila os teste
 
 ### O que este repo eh
 
-Este repositorio e a base de planejamento e bootstrap do **US4 V6 Apple Edition**, a edicao Apple Silicon do Universal State Runtime.
+Este repositorio contém o **Simplicio Local**: o engine local CPU-first,
+os slices do runtime C++ nativo e o caminho Apple Silicon. US4 V6 permanece
+como nome histórico da superfície nativa do runtime.
 
 Hoje ele contem:
 
@@ -252,19 +258,21 @@ Fonte de referencia: [US4-V6-simplicio.md](US4-V6-simplicio.md).
 
 ### Escopo do produto
 
-O US4 V6 Apple Edition mira inferencia local para:
+O Simplicio Local mira inferencia local para:
 
 - adapters dense: Qwen, Llama, Gemma;
 - adapters MoE: DeepSeek, Kimi, MiniMax, GLM;
 - adapters low-memory: BitNet e PT-BitNet ternary;
-- backends Apple: MLX, Metal, NEON/Accelerate e ANE opcional em M5+.
+- execucao portavel em CPU escalar primeiro, com NEON quando disponivel;
+- backends Apple opcionais: MLX, Metal, Accelerate e ANE em M5+.
 
 O produto eh explicitamente:
 
 - single-machine first;
+- CPU-first: aceleracao Apple e opcional, nao pre-requisito;
 - correctness-first antes de qualquer claim de performance;
 - CLI + biblioteca, nao app GUI;
-- especifico para Apple nesta edicao.
+- fallback explicito e relato de capacidades do hardware.
 
 ### Estado atual do repo
 
@@ -279,9 +287,9 @@ O produto eh explicitamente:
 ### Stack planejada
 
 - C++20 + CMake + Ninja
-- MLX como caminho primario de tensor/runtime no Apple Silicon
-- Metal para kernels quentes medidos que o MLX nao cobre bem
-- NEON / Accelerate como fallback de CPU
+- CPU escalar e engine C vendorizado como baseline portavel
+- NEON / Accelerate para hot paths de CPU medidos
+- MLX e Metal como caminhos opcionais de aceleracao Apple
 - ANE como caminho opt-in em M5+
 - GoogleTest + CTest para unit e regression
 - Playwright para evidencia E2E da CLI
@@ -340,16 +348,17 @@ tests/         testes de contrato nativos e E2E Playwright da CLI
 
 - inferencia em nuvem ou distribuida;
 - treino ou fine-tuning;
-- hardware nao-Apple nesta edicao;
+- aceleracao Metal/MLX/ANE especifica de Apple em hosts nao-Apple (o caminho
+  CPU continua suportado);
 - shell GUI antes de CLI e biblioteca estarem estaveis.
 
 ## Histórico de estrelas
 
-<a href="https://www.star-history.com/#wesleysimplicio/ds4-simplicio-apple-v6&Date">
+<a href="https://www.star-history.com/#wesleysimplicio/simplicio-local&Date">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=wesleysimplicio/ds4-simplicio-apple-v6&type=Date&theme=dark" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=wesleysimplicio/ds4-simplicio-apple-v6&type=Date" />
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=wesleysimplicio/ds4-simplicio-apple-v6&type=Date" />
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=wesleysimplicio/simplicio-local&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=wesleysimplicio/simplicio-local&type=Date" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=wesleysimplicio/simplicio-local&type=Date" />
   </picture>
 </a>
 

@@ -483,13 +483,18 @@ int main() {
     const us4::MixedDispatchPlan fallbackPlan =
         aneContext.mixedDispatch().BuildPlan(
             "llama", 16U, 4096U, us4::DType::kInt8, us4::RuntimeMode::kFull);
+    ok &= Expect(fallbackPlan.metalSteps == 3U && fallbackPlan.aneSteps == 0U,
+                 "low-bit mixed dispatch should plan all stages for metal");
     const us4::MixedDispatchTelemetry fallbackTelemetry =
         aneContext.mixedDispatch().Execute(
             fallbackPlan, aneContext.layerOffloader(), aneContext.aneBackend(),
             aneContext.metalQueue(), aneShared);
-    ok &= Expect(fallbackTelemetry.metalStages == 3U &&
-                     fallbackTelemetry.aneStages == 0U &&
-                     fallbackTelemetry.strategy == "metal-only",
+    const bool fallbackExecutedOnMetal =
+        fallbackTelemetry.metalStages == fallbackPlan.metalSteps;
+    ok &= Expect(fallbackTelemetry.aneStages == 0U &&
+                     fallbackTelemetry.strategy == "metal-only" &&
+                     (!aneContext.metalQueue().Available() ||
+                      fallbackExecutedOnMetal),
                  "mixed dispatch should fall back to metal for low-bit plans");
 
     us4::HardwareProbeResult thermalProbe = aneProbe;

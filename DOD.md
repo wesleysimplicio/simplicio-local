@@ -8,7 +8,7 @@ against the scalar CPU reference for matmul/RoPE). This file adds the 4th
 DoD layer tracked by the ecosystem-wide hub issue
 ([simplicio-loop#579](https://github.com/wesleysimplicio/simplicio-loop/issues/579))
 for this repo
-([simplicio-local-any-llm-16gb#144](https://github.com/wesleysimplicio/simplicio-local-any-llm-16gb/issues/144)):
+([simplicio-local#144](https://github.com/wesleysimplicio/simplicio-local/issues/144)):
 property/fuzz coverage for the native kernels, on top of the existing
 example-based GoogleTest contract suite (`tests/unit/*_contract_test.cpp`).
 
