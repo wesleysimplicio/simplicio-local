@@ -1,4 +1,4 @@
-<h1 align="center">US4 V6 Apple Edition</h1>
+<h1 align="center">Simplicio Local</h1>
 
 <p align="center">
   <strong>面向 Apple Silicon 本地 LLM 推理的 Universal State Runtime：MLX、Metal、NEON、ANE 路径和实用 CLI。</strong><br />
@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-<a href="https://github.com/wesleysimplicio/ds4-simplicio-apple-v6/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/wesleysimplicio/ds4-simplicio-apple-v6?style=flat-square" /></a>
+<a href="https://github.com/wesleysimplicio/simplicio-local/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/wesleysimplicio/simplicio-local?style=flat-square" /></a>
 <img alt="Apple Silicon" src="https://img.shields.io/badge/Apple%20Silicon-M1--M5-111827?style=flat-square" />
 <img alt="CMake" src="https://img.shields.io/badge/CMake-3.27+-064f8c?style=flat-square" />
 </p>
@@ -16,7 +16,7 @@
 </p>
 
 <p align="center">
-  <img src="../assets/us4-v6-apple-edition-promo.png" alt="US4 V6 Apple Edition preview" width="860" />
+  <img src="../assets/us4-v6-apple-edition-promo.png" alt="Simplicio Local preview" width="860" />
 </p>
 
 ---
@@ -30,7 +30,7 @@
 此本地化页面保留快速路径。恢复后的完整技术指南位于根 README 中，用来保留项目原本的表达和运行细节。
 
 - Full restored guide: [../README.md](../README.md)
-- Local project note: us4-v6-simplicio-apple is the desktop packaging edge of the ecosystem: native launchers, bootstrap scripts, CMake/package metadata, and the Apple-facing path for a local Simplicio experience. The refreshed README now keeps the global polish while preserving the practical installation and build notes from the earlier guide.
+- Local project note: simplicio-local is the local inference edge of the ecosystem: native launchers, bootstrap scripts, CMake/package metadata, and the Apple-facing path for a local Simplicio experience. The refreshed README now keeps the global polish while preserving the practical installation and build notes from the earlier guide.
 
 ## 快速开始
 
@@ -63,7 +63,7 @@ cmake --build build --config Release
 ```mermaid
 flowchart LR
   mapper["simplicio-mapper
-repo context"] --> current["US4 V6 Apple Edition
+repo context"] --> current["Simplicio Local
 this project"]
   prompt["simplicio-prompt
 reasoning runtime"] --> current
@@ -77,7 +77,7 @@ delivery loop"]
 
 - Changelog tracks CMake project version and starter package version separately.
 - Playwright CLI smoke tests are the high-signal E2E path.
-- Repo currently resolves on GitHub as wesleysimplicio/ds4-simplicio-apple-v6.
+- Repo currently resolves on GitHub as wesleysimplicio/simplicio-local.
 
 ## Simplicio 生态
 
@@ -94,11 +94,11 @@ delivery loop"]
 
 ## Star 历史
 
-<a href="https://www.star-history.com/#wesleysimplicio/ds4-simplicio-apple-v6&Date">
+<a href="https://www.star-history.com/#wesleysimplicio/simplicio-local&Date">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=wesleysimplicio/ds4-simplicio-apple-v6&type=Date&theme=dark" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=wesleysimplicio/ds4-simplicio-apple-v6&type=Date" />
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=wesleysimplicio/ds4-simplicio-apple-v6&type=Date" />
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=wesleysimplicio/simplicio-local&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=wesleysimplicio/simplicio-local&type=Date" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=wesleysimplicio/simplicio-local&type=Date" />
   </picture>
 </a>
 

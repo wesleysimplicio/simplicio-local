@@ -31,6 +31,8 @@ próprio, em vez de ficar dentro de `engine/`.
   Python de diagnóstico, planejamento de recursos e servidor
   OpenAI-compatible.
 - `c/coli` — script Python wrapper de CLI (não é binário compilado).
+- `Makefile` — entrypoint compatível no diretório `engine/`; delega todos os
+  alvos ao `c/Makefile` sem duplicar o grafo de build.
 - `c/Makefile` — build nativo do motor (`make`, `make test`, `make
   portable`, `make check`). Ver seção "Build" abaixo.
 - `c/tests/` — testes C (`test_json.c`, `test_st.c`, `test_tier.c`, etc.)
@@ -66,11 +68,14 @@ puro (ver ADR-010).
 # via CMake (delega ao Makefile do motor)
 cmake --build build --target engine-colibri
 
-# direto, sem CMake
-cd engine/c
-make glm            # build do binário GLM-family MoE
-make test           # testes C + Python do motor
-make check           # clean + build portável + testes
+# direto, sem CMake (a partir da raiz)
+make -C engine glm             # build do binário GLM-family MoE
+make -C engine test            # testes C + Python do motor
+make -C engine check           # clean + build portável + testes
+
+# O Makefile proprietário continua disponível para quem precisa trabalhar
+# diretamente no diretório vendorizado:
+make -C engine/c test
 ```
 
 `make test` inclui tokenizer e regressões dos quantizadores/kernels

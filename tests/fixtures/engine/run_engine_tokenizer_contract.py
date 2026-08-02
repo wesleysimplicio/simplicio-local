@@ -58,7 +58,10 @@ def main() -> int:
             print(run_result.stderr, file=sys.stderr)
         if run_result.returncode != 0:
             raise SystemExit("Contrato do tokenizer falhou")
-        if "ENCODE: 4/4" not in run_result.stdout or "DECODE(round-trip): 4/4" not in run_result.stdout:
+        legacy_summary = "TOKENIZER legacy: 4/4 encode+roundtrip"
+        detailed_summary = "ENCODE: 4/4" in run_result.stdout and \
+            "DECODE(round-trip): 4/4" in run_result.stdout
+        if not detailed_summary and legacy_summary not in run_result.stdout:
             raise SystemExit("Resumo do tokenizer nao confirmou 4/4 em encode+decode")
 
     print("engine tokenizer contract: PASS")

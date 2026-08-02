@@ -8,6 +8,13 @@ import {setTimeout as sleep} from "node:timers/promises";
 const repoRoot = path.resolve(__dirname, "..", "..");
 const nativeBin = path.join(repoRoot, "build", "apps", "us4-cli");
 const serveScript = path.join(repoRoot, "scripts", "openai_serve.py");
+const admittedServeEnv = {
+  ...process.env,
+  NO_COLOR : "1",
+  US4_LOCAL_INFERENCE : "enabled",
+  US4_RUNTIME_POLICY : "admitted",
+  US4_RUNTIME_LEASE : "playwright-serve-contract",
+};
 
 type FetchResult = {
   status: number;
@@ -125,7 +132,7 @@ test.describe("us4-cli serve OpenAI-compat smoke", () => {
                       ],
                       {
                         cwd : repoRoot,
-                        env : {...process.env, NO_COLOR : "1"},
+                        env : admittedServeEnv,
                         stdio : [ "ignore", "pipe", "pipe" ],
                       });
     await waitReady(`http://127.0.0.1:${basePort}/health`);
@@ -234,7 +241,7 @@ test.describe("us4-cli serve --native (real runtime, no external process)",
                        ],
                        {
                          cwd : repoRoot,
-                         env : {...process.env, NO_COLOR : "1"},
+                         env : admittedServeEnv,
                          stdio : [ "ignore", "pipe", "pipe" ],
                        });
     await waitReady(`http://127.0.0.1:${nativePort}/v1/models`);

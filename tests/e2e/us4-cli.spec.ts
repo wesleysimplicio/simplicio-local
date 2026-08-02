@@ -148,6 +148,40 @@ test.describe("Native CLI sprint 02 contract", () => {
 
   test.skip(!nativeCliPath, "native us4-cli is not available in this host");
 
+  // Native run/serve commands intentionally require an explicit Runtime
+  // admission tuple. Scope the test-only lease to this suite so the E2E
+  // checks exercise the admitted execution path without weakening the CLI's
+  // fail-closed default.
+  const savedAdmission = {
+    localInference : process.env.US4_LOCAL_INFERENCE,
+    runtimePolicy : process.env.US4_RUNTIME_POLICY,
+    runtimeLease : process.env.US4_RUNTIME_LEASE,
+  };
+
+  test.beforeAll(() => {
+    process.env.US4_LOCAL_INFERENCE = "enabled";
+    process.env.US4_RUNTIME_POLICY = "admitted";
+    process.env.US4_RUNTIME_LEASE = "playwright-native-contract";
+  });
+
+  test.afterAll(() => {
+    if (savedAdmission.localInference === undefined) {
+      delete process.env.US4_LOCAL_INFERENCE;
+    } else {
+      process.env.US4_LOCAL_INFERENCE = savedAdmission.localInference;
+    }
+    if (savedAdmission.runtimePolicy === undefined) {
+      delete process.env.US4_RUNTIME_POLICY;
+    } else {
+      process.env.US4_RUNTIME_POLICY = savedAdmission.runtimePolicy;
+    }
+    if (savedAdmission.runtimeLease === undefined) {
+      delete process.env.US4_RUNTIME_LEASE;
+    } else {
+      process.env.US4_RUNTIME_LEASE = savedAdmission.runtimeLease;
+    }
+  });
+
   test("probe command exposes native acceleration profile",
        async ({}, testInfo) => {
          const {stdout, stderr} = await execFileAsync(

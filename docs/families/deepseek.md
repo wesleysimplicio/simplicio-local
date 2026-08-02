@@ -1,10 +1,10 @@
 # Familia DeepSeek-V3 / R1 no motor `engine/c/glm.c`
 
-> Issue [#120](https://github.com/wesleysimplicio/ds4-simplicio-apple-v6/issues/120), epica
-> [#116](https://github.com/wesleysimplicio/ds4-simplicio-apple-v6/issues/116) (rodar LLM
+> Issue [#120](https://github.com/wesleysimplicio/simplicio-local/issues/120), epica
+> [#116](https://github.com/wesleysimplicio/simplicio-local/issues/116) (rodar LLM
 > tier-1 em 16GB de RAM sem GPU). Depende de #117 (vendoring do motor colibri, mergeado) e
 > #119 (perfil 16GB, mergeado). Bloqueada para rodar em checkpoint real / hardware real de
-> 16GB por [#118](https://github.com/wesleysimplicio/ds4-simplicio-apple-v6/issues/118) — ver
+> 16GB por [#118](https://github.com/wesleysimplicio/simplicio-local/issues/118) — ver
 > "Limitacoes" abaixo.
 
 ## Por que DeepSeek-V3/R1 "quase" ja funcionava
@@ -138,7 +138,7 @@ seja, o group-limiting real esta' ativo e testado, nao contornado.
 - Rodar um checkpoint DeepSeek-V3/R1 real dentro de um teto de RSS de 16GB (perfil
   `docs/profiles/16gb.md`, gate `COLI_RSS_CEILING_GB`/`COLI_PROFILE=16gb`) depende de
   hardware real de 16GB para validar em condicoes reais — bloqueado por
-  [#118](https://github.com/wesleysimplicio/ds4-simplicio-apple-v6/issues/118), fora do
+  [#118](https://github.com/wesleysimplicio/simplicio-local/issues/118), fora do
   escopo cumprivel nesta issue/ambiente. O gate de RSS e' agnostico de arquitetura (projeta
   a partir do modelo efetivamente carregado, testado em #119) e portanto ja' cobre
   DeepSeek-V3/R1 sem mudanca — falta apenas a maquina real para medir o numero final.

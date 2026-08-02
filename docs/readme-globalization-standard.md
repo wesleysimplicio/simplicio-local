@@ -2,7 +2,7 @@
 
 Status: active  
 Date: 2026-06-01  
-Applies to: US4 V6 Apple Edition
+Applies to: Simplicio Local (`wesleysimplicio/simplicio-local`)
 
 ## Benchmark Input
 
@@ -48,8 +48,8 @@ This README pattern was built after reviewing:
 
 ## Project-Specific Checklist
 
-- Product: US4 V6 Apple Edition
-- GitHub slug used by badges and Star History: `wesleysimplicio/ds4-simplicio-apple-v6`
+- Product: Simplicio Local
+- GitHub slug used by badges and Star History: `wesleysimplicio/simplicio-local`
 - Hero asset: `assets/us4-v6-apple-edition-promo.png`
 - Package surfaces: not package-published from this repo
 - Primary quick-start command: `brew install cmake ninja node`

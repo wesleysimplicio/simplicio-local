@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <filesystem>
 #include <stop_token>
 #include <string>
@@ -8,6 +9,69 @@
 
 namespace us4 {
 namespace {
+
+class ScopedRuntimeAdmission {
+public:
+  ScopedRuntimeAdmission()
+      : localInference_(Capture("US4_LOCAL_INFERENCE")),
+        runtimePolicy_(Capture("US4_RUNTIME_POLICY")),
+        runtimeLease_(Capture("US4_RUNTIME_LEASE")) {
+    Set("US4_LOCAL_INFERENCE", "enabled");
+    Set("US4_RUNTIME_POLICY", "admitted");
+    Set("US4_RUNTIME_LEASE", "contract-test-lease");
+  }
+
+  ~ScopedRuntimeAdmission() {
+    Restore(localInference_);
+    Restore(runtimePolicy_);
+    Restore(runtimeLease_);
+  }
+
+  ScopedRuntimeAdmission(const ScopedRuntimeAdmission &) = delete;
+  ScopedRuntimeAdmission &operator=(const ScopedRuntimeAdmission &) = delete;
+
+private:
+  struct SavedValue {
+    const char *name;
+    bool present;
+    std::string value;
+  };
+
+  static SavedValue Capture(const char *name) {
+    const char *value = std::getenv(name);
+    return {.name = name,
+            .present = value != nullptr,
+            .value = value != nullptr ? value : ""};
+  }
+
+  static void Set(const char *name, const char *value) {
+#ifdef _WIN32
+    (void)::_putenv_s(name, value);
+#else
+    (void)::setenv(name, value, 1);
+#endif
+  }
+
+  static void Unset(const char *name) {
+#ifdef _WIN32
+    (void)::_putenv_s(name, "");
+#else
+    (void)::unsetenv(name);
+#endif
+  }
+
+  static void Restore(const SavedValue &saved) {
+    if (saved.present) {
+      Set(saved.name, saved.value.c_str());
+    } else {
+      Unset(saved.name);
+    }
+  }
+
+  SavedValue localInference_;
+  SavedValue runtimePolicy_;
+  SavedValue runtimeLease_;
+};
 
 std::filesystem::path RepoRoot() {
 #ifdef US4_SOURCE_DIR
@@ -101,6 +165,11 @@ TEST(OpenAiChatHandlerContractTest, UnknownModelReturnsExplicitError) {
 // not a canned/mocked response.
 TEST(OpenAiChatHandlerContractTest,
      RealModelPathDrivesRealWeightsThroughNativeHandler) {
+  // HandleChatCompletion is intentionally fail-closed unless the caller has
+  // an explicit Runtime policy admission and lease. Keep this integration
+  // test hermetic while exercising the admitted real-weight path.
+  const ScopedRuntimeAdmission admission;
+
   ChatCompletionRequest request;
   request.model = "qwen-0.5b";
   request.prompt = "alpha";

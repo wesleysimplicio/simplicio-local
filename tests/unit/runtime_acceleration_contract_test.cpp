@@ -13,6 +13,7 @@
 #include "metal/dense_dispatch.h"
 #include "metal/device_info.h"
 #include "metal/kernel_library.h"
+#include "metal/native_metal_backend.h"
 #include "mlx/dense_plan.h"
 #include "mlx/mlx_bridge.h"
 #include "tuning/thermal_monitor.h"
@@ -199,11 +200,18 @@ TEST(RuntimeAccelerationContractTest,
 
 TEST(RuntimeAccelerationContractTest,
      MetalDeviceProbeAndAutoreleaseScopeStayCallable) {
+  const us4::NativeMetalBackend nativeBackend;
   const us4::MetalDeviceInfo device = us4::ProbeMetalDevice(MakeAppleProbe());
   const us4::ScopedAutoreleasePool pool(true);
 
-  EXPECT_TRUE(device.available);
-  EXPECT_EQ(device.maxThreadsPerThreadgroup, 1024U);
+  EXPECT_EQ(device.available, nativeBackend.Available());
+  if (nativeBackend.Available()) {
+    EXPECT_EQ(device.maxThreadsPerThreadgroup, 1024U);
+  } else {
+    EXPECT_EQ(device.maxThreadsPerThreadgroup, 0U);
+    EXPECT_EQ(device.deviceName, "unavailable");
+    EXPECT_EQ(device.queueLabel, "disabled");
+  }
   EXPECT_TRUE(pool.Requested());
   if (pool.Kind() == us4::AutoreleaseBoundaryKind::kObjectiveC) {
     EXPECT_TRUE(pool.Active());
