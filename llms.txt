@@ -7,7 +7,7 @@ Read AGENTS.md before planning or changing this repository.
 GLOBAL ARCHITECTURE RULES FOR LLMS
 
 1. Do not preserve backward compatibility. Delete obsolete behavior directly;
-   do not add compatibility layers, migrations, or legacy fallbacks.
+   do not add compatibility layers, migrations, or fallbacks.
 2. Choose the simplest implementation that meets the current need.
 3. Build long-lived layers incrementally: make the minimum end-to-end version
    work first, then add capabilities without dismantling working code.
