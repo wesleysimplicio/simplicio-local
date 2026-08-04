@@ -1,0 +1,22 @@
+# simplicio-local — LLM orientation
+
+Read AGENTS.md before planning or changing this repository.
+
+
+<!-- simplicio-global-llm-architecture-rules:start -->
+GLOBAL ARCHITECTURE RULES FOR LLMS
+
+1. Do not preserve backward compatibility. Delete obsolete behavior directly;
+   do not add compatibility layers, migrations, or fallbacks.
+2. Choose the simplest implementation that meets the current need.
+3. Build long-lived layers incrementally: make the minimum end-to-end version
+   work first, then add capabilities without dismantling working code.
+4. Keep components modular with clear separation of responsibilities.
+5. Prefer mature, maintained libraries; do not rewrite from scratch without an
+   explicit technical reason.
+6. Inspect existing dependencies before adding packages or reimplementing.
+7. Make architecture decisions for the long term; do not leave temporary
+   solutions to change later.
+8. Reuse validated patterns from mature products instead of reinventing them.
+
+<!-- simplicio-global-llm-architecture-rules:end -->
