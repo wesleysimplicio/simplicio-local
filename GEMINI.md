@@ -11,7 +11,7 @@ release e documentação neste ecossistema. O agente deve lê-las antes de agir:
 
 1. **Não mantenha compatibilidade retroativa.** O que está obsoleto deve ser
    deletado diretamente. Não adicione camadas de compatibilidade, migrações ou
-   fallbacks para preservar comportamento antigo.
+   fallbacks.
 2. **Escolha a implementação mais simples que atende à necessidade atual.**
    Não crie abstrações preventivas nem camadas de configuração desnecessárias.
 3. **Divida o sistema em camadas longas.** Faça primeiro uma versão mínima
