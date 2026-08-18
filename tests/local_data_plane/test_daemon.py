@@ -45,6 +45,12 @@ class DaemonLifecycleTests(unittest.TestCase):
         self.assertFalse(response["ok"])
         self.assertEqual(response["error"]["code"], "backend_mismatch")
 
+    def test_turboquant_cannot_be_attached_to_fixture(self):
+        response = InferenceDaemon().handle({"method": "load", "model_id": "tiny",
+                                              "turboquant": True})[0][1]
+        self.assertFalse(response["ok"])
+        self.assertEqual(response["error"]["code"], "backend_mismatch")
+
 
 if __name__ == "__main__":
     unittest.main()
