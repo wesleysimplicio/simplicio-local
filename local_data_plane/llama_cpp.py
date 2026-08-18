@@ -258,3 +258,17 @@ class LlamaCppProvider:
         if self.process.poll() is None:
             self.process.terminate()
             try:
+                self.process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                self.process.kill()
+                self.process.wait(timeout=5)
+        if stderr is not None:
+            stderr.close()
+        self.process = None
+        self.port = None
+
+    def __enter__(self) -> "LlamaCppProvider":
+        return self
+
+    def __exit__(self, *_: object) -> None:
+        self.stop()
