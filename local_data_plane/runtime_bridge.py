@@ -197,10 +197,14 @@ class RuntimeInferenceBridge:
                 replay[-1][1]["replayed"] = True
                 return replay
             prompt = request.prompt_text()
+            requested_backend = payload.get("backend") or payload.get("requested_backend")
+            capabilities = self.daemon.turboquant_capabilities
+            if requested_backend in {"turboquant", "llama-cpp-turboquant"}:
+                capabilities = self.daemon.turboquant_model_capabilities
             try:
                 profile = resolve_turboquant_profile(
                     request.payload.get("turboquant_profile"),
-                    self.daemon.turboquant_capabilities,
+                    capabilities,
                     allow_fallback=request.intents["allow_fallback"],
                 )
             except (RuntimeError, ValueError) as exc:
@@ -214,9 +218,8 @@ class RuntimeInferenceBridge:
             }
             if payload.get("handle_id") is not None:
                 local_request["handle_id"] = payload["handle_id"]
-            backend = payload.get("backend") or payload.get("requested_backend")
-            if backend is not None:
-                local_request["backend"] = backend
+            if requested_backend is not None:
+                local_request["backend"] = requested_backend
             local_events = self.daemon.handle(local_request, request_id)
             terminal = local_events[-1][1]
             local_receipt = terminal.get("receipt") or {}
