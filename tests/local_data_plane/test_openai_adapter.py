@@ -1,5 +1,7 @@
 import json
+import tempfile
 import unittest
+from pathlib import Path
 
 from local_data_plane.daemon import InferenceDaemon
 from local_data_plane.openai_adapter import OpenAIAdapter
@@ -35,6 +37,16 @@ class OpenAIAdapterTests(unittest.TestCase):
         self.assertEqual(protected.dispatch("GET", "/v1/models")[0], 401)
         self.assertEqual(protected.dispatch("GET", "/v1/models", {"Authorization": "Bearer secret"})[0], 200)
         self.assertNotIn("Access-Control-Allow-Origin", protected.dispatch("GET", "/v1/models", {"Authorization": "Bearer secret"})[1])
+
+    def test_local_benchmark_page_is_served_same_origin(self):
+        with tempfile.TemporaryDirectory() as root:
+            page = Path(root) / "qwen38.html"
+            page.write_text("<title>Qwen benchmark</title>", encoding="utf-8")
+            adapter = OpenAIAdapter(self.daemon, static_root=root)
+            code, headers, body = adapter.dispatch("GET", "/")
+        self.assertEqual(code, 200)
+        self.assertEqual(headers["Content-Type"], "text/html; charset=utf-8")
+        self.assertIn(b"Qwen benchmark", body)
 
 
 if __name__ == "__main__":
