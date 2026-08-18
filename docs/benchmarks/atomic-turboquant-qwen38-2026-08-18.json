@@ -1,0 +1,48 @@
+{
+  "schema": "simplicio.local.inference-benchmark/v1",
+  "status": "real-model-executed",
+  "host": {
+    "platform": "linux-x86_64",
+    "cpu": "Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz",
+    "vcpus": 9,
+    "ram_gib": 21.9,
+    "swap_gib": 0.0
+  },
+  "backend": {
+    "id": "llama-cpp-turboquant",
+    "requested": "turboquant",
+    "release": "b10269-1.4.0",
+    "version": "b10269-1.4.0 (build 10679, commit 074bf826e)",
+    "executable_sha256": "10fa6d72b06742d207836a31bce90d51c96c1a44d90e21c7f3018412c599a2dc",
+    "cache_type_k": "turbo3",
+    "cache_type_v": "turbo3",
+    "flash_attention": "auto",
+    "kv_unified": true
+  },
+  "model": {
+    "id": "qwen3.8-27b-q4",
+    "file": "Qwen3.8-27B-Q4_K_M.gguf",
+    "size_bytes": 17106775008,
+    "context_size": 512,
+    "threads": 9,
+    "threads_batch": 9,
+    "parallel": 1
+  },
+  "execution": {
+    "load_elapsed_seconds": 240.90711691699835,
+    "generate_elapsed_seconds": 9.01108265000057,
+    "prompt_tokens": 21,
+    "generated_tokens": 6,
+    "prompt_ms": 5444.878,
+    "decode_ms": 3550.217,
+    "total_ms": 9007.498903,
+    "effective_backend": "llama-cpp-turboquant",
+    "completed": true,
+    "output_sha256": "ea2bbea0feb03654cdeccc1d76aeb88721002f02193abe2cbdda9ae2e14d4fd9"
+  },
+  "limitations": [
+    "The host has no GPU; this validates the Atomic CPU/reference path and Local process/API integration.",
+    "The load time includes full GGUF identity SHA-256 verification.",
+    "This is not a throughput comparison against F16/Q4 without TurboQuant on the same host."
+  ]
+}

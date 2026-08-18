@@ -238,6 +238,7 @@ class LlamaCppProvider:
     def stop(self) -> None:
         if self.process is None:
             return
+        stderr = self.process.stderr
         if self.process.poll() is None:
             self.process.terminate()
             try:
@@ -245,6 +246,8 @@ class LlamaCppProvider:
             except subprocess.TimeoutExpired:
                 self.process.kill()
                 self.process.wait(timeout=5)
+        if stderr is not None:
+            stderr.close()
         self.process = None
         self.port = None
 
