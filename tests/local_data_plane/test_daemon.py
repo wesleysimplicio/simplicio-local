@@ -37,6 +37,14 @@ class DaemonLifecycleTests(unittest.TestCase):
         self.assertNotIn("do not persist", str(receipt))
         self.assertEqual(receipt["identity"]["effective_backend"], "fixture")
 
+    def test_backend_request_cannot_fallback_to_fixture(self):
+        daemon = InferenceDaemon()
+        handle = daemon.handle({"method": "load", "model_id": "tiny"})[0][1]["handle_id"]
+        response = daemon.handle({"method": "generate", "handle_id": handle,
+                                  "backend": "llama-cpp", "prompt": "hello", "max_tokens": 1}, 12)[-1][1]
+        self.assertFalse(response["ok"])
+        self.assertEqual(response["error"]["code"], "backend_mismatch")
+
 
 if __name__ == "__main__":
     unittest.main()

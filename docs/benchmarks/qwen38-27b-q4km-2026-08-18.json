@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-08-18T03:26:38Z",
+  "kind": "real_model_smoke_and_integration",
+  "status": "captured",
+  "host": {
+    "platform": "Linux-6.18.35-x86_64-with-glibc2.39",
+    "cpu": "Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz",
+    "logical_cpus": 9,
+    "ram_total_bytes": 22996746240,
+    "ram_available_before_bytes": 21480026112,
+    "swap_total_bytes": 0,
+    "gpu": null
+  },
+  "model": {
+    "model_id": "qwen3.8-27b-q4km",
+    "source": "unsloth/Qwen3.8-27B-GGUF",
+    "quantization": "Q4_K_M",
+    "format": "GGUF",
+    "size_bytes": 17106775008,
+    "sha256": "7e78da5d7e3ae28d178121f58646953305f3e5bd3cb46f4a75584e8b6c6fe169"
+  },
+  "runtime": {
+    "effective_backend": "llama-cpp",
+    "server": "llama-server 0.1.1-dev (build 10472, commit 60eeeb608)",
+    "context": 1024,
+    "threads": 9,
+    "threads_batch": 9,
+    "parallel": 1,
+    "reasoning": "off",
+    "load_mode": "mmap"
+  },
+  "integration_run": {
+    "prompt": "Reply with exactly OK.",
+    "response": "OK",
+    "load_ms": 165737.3,
+    "generation_total_ms": 4061.815,
+    "prompt_tokens": 17,
+    "generated_tokens": 2,
+    "prompt_ms": 3606.394,
+    "decode_ms": 445.671,
+    "decode_tokens_per_second": 4.487,
+    "finish_reason": "stop",
+    "daemon_effective_backend": "llama-cpp",
+    "receipt_status": "completed"
+  },
+  "long_generation_run": {
+    "prompt": "Write a concise 64-token paragraph explaining why local inference is useful. No reasoning, no preamble.",
+    "ready_ms": 87424.414,
+    "request_ms": 39464.176,
+    "prompt_tokens": 33,
+    "generated_tokens": 64,
+    "prompt_ms": 5632.335,
+    "decode_ms": 33823.884,
+    "decode_tokens_per_second": 1.892,
+    "finish_reason": "length",
+    "mem_available_after_bytes": 10444431360,
+    "effective_backend": "llama-cpp"
+  },
+  "negative_control": {
+    "requested_backend": "turboquant",
+    "status": "blocked",
+    "error_code": "backend_unavailable",
+    "reason": "TurboQuant is an evidence gate in this build; no executor is installed"
+  },
+  "validation": {
+    "python_unit_tests": 44,
+    "python_unit_tests_passed": true,
+    "node_tests": 40,
+    "node_tests_passed": true,
+    "benchmark_ui": "web/qwen38.html",
+    "benchmark_ui_storage": "browser localStorage plus downloadable JSON"
+  },
+  "notes": [
+    "The 2-token run is an integration smoke, not a stable throughput benchmark.",
+    "load_ms includes GGUF identity validation and llama.cpp startup through the daemon.",
+    "GPU, MLX, Metal, ANE, Ollama and a TurboQuant executor were not available on this Linux CPU-only host."
+  ]
+}

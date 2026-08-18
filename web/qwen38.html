@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Qwen 3.8 · Simplicio Local</title>
+  <style>
+    :root { color-scheme: dark; --bg:#202124; --panel:#303134; --line:#4b4d52; --text:#e8eaed; --muted:#aeb3bb; --blue:#8ab4f8; --green:#81c995; --red:#f28b82; }
+    * { box-sizing: border-box; }
+    body { margin:0; min-height:100vh; background:var(--bg); color:var(--text); font:15px Arial, sans-serif; }
+    main { width:min(900px, calc(100% - 32px)); margin:0 auto; padding:48px 0 56px; }
+    .brand { text-align:center; font-size:clamp(42px, 8vw, 76px); letter-spacing:-5px; margin:18px 0 28px; }
+    .brand span:nth-child(1), .brand span:nth-child(4) { color:#8ab4f8; } .brand span:nth-child(2) { color:#f28b82; }
+    .brand span:nth-child(3) { color:#fdd663; } .brand span:nth-child(5) { color:#81c995; }
+    .tag { text-align:center; color:var(--muted); margin:-16px 0 28px; }
+    .search { display:flex; gap:10px; align-items:center; border:1px solid var(--line); border-radius:28px; padding:8px 10px 8px 18px; background:#202124; box-shadow:0 2px 8px #0003; }
+    textarea { width:100%; min-height:46px; max-height:180px; resize:vertical; border:0; outline:0; background:transparent; color:var(--text); font:16px Arial; padding:6px 0; }
+    button { border:1px solid transparent; border-radius:5px; padding:10px 15px; cursor:pointer; color:#202124; background:var(--blue); font-weight:600; white-space:nowrap; }
+    button.secondary { color:var(--text); background:var(--panel); border-color:var(--line); }
+    button:disabled { opacity:.55; cursor:wait; }
+    .controls, .stats, .saved { display:grid; gap:12px; margin-top:18px; }
+    .controls { grid-template-columns:1fr 140px 120px; }
+    input { width:100%; border:1px solid var(--line); border-radius:5px; background:var(--panel); color:var(--text); padding:10px; }
+    label { color:var(--muted); font-size:12px; } label input { display:block; margin-top:5px; }
+    .card { margin-top:22px; border:1px solid var(--line); border-radius:10px; padding:18px; background:var(--panel); }
+    .card h2 { margin:0 0 12px; font-size:16px; font-weight:500; }
+    #answer { white-space:pre-wrap; min-height:50px; line-height:1.5; }
+    .stats { grid-template-columns:repeat(5, 1fr); }
+    .metric { border:1px solid var(--line); border-radius:7px; padding:12px; min-height:67px; }
+    .metric small { display:block; color:var(--muted); margin-bottom:7px; } .metric strong { font-size:16px; }
+    .ok { color:var(--green); } .error { color:var(--red); }
+    .saved-head { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    table { width:100%; border-collapse:collapse; font-size:13px; } th, td { text-align:left; padding:9px 6px; border-top:1px solid var(--line); } th { color:var(--muted); font-weight:normal; }
+    .hint { color:var(--muted); font-size:12px; line-height:1.5; }
+    @media (max-width:700px) { .controls, .stats { grid-template-columns:1fr 1fr; } .controls label:first-child { grid-column:1 / -1; } .stats .metric:last-child { grid-column:1 / -1; } .search { align-items:flex-end; } }
+  </style>
+</head>
+<body>
+<main>
+  <div class="brand"><span>Q</span><span>w</span><span>e</span><span>n</span><span>3.8</span></div>
+  <div class="tag">Simplicio Local · Q4_K_M · benchmark real no llama.cpp</div>
+  <form id="run-form" class="search">
+    <textarea id="prompt" aria-label="Prompt" placeholder="Digite um prompt para testar o modelo...">Reply with exactly OK.</textarea>
+    <button id="run" type="submit">Testar</button>
+  </form>
+  <div class="controls">
+    <label>Modelo<input id="model" value="qwen3.8-27b-q4km"></label>
+    <label>Max tokens<input id="max-tokens" type="number" min="1" max="4096" value="16"></label>
+    <label>Endpoint<input id="endpoint" value="/v1/chat/completions"></label>
+  </div>
+  <section class="card"><h2>Resposta</h2><div id="answer" class="hint">Aguardando um teste...</div></section>
+  <section class="stats" aria-label="Medições atuais">
+    <div class="metric"><small>Latência total</small><strong id="total">—</strong></div>
+    <div class="metric"><small>Prompt tokens</small><strong id="prompt-tokens">—</strong></div>
+    <div class="metric"><small>Output tokens</small><strong id="output-tokens">—</strong></div>
+    <div class="metric"><small>Prompt / decode</small><strong id="phases">—</strong></div>
+    <div class="metric"><small>Decode tok/s</small><strong id="tok-s">—</strong></div>
+    <div class="metric"><small>Backend efetivo</small><strong id="backend">—</strong></div>
+    <div class="metric"><small>Resultado</small><strong id="result">—</strong></div>
+  </section>
+  <section class="card saved">
+    <div class="saved-head"><h2>Medições salvas (<span id="count">0</span>)</h2><div><button class="secondary" id="download" type="button">Baixar JSON</button> <button class="secondary" id="clear" type="button">Limpar</button></div></div>
+    <div class="hint">Cada execução fica no localStorage deste navegador e pode ser baixada como JSON.</div>
+    <table><thead><tr><th>Hora</th><th>Prompt</th><th>Total</th><th>Tok/s</th><th>Backend</th><th>Resultado</th></tr></thead><tbody id="runs"></tbody></table>
+  </section>
+</main>
+<script>
+  const KEY = 'simplicio-qwen38-benchmarks-v1';
+  const $ = (id) => document.getElementById(id);
+  const loadRuns = () => { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (_) { return []; } };
+  const saveRuns = (runs) => localStorage.setItem(KEY, JSON.stringify(runs));
+  const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function renderRuns() {
+    const runs = loadRuns(); $('count').textContent = runs.length;
+    $('runs').innerHTML = runs.slice().reverse().map(r => `<tr><td>${esc(new Date(r.timestamp).toLocaleTimeString())}</td><td>${esc(r.prompt.slice(0,32))}</td><td>${r.total_ms.toFixed(0)} ms</td><td>${r.output_tokens && r.total_ms ? (r.output_tokens/(r.total_ms/1000)).toFixed(2) : '—'}</td><td>${esc(r.effective_backend || '—')}</td><td class="${r.ok?'ok':'error'}">${r.ok?'OK':'erro'}</td></tr>`).join('');
+  }
+  function setMetric(id, value) { $(id).textContent = value; }
+  $('run-form').addEventListener('submit', async (event) => {
+    event.preventDefault(); const button = $('run'); button.disabled = true; $('answer').className = 'hint'; $('answer').textContent = 'Executando...';
+    const prompt = $('prompt').value, started = performance.now(), record = { schema_version:1, timestamp:new Date().toISOString(), prompt, model:$('model').value, max_tokens:Number($('max-tokens').value) };
+    try {
+      const response = await fetch($('endpoint').value, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({model:record.model, messages:[{role:'user',content:prompt}], max_tokens:record.max_tokens, temperature:0, stream:false}) });
+      const payload = await response.json(); record.total_ms = performance.now()-started; record.http_status=response.status; record.ok=response.ok;
+      if (!response.ok) throw new Error(payload.error?.message || 'HTTP '+response.status);
+      const choice = payload.choices?.[0] || {}, usage = payload.usage || {}, meta = payload.metadata || {};
+      record.text=choice.message?.content || choice.text || ''; record.prompt_tokens=usage.prompt_tokens||0; record.output_tokens=usage.completion_tokens||0; record.effective_backend=meta.effective_backend; record.receipt=meta.receipt;
+      const metrics=meta.receipt?.metrics || {}; record.prompt_ms=metrics['latency.prompt_ms']?.value; record.decode_ms=metrics['latency.decode_ms']?.value; record.decode_tokens_per_second=record.decode_ms && record.output_tokens ? record.output_tokens/(record.decode_ms/1000) : undefined;
+      $('answer').className=''; $('answer').textContent=record.text || '(resposta vazia)'; setMetric('result','sucesso');
+    } catch (error) { record.total_ms=record.total_ms || performance.now()-started; record.ok=false; record.error=String(error.message || error); $('answer').className='error'; $('answer').textContent=record.error; setMetric('result','erro'); }
+    setMetric('total', (record.total_ms||0).toFixed(0)+' ms'); setMetric('prompt-tokens', record.prompt_tokens ?? '—'); setMetric('output-tokens', record.output_tokens ?? '—'); setMetric('phases', record.prompt_ms && record.decode_ms ? record.prompt_ms.toFixed(0)+' / '+record.decode_ms.toFixed(0)+' ms' : '—'); setMetric('tok-s', record.decode_tokens_per_second ? record.decode_tokens_per_second.toFixed(2) : '—'); setMetric('backend', record.effective_backend || '—');
+    const runs=loadRuns(); runs.push(record); saveRuns(runs); renderRuns(); button.disabled=false;
+  });
+  $('download').addEventListener('click', () => { const blob=new Blob([JSON.stringify({schema_version:1, exported_at:new Date().toISOString(), runs:loadRuns()},null,2)], {type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='simplicio-qwen38-benchmarks.json'; a.click(); URL.revokeObjectURL(a.href); });
+  $('clear').addEventListener('click', () => { if (confirm('Apagar medições salvas neste navegador?')) { saveRuns([]); renderRuns(); } });
+  renderRuns();
+</script>
+</body>
+</html>
