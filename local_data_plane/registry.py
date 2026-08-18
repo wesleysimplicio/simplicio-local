@@ -5,6 +5,8 @@ from __future__ import annotations
 import os
 import platform
 import shutil
+import time
+import hashlib
 from dataclasses import dataclass
 from enum import IntEnum
 from pathlib import Path
@@ -105,6 +107,78 @@ class BackendRegistry:
             }
             for item in self.catalog()
         ]
+
+    def runtime_discovery(self, *, model_id: str = "unresolved-model") -> list[dict[str, object]]:
+        """Expose the Runtime v2 discovery shape without inventing capability evidence."""
+
+        now_ms = int(time.time() * 1000)
+        build_hash = hashlib.sha256(b"simplicio-local-python-data-plane").hexdigest()
+        discoveries: list[dict[str, object]] = []
+        for item in self._items.values():
+            if item.available:
+                state = "ready"
+                evidence = "measured" if item.evidence_level >= EvidenceLevel.FIXTURE_EXECUTED else "probed"
+                unavailable_reason = None
+            elif item.supported:
+                state = "degraded"
+                evidence = "advertised"
+                unavailable_reason = item.reason or "backend is not executable on this host"
+            else:
+                state = "absent"
+                evidence = "unknown"
+                unavailable_reason = item.reason or "backend is not present"
+            backend_hash = hashlib.sha256(item.backend.encode()).hexdigest()
+            model_hash = hashlib.sha256(model_id.encode()).hexdigest()
+            devices = {item.device if item.device in {"cpu", "metal", "mlx", "cuda", "vulkan", "npu"} else "auto"}
+            storage_modes = {"resident", "auto"}
+            if "gguf" in item.formats:
+                storage_modes.add("mmap")
+            discoveries.append({
+                "schema": "simplicio.inference-backend/v2",
+                "state": state,
+                "identity": {
+                    "protocol_min": 2,
+                    "protocol_max": 2,
+                    "daemon_version": "python-data-plane",
+                    "build_commit": "unknown",
+                    "build_hash": build_hash,
+                    "license": item.license,
+                    "backend": {"id": item.backend, "revision": item.version,
+                                "sha256": backend_hash, "architecture": item.isa},
+                    "model": {"id": model_id, "revision": "unresolved",
+                              "sha256": model_hash, "architecture": item.isa},
+                    "tokenizer_hash": "unknown",
+                    "chat_template_hash": "unknown",
+                    "requested_backend": item.backend,
+                    "effective_backend": item.effective_backend or item.backend,
+                    "requested_model": model_id,
+                    "effective_model": model_id,
+                    "requested_device": next(iter(devices)),
+                    "effective_device": next(iter(devices)),
+                    "profile_hash": hashlib.sha256(b"compatibility").hexdigest(),
+                },
+                "capabilities": {
+                    "lifecycle_methods": sorted(set(item.methods) | {"handshake", "capabilities", "estimate"}),
+                    "formats": sorted(item.formats),
+                    "model_families": sorted(item.model_families),
+                    "streaming": "generate" in item.methods,
+                    "grammar": False,
+                    "embeddings": False,
+                    "vision": False,
+                    "kv_codecs": [],
+                    "recurrent_codecs": [],
+                    "mtp_codecs": [],
+                    "storage_modes": sorted(storage_modes),
+                    "devices": sorted(devices),
+                    "evidence_level": evidence,
+                    "unavailable_reason": unavailable_reason,
+                },
+                "estimate": None,
+                "generated_at_unix_ms": now_ms,
+                "extensions": {"local_evidence_level": item.evidence_level.name_value,
+                               "kind": item.kind, "preferred": item.preferred},
+            })
+        return sorted(discoveries, key=lambda value: value["identity"]["effective_backend"])
 
     @classmethod
     def default(cls, repo_root: str | os.PathLike[str] | None = None) -> "BackendRegistry":
