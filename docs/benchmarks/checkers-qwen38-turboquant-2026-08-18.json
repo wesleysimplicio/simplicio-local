@@ -1,0 +1,178 @@
+{
+  "schema": "simplicio.local.checkers-benchmark/v1",
+  "status": "captured",
+  "captured_at": "2026-08-18T11:18:00.633Z",
+  "repository": "wesleysimplicio/simplicio-local",
+  "tooling": {
+    "simplicio_version": "3.8.13",
+    "simplicio_binary_sha256": "6df309002e6e1243668de64d696ec22b8bffa42cd5b9d103a0e06269ef1e6a43"
+  },
+  "host": {
+    "platform": "linux",
+    "arch": "x64",
+    "cpu": "Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz",
+    "logical_cpus": 9,
+    "node": "v24.19.0",
+    "ram_total_bytes": 23548682240,
+    "ram_available_before_bytes": 19882934272,
+    "swap_total_bytes": 0,
+    "swap_free_before_bytes": 0
+  },
+  "backend": {
+    "id": "llama-cpp-turboquant",
+    "repository": "AtomicBot-ai/atomic-llama-cpp-turboquant",
+    "release": "b10269-1.4.0",
+    "asset": "llama-turboquant-linux-x64-vulkan.tar.gz",
+    "archive_sha256": "50ec8a3da5ad69b24cf2c90e3cd2d353bba3f46d2c92377644a21fb21e7c18f0",
+    "server_version": "version: b10269-1.4.0 (build 10679, commit 074bf826e) built with GNU 11.4.0 for Linux x86_64",
+    "executable_sha256": "10fa6d72b06742d207836a31bce90d51c96c1a44d90e21c7f3018412c599a2dc"
+  },
+  "model": {
+    "id": "qwen3.8-27b-q4",
+    "file": "Qwen3.8-27B-Q4_K_M.gguf",
+    "size_bytes": 17106775008,
+    "sha256": "7e78da5d7e3ae28d178121f58646953305f3e5bd3cb46f4a75584e8b6c6fe169",
+    "sha256_source": "previous real-model provider receipt; not recomputed in this run"
+  },
+  "configuration": {
+    "context_size": 512,
+    "threads": 9,
+    "threads_batch": 9,
+    "parallel": 1,
+    "cache_type_k": "turbo3",
+    "cache_type_v": "turbo3",
+    "flash_attention": "auto",
+    "kv_unified": true,
+    "reasoning": "off"
+  },
+  "inference": {
+    "server_ready_ms": 96973.7881,
+    "measured_from_process_start_ms": 233788.753258,
+    "warmup": {
+      "request_ms": 9957.826210999992,
+      "usage": {
+        "completion_tokens": 2,
+        "prompt_tokens": 18,
+        "total_tokens": 20,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "timings": {
+        "cache_n": 0,
+        "prompt_n": 18,
+        "prompt_ms": 9274.195,
+        "prompt_per_token_ms": 515.2330555555556,
+        "prompt_per_second": 1.9408692614291592,
+        "predicted_n": 2,
+        "predicted_ms": 654.825,
+        "predicted_per_token_ms": 327.4125,
+        "predicted_per_second": 3.0542511357996407
+      }
+    },
+    "measured_calls": [
+      {
+        "request_ms": 45937.22562,
+        "prompt_tokens_in": 226,
+        "output_tokens_out": 9,
+        "total_tokens": 235,
+        "reasoning_tokens": null,
+        "cache_read_tokens": 0,
+        "ttft_ms": 37756.731,
+        "decode_ms": 5579.242,
+        "prompt_tokens_per_second": 5.9856876910238865,
+        "output_tokens_per_second": 1.6131223560476495,
+        "server_total_ms": null,
+        "move": "b6-a5",
+        "model_output": "{\"move\":\"b6-a5\"}",
+        "legal_move_from_model": true,
+        "fallback": false,
+        "timings_raw": {
+          "cache_n": 0,
+          "prompt_n": 226,
+          "prompt_ms": 37756.731,
+          "prompt_per_token_ms": 167.0651814159292,
+          "prompt_per_second": 5.9856876910238865,
+          "predicted_n": 9,
+          "predicted_ms": 5579.242,
+          "predicted_per_token_ms": 619.9157777777777,
+          "predicted_per_second": 1.6131223560476493
+        }
+      },
+      {
+        "request_ms": 38848.17072300002,
+        "prompt_tokens_in": 196,
+        "output_tokens_out": 9,
+        "total_tokens": 205,
+        "reasoning_tokens": null,
+        "cache_read_tokens": 21,
+        "ttft_ms": 28187.753,
+        "decode_ms": 7248.97,
+        "prompt_tokens_per_second": 6.953374396320274,
+        "output_tokens_per_second": 1.2415556968783152,
+        "server_total_ms": null,
+        "move": "d6-b4",
+        "model_output": "{\"move\":\"d6-b4\"}",
+        "legal_move_from_model": true,
+        "fallback": false,
+        "timings_raw": {
+          "cache_n": 21,
+          "prompt_n": 175,
+          "prompt_ms": 28187.753,
+          "prompt_per_token_ms": 161.07287428571428,
+          "prompt_per_second": 6.208369996714531,
+          "predicted_n": 9,
+          "predicted_ms": 7248.97,
+          "predicted_per_token_ms": 805.4411111111111,
+          "predicted_per_second": 1.241555696878315
+        }
+      },
+      {
+        "request_ms": 42001.84721899999,
+        "prompt_tokens_in": 236,
+        "output_tokens_out": 9,
+        "total_tokens": 245,
+        "reasoning_tokens": null,
+        "cache_read_tokens": 21,
+        "ttft_ms": 32487.405,
+        "decode_ms": 5056.908,
+        "prompt_tokens_per_second": 7.264353677986901,
+        "output_tokens_per_second": 1.7797436694517679,
+        "server_total_ms": null,
+        "move": "f6-e5",
+        "model_output": "{\"move\":\"f6-e5\"}",
+        "legal_move_from_model": true,
+        "fallback": false,
+        "timings_raw": {
+          "cache_n": 21,
+          "prompt_n": 215,
+          "prompt_ms": 32487.405,
+          "prompt_per_token_ms": 151.1042093023256,
+          "prompt_per_second": 6.617949325284676,
+          "predicted_n": 9,
+          "predicted_ms": 5056.908,
+          "predicted_per_token_ms": 561.8786666666667,
+          "predicted_per_second": 1.7797436694517677
+        }
+      }
+    ]
+  },
+  "process": {
+    "peak_rss_bytes_observed": 19715407872,
+    "peak_vm_peak_bytes_observed": 32921243648,
+    "swap_bytes_at_last_sample": 0,
+    "read_bytes_delta": 72654848,
+    "write_bytes_delta": 20480,
+    "minor_page_faults_delta": 636793,
+    "major_page_faults_delta": 39,
+    "voluntary_context_switches_delta": 513,
+    "nonvoluntary_context_switches_delta": 6577,
+    "cpu_time_ms_delta": 938540,
+    "sampling": "kernel /proc samples at health and request boundaries"
+  },
+  "notes": [
+    "A página standalone de damas usa o mesmo contrato OpenAI-compatible testado aqui.",
+    "O relatório não conta warmup na tabela de chamadas medidas.",
+    "sem stderr de erro no encerramento"
+  ]
+}
