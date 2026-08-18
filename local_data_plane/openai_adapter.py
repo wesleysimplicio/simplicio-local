@@ -96,6 +96,11 @@ class OpenAIAdapter:
                                     "receipt": terminal.get("receipt")})
         request_id = f"chatcmpl-simplicio-{self._request_id}"
         text = terminal.get("text", "")
+        receipt = terminal.get("receipt") or {}
+        metrics = receipt.get("metrics") or {}
+        prompt_tokens = int((metrics.get("tokens.prompt") or {}).get("value") or 0)
+        completion_tokens = int((metrics.get("tokens.generated") or {}).get("value") or
+                                terminal.get("generated_tokens", 0))
         if payload.get("stream"):
             chunks = []
             for event_kind, event in events:
@@ -109,11 +114,11 @@ class OpenAIAdapter:
                     "model": active.get("model_id", terminal.get("handle_id", "fixture")),
                     "choices": [{"index": 0, "text": text, "message": {"role": "assistant", "content": text},
                                  "finish_reason": terminal.get("stop_reason", "length")}],
-                    "usage": {"prompt_tokens": 0, "completion_tokens": terminal.get("generated_tokens", 0),
-                              "total_tokens": terminal.get("generated_tokens", 0)},
+                    "usage": {"prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens,
+                              "total_tokens": prompt_tokens + completion_tokens},
                     "metadata": {"requested_backend": terminal.get("requested_backend"),
                                  "effective_backend": terminal.get("effective_backend"),
-                                 "receipt": terminal.get("receipt")}}
+                                 "receipt": receipt}}
         return self._json(200, response)
 
 
