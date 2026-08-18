@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Jogo de damas local contra Qwen3.8 27B com llama.cpp TurboQuant." />
+    <title>Simplicio Local · Damas TurboQuant</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">SIMPLICIO LOCAL / LLAMA.CPP / TURBOQUANT</p>
+          <h1>Damas contra o Qwen3.8</h1>
+          <p class="intro">Uma partida local-first: as regras rodam no navegador e o Qwen3.8 27B escolhe as jogadas pretas pelo endpoint OpenAI-compatible.</p>
+        </div>
+        <div class="engine-badge"><span></span><strong>Qwen3.8 27B · Q4</strong><small>TurboQuant KV cache</small></div>
+      </header>
+
+      <section class="layout" aria-label="Jogo de damas">
+        <div class="game-card">
+          <div class="game-toolbar">
+            <div><span class="label">STATUS</span><strong id="game-status">Carregando tabuleiro…</strong></div>
+            <div class="score"><span class="white-dot"></span><b id="white-count">12</b><span class="black-dot"></span><b id="black-count">12</b></div>
+          </div>
+          <div id="board" class="board" role="grid" aria-label="Tabuleiro de damas"></div>
+          <div class="game-actions"><button id="ai-turn" class="primary" type="button" disabled>Jogar com Qwen</button><button id="new-game" type="button">Nova partida</button><label class="switch-label"><input id="auto-ai" type="checkbox" checked /> resposta automática</label></div>
+        </div>
+
+        <aside class="side-card">
+          <div class="panel-block"><span class="label">CONEXÃO LOCAL</span><label>Endpoint <input id="api-url" type="url" value="http://127.0.0.1:18181/v1/chat/completions" /></label><label>Modelo <input id="model-id" value="qwen3.8-27b-q4-turboquant" /></label></div>
+          <div class="panel-block"><span class="label">ÚLTIMA MEDIÇÃO</span><p id="metrics-last" class="metric-copy">Nenhuma chamada ao modelo ainda.</p></div>
+          <div class="panel-block"><span class="label">HISTÓRICO</span><ol id="move-history" class="history"></ol></div>
+          <div id="game-error" class="error" hidden></div>
+          <div class="legend"><span><i class="legend-piece white"></i> Você / brancas</span><span><i class="legend-piece black"></i> Qwen / pretas</span></div>
+        </aside>
+      </section>
+
+      <footer>Para medir: inicie o <code>llama-server</code> Atomic com <code>turbo3</code>, abra este arquivo por HTTP e use o relatório em <code>docs/benchmarks/</code>.</footer>
+    </main>
+    <script type="module" src="./checkers.js"></script>
+  </body>
+</html>
