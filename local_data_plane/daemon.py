@@ -21,6 +21,7 @@ from typing import BinaryIO, Any
 from .binary import ERROR, EVENT, REQUEST, RESPONSE, FrameError, read_frame, write_frame
 from .protocol import METHODS, PROTOCOL_NAME, PROTOCOL_VERSION, error, ok
 from .registry import BackendRegistry
+from .telemetry import ReceiptBuilder
 
 
 @dataclass
@@ -143,23 +144,33 @@ class InferenceDaemon:
             return [(ERROR, error("generate", "invalid_argument", "max_tokens is outside the bounded range"))]
         cancelled = threading.Event()
         self._cancelled[request_id] = cancelled
+        receipt_builder = ReceiptBuilder(request_id, requested_backend=str(request.get("backend", "fixture")),
+                                         effective_backend="fixture", model=handle.model_id,
+                                         profile=str(request.get("profile", "resident")))
+        receipt_builder.record_prompt(prompt)
         events: list[tuple[int, dict[str, Any]]] = []
         started = time.monotonic()
         try:
             for index in range(max_tokens):
                 if cancelled.is_set() or self.draining:
-                    events.append((RESPONSE, error("generate", "cancelled", "generation cancelled")))
+                    receipt = receipt_builder.finish("cancelled", error_code="cancelled", error_message="generation cancelled")
+                    events.append((RESPONSE, error("generate", "cancelled", "generation cancelled", receipt=receipt.as_dict())))
                     break
                 token = " " + ("ok" if not prompt else prompt.split()[index % max(1, len(prompt.split()))])
                 events.append((EVENT, {"method": "generate", "event": "token", "request_id": request_id,
                                        "index": index, "text": token}))
                 time.sleep(0.0005)
             else:
+                text = "".join(item[1]["text"] for item in events if item[0] == EVENT)
+                receipt_builder.record_output(text)
+                receipt_builder.record("tokens.generated", max_tokens, "tokens", "fixture decoder")
+                receipt = receipt_builder.finish("completed")
                 events.append((RESPONSE, ok("generate", request_id=request_id, handle_id=handle.handle_id,
-                                            text="".join(item[1]["text"] for item in events if item[0] == EVENT),
+                                            text=text,
                                             generated_tokens=max_tokens, stop_reason="length",
                                             elapsed_ms=(time.monotonic() - started) * 1000.0,
-                                            requested_backend="fixture", effective_backend="fixture")))
+                                            requested_backend=str(request.get("backend", "fixture")), effective_backend="fixture",
+                                            receipt=receipt.as_dict())))
         finally:
             self._cancelled.pop(request_id, None)
         return events

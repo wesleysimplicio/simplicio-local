@@ -27,6 +27,16 @@ class DaemonLifecycleTests(unittest.TestCase):
         self.assertEqual((kind, request_id), (RESPONSE, 4))
         self.assertEqual(payload["protocol"], "simplicio.inference-backend/v2")
 
+    def test_generate_contains_terminal_redacted_receipt(self):
+        daemon = InferenceDaemon()
+        handle = daemon.handle({"method": "load", "model_id": "tiny"})[0][1]["handle_id"]
+        response = daemon.handle({"method": "generate", "handle_id": handle,
+                                  "prompt": "do not persist", "max_tokens": 1}, 11)[-1][1]
+        receipt = response["receipt"]
+        self.assertEqual(receipt["terminal_status"], "completed")
+        self.assertNotIn("do not persist", str(receipt))
+        self.assertEqual(receipt["identity"]["effective_backend"], "fixture")
+
 
 if __name__ == "__main__":
     unittest.main()

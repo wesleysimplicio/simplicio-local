@@ -27,5 +27,5 @@ def ok(method: str, **values: object) -> dict[str, object]:
     return {"ok": True, "method": method, **values}
 
 
-def error(method: str, code: str, message: str) -> dict[str, object]:
-    return {"ok": False, "method": method, "error": {"code": code, "message": message}}
+def error(method: str, code: str, message: str, **values: object) -> dict[str, object]:
+    return {"ok": False, "method": method, "error": {"code": code, "message": message}, **values}
