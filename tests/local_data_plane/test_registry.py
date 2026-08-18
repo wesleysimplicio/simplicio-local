@@ -30,6 +30,15 @@ class RegistryTests(unittest.TestCase):
         proxy = next(row for row in catalog if row["backend"] == "ollama-proxy")
         self.assertEqual(proxy["kind"], "proxy")
 
+    def test_runtime_discovery_has_v2_identity_and_reasoned_unavailable_state(self):
+        discovery = BackendRegistry.default(Path.cwd()).runtime_discovery()
+        fixture = next(row for row in discovery if row["identity"]["effective_backend"] == "fixture")
+        self.assertEqual(fixture["schema"], "simplicio.inference-backend/v2")
+        self.assertEqual(fixture["state"], "ready")
+        self.assertEqual(len(fixture["identity"]["backend"]["sha256"]), 64)
+        absent = next(row for row in discovery if row["identity"]["effective_backend"] == "mlx-lm")
+        self.assertIsNotNone(absent["capabilities"]["unavailable_reason"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -11,6 +11,7 @@ METHODS = (
     "load",
     "warm",
     "generate",
+    "runtime_generate",
     "cancel",
     "status",
     "drain",

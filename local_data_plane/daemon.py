@@ -19,9 +19,12 @@ from pathlib import Path
 from typing import BinaryIO, Any
 
 from .binary import ERROR, EVENT, REQUEST, RESPONSE, FrameError, read_frame, write_frame
+from .artifacts import digest_file, pin_from_payload
 from .protocol import METHODS, PROTOCOL_NAME, PROTOCOL_VERSION, error, ok
 from .llama_cpp import LlamaCppProvider
+from .profiles import TurboQuantCapabilities
 from .registry import BackendRegistry
+from .runtime_bridge import RuntimeInferenceBridge
 from .telemetry import ReceiptBuilder
 
 
@@ -52,6 +55,12 @@ class InferenceDaemon:
         self._started_at = time.monotonic()
         self._request_count = 0
         self.registry = BackendRegistry.default(repo_root)
+        # Runtime may request a profile, but this build has no physical
+        # TurboQuant executor.  The bridge can therefore reject or explicitly
+        # downgrade the request according to allow_fallback.
+        self.turboquant_capabilities = TurboQuantCapabilities(
+            backend="local", executor_available=False, reason="no TurboQuant executor installed")
+        self.runtime_bridge = RuntimeInferenceBridge(self)
 
     def _identity(self) -> dict[str, object]:
         return {
@@ -75,7 +84,8 @@ class InferenceDaemon:
                 return [(RESPONSE, ok(method, **self._identity(), methods=list(METHODS), state=self.state))]
             if method == "capabilities":
                 return [(RESPONSE, ok(method, capabilities=self.registry.catalog(),
-                                       release_matrix=self.registry.release_matrix()))]
+                                       release_matrix=self.registry.release_matrix(),
+                                       runtime_discovery=self.registry.runtime_discovery()))]
             if method == "estimate":
                 return [(RESPONSE, ok(method, weights_bytes=0, kv_bytes=0, io_bytes=0,
                                        source="unknown", value_semantics="unknown"))]
@@ -87,6 +97,18 @@ class InferenceDaemon:
                 path = request.get("path")
                 if path is not None and not Path(str(path)).is_file():
                     return [(ERROR, error(method, "model_unavailable", "model path is unavailable"))]
+                if request.get("artifact_pin") is not None:
+                    try:
+                        pin = pin_from_payload(request["artifact_pin"])
+                        pin.validate()
+                        artifact_kind = pin.artifact_kind.casefold()
+                        if path is not None and artifact_kind in {"model", "model-weights", "weights", "gguf"}:
+                            actual_digest = digest_file(str(path))
+                            if actual_digest != pin.digest:
+                                return [(ERROR, error(method, "artifact_digest_mismatch",
+                                                      "model bytes do not match artifact_pin.sha256"))]
+                    except (OSError, TypeError, ValueError) as exc:
+                        return [(ERROR, error(method, "artifact_invalid", str(exc)))]
                 if backend == "turboquant":
                     return [(ERROR, error(method, "backend_unavailable",
                                           "TurboQuant is an evidence gate in this build; no executor is installed"))]
@@ -123,6 +145,9 @@ class InferenceDaemon:
                 return [(RESPONSE, ok(method, handle_id=handle.handle_id, state="warmed"))]
             if method == "generate":
                 return self._generate(request, request_id)
+            if method == "runtime_generate":
+                payload = request.get("request") if isinstance(request.get("request"), dict) else request
+                return self.runtime_bridge.generate(payload, request_id)
             if method == "cancel":
                 target = int(request.get("request_id", -1))
                 event = self._cancelled.get(target)

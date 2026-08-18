@@ -1,8 +1,15 @@
-"""Orthogonal inference profiles and evidence-gated TurboQuant."""
+"""Orthogonal inference profiles and evidence-gated TurboQuant.
+
+The Runtime can request a TurboQuant profile, but Local may only report it as
+active when an executor and the corresponding observed evidence are present.
+This keeps a profile request from becoming a false claim about the physical
+kernel that actually ran.
+"""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import FrozenSet
 
 from .registry import EvidenceLevel
 
@@ -49,6 +56,81 @@ class TurboQuantResult:
     reason: str
     backend: str
     quality_error: float | None = None
+
+
+TURBOQUANT_PROFILES = frozenset({"compatibility", "quality", "balanced", "memory", "safe-compressed"})
+
+
+@dataclass(frozen=True)
+class TurboQuantCapabilities:
+    """Advertised physical TurboQuant support for one Local backend."""
+
+    backend: str
+    executor_available: bool = False
+    weight_profiles: FrozenSet[str] = frozenset()
+    kv_profiles: FrozenSet[str] = frozenset()
+    evidence_level: EvidenceLevel = EvidenceLevel.SOURCE_PRESENT
+    reason: str = "TurboQuant executor is not installed"
+
+    def validate(self) -> None:
+        if not self.backend.strip():
+            raise ValueError("TurboQuant capability backend is required")
+        if not self.weight_profiles.issubset(TURBOQUANT_PROFILES):
+            raise ValueError("unsupported TurboQuant weight profile")
+        if not self.kv_profiles.issubset(TURBOQUANT_PROFILES):
+            raise ValueError("unsupported TurboQuant KV profile")
+        if not self.executor_available and not self.reason.strip():
+            raise ValueError("unavailable TurboQuant capability requires a reason")
+
+
+@dataclass(frozen=True)
+class ResolvedTurboQuantProfile:
+    requested: str
+    effective: str
+    active: bool
+    degraded: bool
+    reason: str
+    backend: str
+    evidence_level: EvidenceLevel
+
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "requested": self.requested,
+            "effective": self.effective,
+            "active": self.active,
+            "degraded": self.degraded,
+            "reason": self.reason,
+            "backend": self.backend,
+            "evidence_level": self.evidence_level.name_value,
+        }
+
+
+def resolve_turboquant_profile(
+    requested: str | None,
+    capabilities: TurboQuantCapabilities,
+    *,
+    allow_fallback: bool,
+) -> ResolvedTurboQuantProfile:
+    """Resolve a Runtime profile without silently enabling a missing kernel."""
+
+    capabilities.validate()
+    profile = (requested or "compatibility").strip().lower()
+    if profile not in TURBOQUANT_PROFILES:
+        raise ValueError(f"unsupported TurboQuant profile: {profile!r}")
+    if profile == "compatibility":
+        return ResolvedTurboQuantProfile(profile, profile, False, False,
+                                          "compatibility profile does not require TurboQuant",
+                                          capabilities.backend, capabilities.evidence_level)
+    if capabilities.executor_available and profile in capabilities.weight_profiles:
+        return ResolvedTurboQuantProfile(profile, profile, True, False,
+                                          "TurboQuant executor and profile are available",
+                                          capabilities.backend, capabilities.evidence_level)
+    reason = capabilities.reason or "requested TurboQuant profile is unavailable"
+    if not allow_fallback:
+        raise RuntimeError(f"TurboQuant profile {profile!r} unavailable: {reason}")
+    return ResolvedTurboQuantProfile(profile, "compatibility", False, True,
+                                     f"fallback to compatibility: {reason}",
+                                     capabilities.backend, capabilities.evidence_level)
 
 
 def validate_turboquant(
