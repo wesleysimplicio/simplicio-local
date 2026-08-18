@@ -315,7 +315,8 @@ python3 bin/local-openai.py \
 
 O provider verifica a presença de `turbo3` no `--help` antes de iniciar; um
 `llama-server` upstream sem o fork TurboQuant não é aceito como se fosse o
-backend otimizado.
+backend otimizado. O instalador resolve o manifesto de plataformas do Atomic;
+no Linux x64, o release atual testado é `b10269-1.4.0`.
 
 ### Stack planejada
 
