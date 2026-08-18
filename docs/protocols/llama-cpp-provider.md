@@ -18,11 +18,12 @@ also runs `llama-server --help` and requires `--cache-type-k`,
 server. An upstream server that lacks these options fails closed.
 
 `TurboQuantBackendInstaller` follows the Atomic Agent managed-install pattern:
-it selects an allow-listed platform asset from the Atomic fork's GitHub
-releases, extracts it into a versioned directory under the Local home, and
+it reads Atomic's platform manifest, selects the pinned tag/asset, extracts
+the `.tar.gz`/`.zip` into a versioned directory under the Local home, and
 writes `current.json` plus an install receipt containing the archive digest.
 The installer is opt-in; Local never downloads a backend during a normal
-inference request.
+inference request. The current Linux manifest entry is
+`b10269-1.4.0/llama-turboquant-linux-x64-vulkan.tar.gz`.
 
 When the executable or model is unavailable, the provider returns an explicit
 blocked state. It does not silently fall back to MLX, Ollama, a fixture, or a
