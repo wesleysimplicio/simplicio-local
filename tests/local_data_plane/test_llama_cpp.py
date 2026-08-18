@@ -56,6 +56,9 @@ class LlamaCppTests(unittest.TestCase):
             self.assertEqual(args[args.index("--cache-type-v") + 1], "turbo3")
             self.assertEqual(args[args.index("--flash-attn") + 1], "auto")
             self.assertIn("-kvu", args)
+            self.assertEqual(args[args.index("--batch-size") + 1], "2048")
+            self.assertEqual(args[args.index("--ubatch-size") + 1], "512")
+            self.assertIn("--cont-batching", args)
 
     def test_atomic_turboquant_rejects_upstream_help(self):
         with tempfile.TemporaryDirectory() as temp:
