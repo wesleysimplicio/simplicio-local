@@ -136,14 +136,22 @@ class LlamaCppProvider:
         return identity
 
     def server_args(self, model_path: str | os.PathLike[str], port: int, *, context_size: int,
-                    parallel: int, threads: int, threads_batch: int, reasoning: str) -> list[str]:
+                    parallel: int, threads: int, threads_batch: int, reasoning: str,
+                    batch_size: int = 2048, ubatch_size: int = 512,
+                    cache_reuse: int = 0, keep: int = 0,
+                    cont_batching: bool = True, threads_http: int | None = None) -> list[str]:
         """Build the command line separately so the TurboQuant contract is testable."""
 
         identity = inspect_gguf(model_path)
         args = [self.executable or "llama-server", "--model", identity.path, "--host", "127.0.0.1",
                 "--port", str(port), "--no-webui", "--metrics", "--load-mode", "mmap",
                 "--ctx-size", str(context_size), "--parallel", str(parallel), "--threads", str(threads),
-                "--threads-batch", str(threads_batch), "--reasoning", reasoning]
+                "--threads-batch", str(threads_batch), "--batch-size", str(batch_size),
+                "--ubatch-size", str(ubatch_size), "--cache-reuse", str(cache_reuse),
+                "--keep", str(keep), "--reasoning", reasoning,
+                "--cont-batching" if cont_batching else "--no-cont-batching"]
+        if threads_http is not None:
+            args.extend(["--threads-http", str(threads_http)])
         if self.turboquant_enabled:
             args.extend(["--cache-type-k", self.cache_type_k or "turbo3",
                          "--cache-type-v", self.cache_type_v or "turbo3",
@@ -160,12 +168,20 @@ class LlamaCppProvider:
         threads = self._env_int("SIMPLICIO_LOCAL_LLAMA_THREADS", os.cpu_count() or 1)
         threads_batch = self._env_int("SIMPLICIO_LOCAL_LLAMA_THREADS_BATCH", threads)
         parallel = self._env_int("SIMPLICIO_LOCAL_LLAMA_PARALLEL", 1)
+        batch_size = self._env_int("SIMPLICIO_LOCAL_LLAMA_BATCH", 2048)
+        ubatch_size = self._env_int("SIMPLICIO_LOCAL_LLAMA_UBATCH", 512)
+        cache_reuse = int(os.environ.get("SIMPLICIO_LOCAL_LLAMA_CACHE_REUSE", "0"))
+        keep = int(os.environ.get("SIMPLICIO_LOCAL_LLAMA_KEEP", "0"))
+        cont_batching = os.environ.get("SIMPLICIO_LOCAL_LLAMA_CONT_BATCHING", "1").lower() not in {"0", "false", "off"}
+        threads_http = os.environ.get("SIMPLICIO_LOCAL_LLAMA_THREADS_HTTP")
         startup_timeout = float(os.environ.get("SIMPLICIO_LOCAL_LLAMA_STARTUP_TIMEOUT", "300"))
         reasoning = os.environ.get("SIMPLICIO_LOCAL_LLAMA_REASONING", "off").strip().lower()
         self.process = subprocess.Popen(
             self.server_args(identity.path, selected_port, context_size=context_size,
                              parallel=parallel, threads=threads, threads_batch=threads_batch,
-                             reasoning=reasoning),
+                             reasoning=reasoning, batch_size=batch_size, ubatch_size=ubatch_size,
+                             cache_reuse=cache_reuse, keep=keep, cont_batching=cont_batching,
+                             threads_http=int(threads_http) if threads_http else None),
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
         )
@@ -242,17 +258,3 @@ class LlamaCppProvider:
         if self.process.poll() is None:
             self.process.terminate()
             try:
-                self.process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                self.process.kill()
-                self.process.wait(timeout=5)
-        if stderr is not None:
-            stderr.close()
-        self.process = None
-        self.port = None
-
-    def __enter__(self) -> "LlamaCppProvider":
-        return self
-
-    def __exit__(self, *_: object) -> None:
-        self.stop()
