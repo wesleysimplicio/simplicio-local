@@ -12,6 +12,8 @@ METHODS = (
     "warm",
     "generate",
     "runtime_generate",
+    "turboquant_compress",
+    "turboquant_decompress",
     "cancel",
     "status",
     "drain",
