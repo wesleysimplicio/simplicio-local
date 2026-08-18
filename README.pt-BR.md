@@ -303,6 +303,20 @@ permite baixar `simplicio-qwen38-benchmarks.json`. O primeiro capture real
 feito neste host esta em
 [`docs/benchmarks/qwen38-27b-q4km-2026-08-18.json`](docs/benchmarks/qwen38-27b-q4km-2026-08-18.json).
 
+Para usar o caminho TurboQuant do Atomic Agent, instale o `llama-server`
+compatível e peça explicitamente o backend:
+
+```bash
+python3 bin/install-turboquant-backend.py --json
+python3 bin/local-openai.py \
+  --model /caminho/Qwen3.8-27B-UD-Q4_K_XL.gguf \
+  --model-id qwen3.8-27b --backend turboquant --turboquant --port 8080
+```
+
+O provider verifica a presença de `turbo3` no `--help` antes de iniciar; um
+`llama-server` upstream sem o fork TurboQuant não é aceito como se fosse o
+backend otimizado.
+
 ### Stack planejada
 
 - C++20 + CMake + Ninja
