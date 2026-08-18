@@ -20,6 +20,7 @@ from typing import BinaryIO, Any
 
 from .binary import ERROR, EVENT, REQUEST, RESPONSE, FrameError, read_frame, write_frame
 from .protocol import METHODS, PROTOCOL_NAME, PROTOCOL_VERSION, error, ok
+from .llama_cpp import LlamaCppProvider
 from .registry import BackendRegistry
 from .telemetry import ReceiptBuilder
 
@@ -29,6 +30,8 @@ class ModelHandle:
     handle_id: str
     model_id: str
     path: str | None = None
+    backend: str = "fixture"
+    provider: LlamaCppProvider | None = field(default=None, repr=False)
     state: str = "loaded"
     warmed: bool = False
     created_at: float = field(default_factory=time.monotonic)
@@ -80,17 +83,37 @@ class InferenceDaemon:
                 if self.draining:
                     return [(ERROR, error(method, "draining", "daemon is draining"))]
                 model_id = str(request.get("model_id", "fixture"))
+                backend = str(request.get("backend", "fixture")).strip().lower() or "fixture"
                 path = request.get("path")
                 if path is not None and not Path(str(path)).is_file():
                     return [(ERROR, error(method, "model_unavailable", "model path is unavailable"))]
+                if backend == "turboquant":
+                    return [(ERROR, error(method, "backend_unavailable",
+                                          "TurboQuant is an evidence gate in this build; no executor is installed"))]
+                if backend not in {"fixture", "llama-cpp"}:
+                    return [(ERROR, error(method, "backend_unavailable",
+                                          f"backend {backend!r} has no executable provider"))]
                 handle_id = str(request.get("handle_id") or uuid.uuid4().hex)
                 if handle_id in self.handles:
                     handle = self.handles[handle_id]
                     return [(RESPONSE, ok(method, handle_id=handle.handle_id, state=handle.state, idempotent=True))]
+                provider = None
+                if backend == "llama-cpp":
+                    if path is None:
+                        return [(ERROR, error(method, "model_unavailable",
+                                              "llama-cpp requires an explicit GGUF path"))]
+                    try:
+                        provider = LlamaCppProvider(executable=request.get("executable"))
+                        provider.start_server(str(path), int(request.get("port", 0)))
+                    except (OSError, RuntimeError, ValueError) as exc:
+                        if provider is not None:
+                            provider.stop()
+                        return [(ERROR, error(method, "backend_start_failed", str(exc)))]
                 self.state = "ready"
-                handle = ModelHandle(handle_id, model_id, str(path) if path else None)
+                handle = ModelHandle(handle_id, model_id, str(path) if path else None, backend, provider)
                 self.handles[handle_id] = handle
-                return [(RESPONSE, ok(method, handle_id=handle_id, state=handle.state, model_id=model_id))]
+                return [(RESPONSE, ok(method, handle_id=handle_id, state=handle.state,
+                                       model_id=model_id, backend=backend))]
             if method == "warm":
                 handle = self._get_handle(request)
                 if handle is None:
@@ -110,7 +133,8 @@ class InferenceDaemon:
             if method == "status":
                 return [(RESPONSE, ok(method, state=self.state, draining=self.draining,
                                        handles=[{"handle_id": h.handle_id, "model_id": h.model_id,
-                                                 "state": h.state, "warmed": h.warmed}
+                                                 "state": h.state, "warmed": h.warmed,
+                                                 "backend": h.backend}
                                                 for h in self.handles.values()],
                                        requests=self._request_count, effect_authority="none"))]
             if method == "drain":
@@ -119,11 +143,17 @@ class InferenceDaemon:
                 return [(RESPONSE, ok(method, state=self.state, accepted_requests=0))]
             if method == "unload":
                 handle_id = str(request.get("handle_id", ""))
-                removed = self.handles.pop(handle_id, None) is not None
+                handle = self.handles.pop(handle_id, None)
+                if handle is not None and handle.provider is not None:
+                    handle.provider.stop()
+                removed = handle is not None
                 return [(RESPONSE, ok(method, handle_id=handle_id, unloaded=removed))]
             if method == "shutdown":
                 for event in self._cancelled.values():
                     event.set()
+                for handle in self.handles.values():
+                    if handle.provider is not None:
+                        handle.provider.stop()
                 self.state = "stopped"
                 return [(RESPONSE, ok(method, state=self.state))]
         return [(ERROR, error(method, "internal_error", "unreachable protocol branch"))]
@@ -142,6 +172,15 @@ class InferenceDaemon:
         max_tokens = int(request.get("max_tokens", 8))
         if max_tokens < 0 or max_tokens > 4096:
             return [(ERROR, error("generate", "invalid_argument", "max_tokens is outside the bounded range"))]
+        requested_backend = str(request.get("backend", handle.backend)).strip().lower() or handle.backend
+        if requested_backend != handle.backend:
+            return [(ERROR, error("generate", "backend_mismatch",
+                                  f"handle is loaded with backend {handle.backend!r}"))]
+        if handle.backend == "llama-cpp":
+            return self._generate_llama(handle, prompt, max_tokens, request, request_id)
+        if handle.backend != "fixture":
+            return [(ERROR, error("generate", "backend_unavailable",
+                                  f"backend {handle.backend!r} has no executable provider"))]
         cancelled = threading.Event()
         self._cancelled[request_id] = cancelled
         receipt_builder = ReceiptBuilder(request_id, requested_backend=str(request.get("backend", "fixture")),
@@ -174,6 +213,50 @@ class InferenceDaemon:
         finally:
             self._cancelled.pop(request_id, None)
         return events
+
+    def _generate_llama(self, handle: ModelHandle, prompt: str, max_tokens: int,
+                        request: dict[str, Any], request_id: int) -> list[tuple[int, dict[str, Any]]]:
+        assert handle.provider is not None
+        cancelled = threading.Event()
+        self._cancelled[request_id] = cancelled
+        receipt_builder = ReceiptBuilder(request_id, requested_backend="llama-cpp",
+                                         effective_backend="llama-cpp", model=handle.model_id,
+                                         profile=str(request.get("profile", "resident")))
+        receipt_builder.record_prompt(prompt)
+        started = time.monotonic()
+        try:
+            if cancelled.is_set() or self.draining:
+                receipt = receipt_builder.finish("cancelled", error_code="cancelled",
+                                                error_message="generation cancelled")
+                return [(RESPONSE, error("generate", "cancelled", "generation cancelled",
+                                          receipt=receipt.as_dict()))]
+            result = handle.provider.generate(prompt, max_tokens)
+            text = str(result["text"])
+            generated_tokens = int(result.get("generated_tokens", 0))
+            events = [(EVENT, {"method": "generate", "event": "text", "request_id": request_id,
+                               "index": 0, "text": text})]
+            receipt_builder.record_output(text)
+            receipt_builder.record("tokens.generated", generated_tokens, "tokens", "llama-server usage")
+            if result.get("prompt_tokens") is not None:
+                receipt_builder.record("tokens.prompt", int(result["prompt_tokens"]), "tokens", "llama-server usage")
+            timings = result.get("timings") or {}
+            if timings.get("prompt_ms") is not None:
+                receipt_builder.record("latency.prompt_ms", float(timings["prompt_ms"]), "milliseconds", "llama-server timings")
+            if timings.get("predicted_ms") is not None:
+                receipt_builder.record("latency.decode_ms", float(timings["predicted_ms"]), "milliseconds", "llama-server timings")
+            receipt = receipt_builder.finish("completed")
+            events.append((RESPONSE, ok("generate", request_id=request_id, handle_id=handle.handle_id,
+                                        text=text, generated_tokens=generated_tokens,
+                                        stop_reason=str(result.get("finish_reason", "stop")),
+                                        elapsed_ms=(time.monotonic() - started) * 1000.0,
+                                        requested_backend="llama-cpp", effective_backend="llama-cpp",
+                                        receipt=receipt.as_dict())))
+            return events
+        except (OSError, RuntimeError, ValueError) as exc:
+            receipt = receipt_builder.finish("failed", error_code="backend_error", error_message=str(exc))
+            return [(ERROR, error("generate", "backend_error", str(exc), receipt=receipt.as_dict()))]
+        finally:
+            self._cancelled.pop(request_id, None)
 
     def serve(self, input_stream: BinaryIO, output_stream: BinaryIO) -> None:
         """Serve framed requests on stdio until EOF or shutdown."""
