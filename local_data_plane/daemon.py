@@ -23,9 +23,10 @@ from .artifacts import digest_file, pin_from_payload
 from .protocol import METHODS, PROTOCOL_NAME, PROTOCOL_VERSION, error, ok
 from .llama_cpp import LlamaCppProvider
 from .profiles import TurboQuantCapabilities
-from .registry import BackendRegistry
+from .registry import BackendRegistry, EvidenceLevel
 from .runtime_bridge import RuntimeInferenceBridge
 from .telemetry import ReceiptBuilder
+from .turboquant import TurboQuantError, TurboQuantExecutor, TurboQuantPacket
 
 
 @dataclass
@@ -35,6 +36,7 @@ class ModelHandle:
     path: str | None = None
     backend: str = "fixture"
     provider: LlamaCppProvider | None = field(default=None, repr=False)
+    requested_backend: str | None = None
     state: str = "loaded"
     warmed: bool = False
     created_at: float = field(default_factory=time.monotonic)
@@ -55,11 +57,33 @@ class InferenceDaemon:
         self._started_at = time.monotonic()
         self._request_count = 0
         self.registry = BackendRegistry.default(repo_root)
-        # Runtime may request a profile, but this build has no physical
-        # TurboQuant executor.  The bridge can therefore reject or explicitly
-        # downgrade the request according to allow_fallback.
+        # The NumPy codec is useful for KV contract tests.  Model-generation
+        # TurboQuant is advertised separately and only becomes active when an
+        # Atomic-compatible llama-server passes its help probe.
         self.turboquant_capabilities = TurboQuantCapabilities(
             backend="local", executor_available=False, reason="no TurboQuant executor installed")
+        turboquant_backend = self.registry.get("llama-cpp-turboquant")
+        self.turboquant_model_capabilities = TurboQuantCapabilities(
+            backend="llama-cpp-turboquant",
+            executor_available=bool(turboquant_backend and turboquant_backend.available),
+            cache_profiles=(frozenset({"quality", "balanced", "memory", "safe-compressed"})
+                            if turboquant_backend and turboquant_backend.available else frozenset()),
+            evidence_level=(turboquant_backend.evidence_level if turboquant_backend
+                            else EvidenceLevel.SOURCE_PRESENT),
+            reason=(turboquant_backend.reason if turboquant_backend
+                    else "Atomic TurboQuant llama-server is not registered"),
+        )
+        self.turboquant_executor = TurboQuantExecutor()
+        turboquant_available = self.turboquant_executor.available()
+        self.turboquant_cache_capabilities = TurboQuantCapabilities(
+            backend=TurboQuantExecutor.backend,
+            executor_available=turboquant_available,
+            cache_profiles=TurboQuantExecutor.profiles if turboquant_available else frozenset(),
+            evidence_level=(EvidenceLevel.FIXTURE_EXECUTED if turboquant_available
+                            else EvidenceLevel.SOURCE_PRESENT),
+            reason=("CPU NumPy reference executor is available" if turboquant_available
+                    else "NumPy is not installed"),
+        )
         self.runtime_bridge = RuntimeInferenceBridge(self)
 
     def _identity(self) -> dict[str, object]:
@@ -85,7 +109,9 @@ class InferenceDaemon:
             if method == "capabilities":
                 return [(RESPONSE, ok(method, capabilities=self.registry.catalog(),
                                        release_matrix=self.registry.release_matrix(),
-                                       runtime_discovery=self.registry.runtime_discovery()))]
+                                       runtime_discovery=self.registry.runtime_discovery(),
+                                       turboquant=self.turboquant_cache_capabilities_dict(),
+                                       turboquant_model=self.turboquant_model_capabilities_dict()))]
             if method == "estimate":
                 return [(RESPONSE, ok(method, weights_bytes=0, kv_bytes=0, io_bytes=0,
                                        source="unknown", value_semantics="unknown"))]
@@ -109,33 +135,45 @@ class InferenceDaemon:
                                                       "model bytes do not match artifact_pin.sha256"))]
                     except (OSError, TypeError, ValueError) as exc:
                         return [(ERROR, error(method, "artifact_invalid", str(exc)))]
-                if backend == "turboquant":
-                    return [(ERROR, error(method, "backend_unavailable",
-                                          "TurboQuant is an evidence gate in this build; no executor is installed"))]
-                if backend not in {"fixture", "llama-cpp"}:
+                turboquant_requested = (backend in {"turboquant", "llama-cpp-turboquant"} or
+                                         bool(request.get("turboquant")))
+                if backend not in {"fixture", "llama-cpp", "turboquant", "llama-cpp-turboquant"}:
                     return [(ERROR, error(method, "backend_unavailable",
                                           f"backend {backend!r} has no executable provider"))]
+                if turboquant_requested and backend == "fixture":
+                    return [(ERROR, error(method, "backend_mismatch",
+                                          "TurboQuant requires an Atomic-compatible llama-cpp backend"))]
+                effective_backend = "llama-cpp-turboquant" if turboquant_requested else backend
                 handle_id = str(request.get("handle_id") or uuid.uuid4().hex)
                 if handle_id in self.handles:
                     handle = self.handles[handle_id]
                     return [(RESPONSE, ok(method, handle_id=handle.handle_id, state=handle.state, idempotent=True))]
                 provider = None
-                if backend == "llama-cpp":
+                if backend in {"llama-cpp", "turboquant", "llama-cpp-turboquant"}:
                     if path is None:
                         return [(ERROR, error(method, "model_unavailable",
                                               "llama-cpp requires an explicit GGUF path"))]
                     try:
-                        provider = LlamaCppProvider(executable=request.get("executable"))
+                        provider = LlamaCppProvider(
+                            executable=request.get("executable"),
+                            turboquant=turboquant_requested,
+                            cache_type_k=request.get("cache_type_k"),
+                            cache_type_v=request.get("cache_type_v"),
+                            flash_attn=request.get("flash_attn"),
+                        )
                         provider.start_server(str(path), int(request.get("port", 0)))
                     except (OSError, RuntimeError, ValueError) as exc:
                         if provider is not None:
                             provider.stop()
                         return [(ERROR, error(method, "backend_start_failed", str(exc)))]
                 self.state = "ready"
-                handle = ModelHandle(handle_id, model_id, str(path) if path else None, backend, provider)
+                handle = ModelHandle(handle_id, model_id, str(path) if path else None,
+                                     effective_backend, provider, requested_backend=backend)
                 self.handles[handle_id] = handle
                 return [(RESPONSE, ok(method, handle_id=handle_id, state=handle.state,
-                                       model_id=model_id, backend=backend))]
+                                       model_id=model_id, backend=effective_backend,
+                                       requested_backend=backend,
+                                       turboquant=turboquant_requested))]
             if method == "warm":
                 handle = self._get_handle(request)
                 if handle is None:
@@ -148,6 +186,10 @@ class InferenceDaemon:
             if method == "runtime_generate":
                 payload = request.get("request") if isinstance(request.get("request"), dict) else request
                 return self.runtime_bridge.generate(payload, request_id)
+            if method == "turboquant_compress":
+                return self._turboquant_compress(request, request_id)
+            if method == "turboquant_decompress":
+                return self._turboquant_decompress(request, request_id)
             if method == "cancel":
                 target = int(request.get("request_id", -1))
                 event = self._cancelled.get(target)
@@ -183,6 +225,49 @@ class InferenceDaemon:
                 return [(RESPONSE, ok(method, state=self.state))]
         return [(ERROR, error(method, "internal_error", "unreachable protocol branch"))]
 
+    def turboquant_cache_capabilities_dict(self) -> dict[str, object]:
+        return self._turboquant_capabilities_dict(self.turboquant_cache_capabilities)
+
+    def turboquant_model_capabilities_dict(self) -> dict[str, object]:
+        return self._turboquant_capabilities_dict(self.turboquant_model_capabilities)
+
+    @staticmethod
+    def _turboquant_capabilities_dict(capabilities: TurboQuantCapabilities) -> dict[str, object]:
+        return {
+            "backend": capabilities.backend,
+            "executor_available": capabilities.executor_available,
+            "profiles": sorted(capabilities.cache_profiles),
+            "evidence_level": capabilities.evidence_level.name_value,
+            "reason": capabilities.reason,
+        }
+
+    def _turboquant_compress(self, request: dict[str, Any], request_id: int) -> list[tuple[int, dict[str, Any]]]:
+        if not self.turboquant_cache_capabilities.executor_available:
+            return [(ERROR, error("turboquant_compress", "backend_unavailable",
+                                  self.turboquant_cache_capabilities.reason))]
+        try:
+            bits = int(request.get("bits", 4))
+            seed = int(request.get("seed", 0))
+            packet = self.turboquant_executor.compress(request.get("vectors", []), bits=bits, seed=seed)
+            metrics = self.turboquant_executor.measure(request.get("vectors", []), bits=bits, seed=seed)
+            return [(RESPONSE, ok("turboquant_compress", request_id=request_id,
+                                  backend=TurboQuantExecutor.backend, packet=packet.as_dict(), metrics=metrics))]
+        except (TypeError, ValueError, TurboQuantError) as exc:
+            return [(ERROR, error("turboquant_compress", "invalid_argument", str(exc)))]
+
+    def _turboquant_decompress(self, request: dict[str, Any], request_id: int) -> list[tuple[int, dict[str, Any]]]:
+        if not self.turboquant_cache_capabilities.executor_available:
+            return [(ERROR, error("turboquant_decompress", "backend_unavailable",
+                                  self.turboquant_cache_capabilities.reason))]
+        try:
+            packet = TurboQuantPacket.from_dict(request.get("packet"))
+            vectors = self.turboquant_executor.decompress(packet)
+            return [(RESPONSE, ok("turboquant_decompress", request_id=request_id,
+                                  backend=TurboQuantExecutor.backend, shape=list(packet.shape),
+                                  vectors=vectors.tolist()))]
+        except (TypeError, ValueError, TurboQuantError) as exc:
+            return [(ERROR, error("turboquant_decompress", "invalid_argument", str(exc)))]
+
     def _get_handle(self, request: dict[str, Any]) -> ModelHandle | None:
         handle_id = request.get("handle_id")
         if handle_id is None:
@@ -197,11 +282,13 @@ class InferenceDaemon:
         max_tokens = int(request.get("max_tokens", 8))
         if max_tokens < 0 or max_tokens > 4096:
             return [(ERROR, error("generate", "invalid_argument", "max_tokens is outside the bounded range"))]
-        requested_backend = str(request.get("backend", handle.backend)).strip().lower() or handle.backend
-        if requested_backend != handle.backend:
+        requested_backend = str(request.get("backend", handle.requested_backend or handle.backend)).strip().lower()
+        requested_effective = ("llama-cpp-turboquant" if requested_backend in {"turboquant", "llama-cpp-turboquant"}
+                               else requested_backend)
+        if requested_effective != handle.backend:
             return [(ERROR, error("generate", "backend_mismatch",
                                   f"handle is loaded with backend {handle.backend!r}"))]
-        if handle.backend == "llama-cpp":
+        if handle.backend in {"llama-cpp", "llama-cpp-turboquant"}:
             return self._generate_llama(handle, prompt, max_tokens, request, request_id)
         if handle.backend != "fixture":
             return [(ERROR, error("generate", "backend_unavailable",
@@ -244,8 +331,9 @@ class InferenceDaemon:
         assert handle.provider is not None
         cancelled = threading.Event()
         self._cancelled[request_id] = cancelled
-        receipt_builder = ReceiptBuilder(request_id, requested_backend="llama-cpp",
-                                         effective_backend="llama-cpp", model=handle.model_id,
+        requested_backend = str(request.get("backend", handle.requested_backend or handle.backend))
+        receipt_builder = ReceiptBuilder(request_id, requested_backend=requested_backend,
+                                         effective_backend=handle.backend, model=handle.model_id,
                                          profile=str(request.get("profile", "resident")))
         receipt_builder.record_prompt(prompt)
         started = time.monotonic()
@@ -274,7 +362,7 @@ class InferenceDaemon:
                                         text=text, generated_tokens=generated_tokens,
                                         stop_reason=str(result.get("finish_reason", "stop")),
                                         elapsed_ms=(time.monotonic() - started) * 1000.0,
-                                        requested_backend="llama-cpp", effective_backend="llama-cpp",
+                                        requested_backend=requested_backend, effective_backend=handle.backend,
                                         receipt=receipt.as_dict())))
             return events
         except (OSError, RuntimeError, ValueError) as exc:

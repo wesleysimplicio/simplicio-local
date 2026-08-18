@@ -1,0 +1,32 @@
+{
+  "schema": "simplicio.local.turboquant-kv/v1",
+  "backend": "turboquant-kv-numpy",
+  "host": {
+    "platform": "linux-x86_64",
+    "device": "cpu",
+    "provider": "numpy-reference"
+  },
+  "configuration": {
+    "rows": 256,
+    "dimension": 128,
+    "bits": 4,
+    "seed": 7,
+    "mode": "norm-correction-no-qjl"
+  },
+  "measurement": {
+    "packed_bytes": 16384,
+    "compressed_bytes": 17984,
+    "uncompressed_bytes": 131072,
+    "compression_ratio": 7.288256227758007,
+    "mse": 0.013611367903649807,
+    "relative_l2_error": 0.10078912228345871,
+    "rotation_mode": "hadamard",
+    "finite": true
+  },
+  "limitations": [
+    "Reference CPU KV codec; no fused attention kernel",
+    "Not attached to the llama.cpp model-generation loop until a KV hook is available",
+    "Compression ratio is versus FP32 and includes packet metadata"
+  ],
+  "reproduction": "python3 -c 'from local_data_plane.turboquant import TurboQuantExecutor; ...'"
+}

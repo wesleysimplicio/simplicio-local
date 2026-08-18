@@ -21,13 +21,20 @@ parser.add_argument("--model-id")
 parser.add_argument("--backend", default="fixture")
 parser.add_argument("--executable")
 parser.add_argument("--llama-port", type=int, default=0)
+parser.add_argument("--turboquant", action="store_true",
+                    help="use Atomic-compatible llama-server TurboQuant KV cache")
+parser.add_argument("--cache-type-k", default=None)
+parser.add_argument("--cache-type-v", default=None)
+parser.add_argument("--flash-attn", default=None)
 args = parser.parse_args()
 daemon = InferenceDaemon(standalone=True)
 if args.model:
     model_id = args.model_id or Path(args.model).stem
     loaded = daemon.handle({"method": "load", "model_id": model_id, "path": args.model,
                             "backend": args.backend, "executable": args.executable,
-                            "port": args.llama_port})[0][1]
+                            "port": args.llama_port, "turboquant": args.turboquant,
+                            "cache_type_k": args.cache_type_k, "cache_type_v": args.cache_type_v,
+                            "flash_attn": args.flash_attn})[0][1]
     if not loaded.get("ok"):
         print(json.dumps(loaded, sort_keys=True), file=sys.stderr)
         raise SystemExit(2)

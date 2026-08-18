@@ -68,6 +68,7 @@ class TurboQuantCapabilities:
     backend: str
     executor_available: bool = False
     weight_profiles: FrozenSet[str] = frozenset()
+    cache_profiles: FrozenSet[str] = frozenset()
     kv_profiles: FrozenSet[str] = frozenset()
     evidence_level: EvidenceLevel = EvidenceLevel.SOURCE_PRESENT
     reason: str = "TurboQuant executor is not installed"
@@ -77,6 +78,8 @@ class TurboQuantCapabilities:
             raise ValueError("TurboQuant capability backend is required")
         if not self.weight_profiles.issubset(TURBOQUANT_PROFILES):
             raise ValueError("unsupported TurboQuant weight profile")
+        if not self.cache_profiles.issubset(TURBOQUANT_PROFILES):
+            raise ValueError("unsupported TurboQuant cache profile")
         if not self.kv_profiles.issubset(TURBOQUANT_PROFILES):
             raise ValueError("unsupported TurboQuant KV profile")
         if not self.executor_available and not self.reason.strip():
@@ -121,7 +124,8 @@ def resolve_turboquant_profile(
         return ResolvedTurboQuantProfile(profile, profile, False, False,
                                           "compatibility profile does not require TurboQuant",
                                           capabilities.backend, capabilities.evidence_level)
-    if capabilities.executor_available and profile in capabilities.weight_profiles:
+    supported_profiles = capabilities.weight_profiles | capabilities.cache_profiles
+    if capabilities.executor_available and profile in supported_profiles:
         return ResolvedTurboQuantProfile(profile, profile, True, False,
                                           "TurboQuant executor and profile are available",
                                           capabilities.backend, capabilities.evidence_level)

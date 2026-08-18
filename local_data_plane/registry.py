@@ -7,10 +7,13 @@ import platform
 import shutil
 import time
 import hashlib
+import importlib.util
 from dataclasses import dataclass
 from enum import IntEnum
 from pathlib import Path
 from typing import Iterable
+
+from .llama_cpp import LlamaCppProvider
 
 
 class EvidenceLevel(IntEnum):
@@ -249,7 +252,32 @@ class BackendRegistry:
                 available=bool(os.environ.get("SIMPLICIO_LOCAL_OPENAI_URL")), supported=True, tested=False,
                 preferred=False, methods=("generate",), reason="external adapter; never an engine capability",
             ),
+            BackendCapability(
+                backend="turboquant-kv", kind="cache-codec", platform=current_platform, isa=current_isa,
+                device="cpu", evidence_level=EvidenceLevel.FIXTURE_EXECUTED,
+                available=importlib.util.find_spec("numpy") is not None,
+                supported=True, tested=importlib.util.find_spec("numpy") is not None, preferred=False,
+                formats=("kv-cache", "fp32"), methods=("turboquant_compress", "turboquant_decompress"),
+                reason=("CPU NumPy reference executor" if importlib.util.find_spec("numpy") is not None
+                        else "NumPy is not installed"),
+            ),
         ]
+
+        turbo_probe = LlamaCppProvider(turboquant=True).probe(turboquant=True)
+        items.append(BackendCapability(
+            backend="llama-cpp-turboquant", kind="engine", platform=current_platform, isa=current_isa,
+            device="vulkan" if current_platform == "linux" else ("metal" if apple else "cpu"),
+            evidence_level=(EvidenceLevel.LINKED if turbo_probe.linked else EvidenceLevel.SOURCE_PRESENT),
+            available=turbo_probe.turboquant,
+            supported=turbo_probe.linked,
+            tested=False,
+            preferred=False,
+            version=turbo_probe.version or "unknown",
+            formats=("gguf",), model_families=("llama", "qwen", "gemma"),
+            methods=("load", "warm", "generate", "cancel"),
+            reason=turbo_probe.reason,
+            artifact_refs=((turbo_probe.executable,) if turbo_probe.executable else ()),
+        ))
 
         llama_server = shutil.which("llama-server")
         if llama_server:

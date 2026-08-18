@@ -30,10 +30,16 @@ Runtime-resolved `prompt_text` whose hash matches `prompt.sha256`.
 - `load` accepts the Runtime `simplicio.inference-artifact-pin/v1` object. The
   pin is validated before a provider starts, and model/weights pins are
   compared with the bytes on disk. Local does not download mutable artifacts.
-- `turboquant_profile` is optional. `compatibility` is always available. A
-  requested physical TurboQuant profile is rejected unless a Local executor
-  advertises that profile; with `intents.allow_fallback=true`, the response
-  explicitly records a degraded fallback to `compatibility`.
+- `turboquant_compress` and `turboquant_decompress` expose a real CPU
+  reference executor (`turboquant-kv-numpy`) for KV blocks. It performs the
+  rotation, fixed Lloyd-Max codebook, bit-packing and per-vector norm
+  correction, and reports measured bytes/error in its response.
+- `turboquant_profile` on `runtime_generate` remains model-backend gated.
+  Standard upstream `llama-cpp` does not expose its internal KV blocks. The
+  Atomic-compatible `llama-cpp-turboquant` path is separate: it is admitted
+  only after the executable advertises `turbo3` and is launched with the
+  native KV-cache flags. On hosts without that binary, `allow_fallback=true`
+  records compatibility explicitly.
 - Physical failures return an error frame together with a terminal Runtime
   event, a `simplicio.local.physical-receipt/v1` receipt, and the Runtime
   receipt hash. The outer response is not marked `ok`.
@@ -67,3 +73,7 @@ Minimal request shape:
   }
 }
 ```
+
+The CPU reference evidence for this checkout is stored in
+`docs/benchmarks/turboquant-kv-cpu-2026-08-18.json`. It is useful for contract
+and quality tests; it is not a claim of fused GPU attention performance.
