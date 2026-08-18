@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import json
+import mimetypes
 import secrets
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from typing import Any
 
 from .daemon import InferenceDaemon
@@ -14,12 +16,13 @@ MAX_BODY = 1 << 20
 
 class OpenAIAdapter:
     def __init__(self, daemon: InferenceDaemon, *, host: str = "127.0.0.1",
-                 auth_token: str | None = None):
+                 auth_token: str | None = None, static_root: str | Path | None = None):
         if host not in {"127.0.0.1", "::1", "localhost"} and not auth_token:
             raise ValueError("auth_token is required when OpenAI adapter is not loopback-only")
         self.daemon = daemon
         self.host = host
         self.auth_token = auth_token
+        self.static_root = Path(static_root).resolve() if static_root else None
         self._request_id = 1000
 
     def _authorized(self, headers: dict[str, str]) -> bool:
@@ -41,6 +44,10 @@ class OpenAIAdapter:
             return self._json(413, {"error": {"message": "request body is too large"}})
         if method == "OPTIONS":
             return 204, {}, b""
+        if method == "GET" and self.static_root is not None and path in {"/", "/qwen38.html"}:
+            page = (self.static_root / "qwen38.html").resolve()
+            if page.parent == self.static_root and page.is_file():
+                return self._json(200, {}, content_type="text/html; charset=utf-8")[:2] + (page.read_bytes(),)
         if method == "GET" and path == "/health":
             status = self.daemon.handle({"method": "status"})[0][1]
             ready = bool(status.get("handles")) and status.get("state") != "stopped"
@@ -66,6 +73,10 @@ class OpenAIAdapter:
             return self._json(400, {"error": {"message": "tool execution is forbidden in Local"}})
         if payload.get("n", 1) != 1 or payload.get("logprobs") not in (None, False):
             return self._json(400, {"error": {"message": "unsupported sampling field"}})
+        handles = self.daemon.handle({"method": "status"})[0][1].get("handles", [])
+        if not handles:
+            return self._json(503, {"error": {"message": "no model is loaded"}})
+        active = handles[0]
         prompt = payload.get("prompt", "")
         if path == "/v1/chat/completions":
             messages = payload.get("messages", [])
@@ -73,9 +84,10 @@ class OpenAIAdapter:
                 return self._json(400, {"error": {"message": "messages is required"}})
             prompt = str(messages[-1].get("content", "")) if isinstance(messages[-1], dict) else ""
         self._request_id += 1
-        request = {"method": "generate", "prompt": str(prompt),
+        request = {"method": "generate", "handle_id": active["handle_id"],
+                   "backend": str(payload.get("backend", active.get("backend", "fixture"))),
+                   "prompt": str(prompt),
                    "max_tokens": int(payload.get("max_tokens", 8)),
-                   "backend": str(payload.get("backend", "fixture")),
                    "profile": str(payload.get("profile", "resident"))}
         events = self.daemon.handle(request, self._request_id)
         terminal = events[-1][1]
@@ -94,7 +106,7 @@ class OpenAIAdapter:
             chunks.append("data: [DONE]\n\n")
             return 200, {"Content-Type": "text/event-stream", "Cache-Control": "no-cache"}, "".join(chunks).encode()
         response = {"id": request_id, "object": "chat.completion" if "chat" in path else "text_completion",
-                    "model": terminal.get("handle_id", "fixture"),
+                    "model": active.get("model_id", terminal.get("handle_id", "fixture")),
                     "choices": [{"index": 0, "text": text, "message": {"role": "assistant", "content": text},
                                  "finish_reason": terminal.get("stop_reason", "length")}],
                     "usage": {"prompt_tokens": 0, "completion_tokens": terminal.get("generated_tokens", 0),
@@ -106,8 +118,8 @@ class OpenAIAdapter:
 
 
 def run_server(daemon: InferenceDaemon, *, host: str = "127.0.0.1", port: int = 8080,
-               auth_token: str | None = None) -> None:
-    adapter = OpenAIAdapter(daemon, host=host, auth_token=auth_token)
+               auth_token: str | None = None, static_root: str | Path | None = None) -> None:
+    adapter = OpenAIAdapter(daemon, host=host, auth_token=auth_token, static_root=static_root)
 
     class Handler(BaseHTTPRequestHandler):
         def _dispatch(self) -> None:
