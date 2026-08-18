@@ -3,7 +3,9 @@
 Atomic Agent's production path is a patched llama.cpp server, not the Python
 reference codec.  This module keeps that binary optional and auditable: it
 selects an allow-listed release asset, extracts it into a versioned directory,
-and writes a receipt that the provider can discover later.
+and writes a receipt that the provider can discover later. The selected tag and
+asset come from Atomic Chat's platform manifest, avoiding a mutable GitHub
+release scan and keeping the exact release in the install receipt.
 """
 
 from __future__ import annotations
@@ -15,6 +17,7 @@ import platform
 import shutil
 import stat
 import tempfile
+import tarfile
 import time
 import zipfile
 from dataclasses import dataclass
@@ -24,7 +27,8 @@ from urllib.request import Request, urlopen
 
 
 ATOMIC_REPO = "AtomicBot-ai/atomic-llama-cpp-turboquant"
-RELEASES_URL = f"https://api.github.com/repos/{ATOMIC_REPO}/releases?per_page=30"
+ATOMIC_CONFIG_MANIFEST = "https://raw.githubusercontent.com/AtomicBot-ai/atomic-chat-conf/main/backends/turboquant-manifest.json"
+RELEASE_DOWNLOAD_BASE = f"https://github.com/{ATOMIC_REPO}/releases/download"
 INSTALL_SCHEMA = "simplicio.local.turboquant-backend-install/v1"
 MAX_ARCHIVE_BYTES = 2 * 1024 * 1024 * 1024
 
@@ -39,14 +43,14 @@ def _machine_name(value: str | None = None) -> str:
 
 
 def platform_asset(system: str | None = None, machine: str | None = None) -> str | None:
-    """Return only an explicitly supported Atomic release asset."""
+    """Return the platform id used by Atomic's pinned backend manifest."""
 
     current_system = (system or platform.system()).lower()
     current_machine = _machine_name(machine)
     return {
-        ("darwin", "arm64"): "llama-turboquant-macos-arm64.zip",
-        ("linux", "x86_64"): "llama-turboquant-linux-x64-vulkan.zip",
-        ("windows", "x86_64"): "llama-turboquant-windows-x64-vulkan.zip",
+        ("darwin", "arm64"): "macos-arm64",
+        ("linux", "x86_64"): "linux-x64-vulkan",
+        ("windows", "x86_64"): "windows-x64-vulkan",
     }.get((current_system, current_machine))
 
 
@@ -73,6 +77,13 @@ def _safe_member(root: Path, name: str) -> Path:
     return target
 
 
+def _safe_link(root: Path, link: Path, destination: str) -> None:
+    resolved_root = root.resolve()
+    resolved_target = (link.parent / destination).resolve()
+    if resolved_target != resolved_root and resolved_root not in resolved_target.parents:
+        raise ValueError(f"archive link escapes extraction root: {destination!r}")
+
+
 class TurboQuantBackendInstaller:
     """Install the allow-listed Atomic llama-server release for this host."""
 
@@ -86,10 +97,10 @@ class TurboQuantBackendInstaller:
 
     @property
     def asset_name(self) -> str:
-        asset = platform_asset(self.system, self.machine)
-        if asset is None:
+        platform_id = platform_asset(self.system, self.machine)
+        if platform_id is None:
             raise RuntimeError(f"Atomic TurboQuant has no managed asset for {self.system}/{self.machine}")
-        return asset
+        return platform_id
 
     @property
     def backend_root(self) -> Path:
@@ -108,26 +119,22 @@ class TurboQuantBackendInstaller:
             return json.loads(response.read().decode("utf-8"))
 
     def discover_release(self) -> TurboQuantRelease:
-        payload = self._json(RELEASES_URL)
-        if not isinstance(payload, list):
-            raise RuntimeError("Atomic release API returned an invalid payload")
+        payload = self._json(ATOMIC_CONFIG_MANIFEST)
+        if not isinstance(payload, dict) or not isinstance(payload.get("backends"), list):
+            raise RuntimeError("Atomic TurboQuant manifest returned an invalid payload")
         wanted = self.asset_name
-        for release in payload:
-            if not isinstance(release, dict) or release.get("draft"):
+        for entry in payload["backends"]:
+            if not isinstance(entry, dict) or entry.get("id") != wanted:
                 continue
-            tag = release.get("tag_name")
-            if not isinstance(tag, str) or not tag.strip():
-                continue
-            for asset in release.get("assets") or []:
-                if not isinstance(asset, dict) or asset.get("name") != wanted:
-                    continue
-                url = asset.get("browser_download_url")
-                if not isinstance(url, str) or not url.startswith("https://"):
-                    raise RuntimeError("Atomic release asset has no safe HTTPS download URL")
-                size = asset.get("size")
-                return TurboQuantRelease(tag.strip(), wanted, url,
-                                         int(size) if isinstance(size, int) and size >= 0 else None)
-        raise RuntimeError(f"no non-draft Atomic release contains {wanted}")
+            tag = entry.get("tag")
+            asset = entry.get("asset")
+            if not isinstance(tag, str) or not isinstance(asset, str) or not tag or not asset:
+                raise RuntimeError("Atomic TurboQuant manifest entry is incomplete")
+            if not asset.startswith("llama-turboquant-") or not asset.endswith((".zip", ".tar.gz")):
+                raise RuntimeError("Atomic TurboQuant manifest contains an unsafe asset name")
+            url = f"{RELEASE_DOWNLOAD_BASE}/{tag}/{asset}"
+            return TurboQuantRelease(tag, asset, url)
+        raise RuntimeError(f"Atomic TurboQuant manifest has no backend for {wanted}")
 
     def _download(self, release: TurboQuantRelease, destination: Path) -> str:
         request = Request(release.download_url, headers=self._headers())
@@ -149,18 +156,43 @@ class TurboQuantBackendInstaller:
 
     def _extract(self, archive: Path, destination: Path) -> Path:
         destination.mkdir(parents=True, exist_ok=True)
-        with zipfile.ZipFile(archive) as bundle:
-            for member in bundle.infolist():
-                target = _safe_member(destination, member.filename)
-                if member.is_dir():
-                    target.mkdir(parents=True, exist_ok=True)
-                    continue
-                target.parent.mkdir(parents=True, exist_ok=True)
-                with bundle.open(member) as source, target.open("wb") as output:
-                    shutil.copyfileobj(source, output)
-                mode = member.external_attr >> 16
-                if mode:
-                    target.chmod(stat.S_IMODE(mode))
+        if archive.name.endswith(".zip"):
+            with zipfile.ZipFile(archive) as bundle:
+                for member in bundle.infolist():
+                    target = _safe_member(destination, member.filename)
+                    if member.is_dir():
+                        target.mkdir(parents=True, exist_ok=True)
+                        continue
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    with bundle.open(member) as source, target.open("wb") as output:
+                        shutil.copyfileobj(source, output)
+                    mode = member.external_attr >> 16
+                    if mode:
+                        target.chmod(stat.S_IMODE(mode))
+        elif archive.name.endswith(".tar.gz"):
+            with tarfile.open(archive, "r:gz") as bundle:
+                for member in bundle.getmembers():
+                    target = _safe_member(destination, member.name)
+                    if member.isdir():
+                        target.mkdir(parents=True, exist_ok=True)
+                        continue
+                    if not member.isfile():
+                        if member.issym():
+                            _safe_link(destination, target, member.linkname)
+                            target.parent.mkdir(parents=True, exist_ok=True)
+                            target.unlink(missing_ok=True)
+                            os.symlink(member.linkname, target)
+                            continue
+                        raise RuntimeError(f"archive contains unsupported tar member: {member.name!r}")
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    source = bundle.extractfile(member)
+                    if source is None:
+                        raise RuntimeError(f"unable to read tar member: {member.name!r}")
+                    with source, target.open("wb") as output:
+                        shutil.copyfileobj(source, output)
+                    target.chmod(stat.S_IMODE(member.mode))
+        else:
+            raise RuntimeError(f"unsupported Atomic backend archive: {archive.name}")
         candidates = [path for path in destination.rglob("llama-server*") if path.is_file()]
         if not candidates:
             raise RuntimeError("Atomic archive does not contain llama-server")
