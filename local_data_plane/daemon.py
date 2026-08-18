@@ -20,6 +20,7 @@ from typing import BinaryIO, Any
 
 from .binary import ERROR, EVENT, REQUEST, RESPONSE, FrameError, read_frame, write_frame
 from .protocol import METHODS, PROTOCOL_NAME, PROTOCOL_VERSION, error, ok
+from .registry import BackendRegistry
 
 
 @dataclass
@@ -35,7 +36,8 @@ class ModelHandle:
 class InferenceDaemon:
     """Owns physical lifecycle state and exposes only inference operations."""
 
-    def __init__(self, home: str | os.PathLike[str] | None = None, *, standalone: bool = False):
+    def __init__(self, home: str | os.PathLike[str] | None = None, *, standalone: bool = False,
+                 repo_root: str | os.PathLike[str] | None = None):
         self.home = Path(home or os.environ.get("SIMPLICIO_LOCAL_HOME", ".simplicio-local"))
         self.standalone = standalone
         self.state = "cold"
@@ -45,6 +47,7 @@ class InferenceDaemon:
         self._lock = threading.RLock()
         self._started_at = time.monotonic()
         self._request_count = 0
+        self.registry = BackendRegistry.default(repo_root)
 
     def _identity(self) -> dict[str, object]:
         return {
@@ -67,16 +70,8 @@ class InferenceDaemon:
                 self.state = "ready"
                 return [(RESPONSE, ok(method, **self._identity(), methods=list(METHODS), state=self.state))]
             if method == "capabilities":
-                return [(RESPONSE, ok(method, capabilities=[{
-                    "backend": "fixture",
-                    "kind": "engine",
-                    "available": True,
-                    "supported": True,
-                    "tested": True,
-                    "preferred": False,
-                    "evidence_level": "fixture-executed",
-                    "effect_authority": "none",
-                }]))]
+                return [(RESPONSE, ok(method, capabilities=self.registry.catalog(),
+                                       release_matrix=self.registry.release_matrix()))]
             if method == "estimate":
                 return [(RESPONSE, ok(method, weights_bytes=0, kv_bytes=0, io_bytes=0,
                                        source="unknown", value_semantics="unknown"))]
@@ -209,9 +204,10 @@ class InferenceDaemon:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Simplicio Local binary inference daemon")
     parser.add_argument("--home", default=None)
+    parser.add_argument("--repo", default=None)
     parser.add_argument("--standalone", action="store_true")
     args = parser.parse_args(argv)
-    InferenceDaemon(args.home, standalone=args.standalone).serve(__import__("sys").stdin.buffer, __import__("sys").stdout.buffer)
+    InferenceDaemon(args.home, standalone=args.standalone, repo_root=args.repo).serve(__import__("sys").stdin.buffer, __import__("sys").stdout.buffer)
     return 0
 
 
