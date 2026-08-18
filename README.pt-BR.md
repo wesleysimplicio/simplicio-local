@@ -284,6 +284,25 @@ O produto eh explicitamente:
 - Runtime, CLI, fixtures, benchmarks e testes E2E estao presentes.
 - Issues do GitHub estao sincronizadas com os arquivos locais de sprint.
 
+### Teste local do Qwen3.8
+
+O adapter OpenAI-compatible pode servir uma pagina local de benchmark em `/`.
+Com um `llama-server` disponivel e um GGUF Q4, execute:
+
+```bash
+SIMPLICIO_LOCAL_LLAMA_SERVER=/caminho/llama-server \
+  python3 bin/local-openai.py \
+  --model /caminho/Qwen3.8-27B-Q4_K_M.gguf \
+  --model-id qwen3.8-27b-q4km \
+  --backend llama-cpp \
+  --port 8080
+```
+
+Abra `http://127.0.0.1:8080/`. A pagina salva cada execucao no navegador e
+permite baixar `simplicio-qwen38-benchmarks.json`. O primeiro capture real
+feito neste host esta em
+[`docs/benchmarks/qwen38-27b-q4km-2026-08-18.json`](docs/benchmarks/qwen38-27b-q4km-2026-08-18.json).
+
 ### Stack planejada
 
 - C++20 + CMake + Ninja
