@@ -16,6 +16,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from .turboquant_backend import discover_installed_executable
+
 
 @dataclass(frozen=True)
 class GgufIdentity:
@@ -35,6 +37,7 @@ class LlamaCppProbe:
     linked: bool
     platform: str
     reason: str
+    turboquant: bool = False
 
 
 def inspect_gguf(path: str | os.PathLike[str]) -> GgufIdentity:
@@ -58,8 +61,20 @@ def inspect_gguf(path: str | os.PathLike[str]) -> GgufIdentity:
 class LlamaCppProvider:
     """Real llama.cpp process provider; no fallback is hidden behind its identity."""
 
-    def __init__(self, executable: str | None = None):
-        self.executable = executable or os.environ.get("SIMPLICIO_LOCAL_LLAMA_SERVER") or shutil.which("llama-server")
+    def __init__(self, executable: str | None = None, *, turboquant: bool = False,
+                 cache_type_k: str | None = None, cache_type_v: str | None = None,
+                 flash_attn: str | None = None):
+        requested_turboquant = os.environ.get("SIMPLICIO_LOCAL_LLAMA_TURBOQUANT", "").strip().lower()
+        self.turboquant_enabled = turboquant or requested_turboquant in {"1", "true", "yes", "on"}
+        managed = discover_installed_executable() if self.turboquant_enabled and executable is None else None
+        self.executable = (executable or os.environ.get("SIMPLICIO_LOCAL_LLAMA_SERVER") or managed or
+                           shutil.which("llama-server"))
+        self.cache_type_k = (cache_type_k or os.environ.get("SIMPLICIO_LOCAL_LLAMA_CACHE_TYPE_K") or
+                             ("turbo3" if self.turboquant_enabled else None))
+        self.cache_type_v = (cache_type_v or os.environ.get("SIMPLICIO_LOCAL_LLAMA_CACHE_TYPE_V") or
+                             ("turbo3" if self.turboquant_enabled else None))
+        self.flash_attn = (flash_attn or os.environ.get("SIMPLICIO_LOCAL_LLAMA_FLASH_ATTN") or
+                           ("auto" if self.turboquant_enabled else None))
         self.process: subprocess.Popen[bytes] | None = None
         self.port: int | None = None
 
@@ -79,27 +94,61 @@ class LlamaCppProvider:
             raise ValueError(f"{name} must be positive")
         return parsed
 
-    def probe(self) -> LlamaCppProbe:
+    def probe(self, *, turboquant: bool | None = None) -> LlamaCppProbe:
+        wants_turboquant = self.turboquant_enabled if turboquant is None else turboquant
         if not self.executable:
             return LlamaCppProbe(None, None, False, platform.system().lower(),
-                                 "llama-server executable not found")
+                                 "llama-server executable not found", False)
         try:
             result = subprocess.run([self.executable, "--version"], check=False,
                                     capture_output=True, text=True, timeout=5)
         except (OSError, subprocess.TimeoutExpired) as exc:
-            return LlamaCppProbe(self.executable, None, False, platform.system().lower(), str(exc))
+            return LlamaCppProbe(self.executable, None, False, platform.system().lower(), str(exc), False)
         version = (result.stdout or result.stderr).strip().splitlines()
         if result.returncode != 0 or not version:
             return LlamaCppProbe(self.executable, None, False, platform.system().lower(),
-                                 "llama-server version probe failed")
-        return LlamaCppProbe(self.executable, version[0], True, platform.system().lower(), "version probe passed")
+                                 "llama-server version probe failed", False)
+        if not wants_turboquant:
+            return LlamaCppProbe(self.executable, version[0], True, platform.system().lower(),
+                                 "version probe passed", False)
+        try:
+            help_result = subprocess.run([self.executable, "--help"], check=False,
+                                         capture_output=True, text=True, timeout=5)
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            return LlamaCppProbe(self.executable, version[0], True, platform.system().lower(),
+                                 f"TurboQuant help probe failed: {exc}", False)
+        help_text = f"{help_result.stdout}\n{help_result.stderr}".lower()
+        turboquant = (help_result.returncode == 0 and "--cache-type-k" in help_text and
+                      "--cache-type-v" in help_text and "turbo3" in help_text)
+        if not turboquant:
+            return LlamaCppProbe(self.executable, version[0], True, platform.system().lower(),
+                                 "llama-server is linked but does not advertise TurboQuant turbo3", False)
+        return LlamaCppProbe(self.executable, version[0], True, platform.system().lower(),
+                             "version and TurboQuant help probes passed", True)
 
     def load(self, model_path: str | os.PathLike[str]) -> GgufIdentity:
         identity = inspect_gguf(model_path)
         probe = self.probe()
         if not probe.linked:
             raise RuntimeError("llama.cpp is not linked; GGUF identity was validated only")
+        if self.turboquant_enabled and not probe.turboquant:
+            raise RuntimeError(probe.reason)
         return identity
+
+    def server_args(self, model_path: str | os.PathLike[str], port: int, *, context_size: int,
+                    parallel: int, threads: int, threads_batch: int, reasoning: str) -> list[str]:
+        """Build the command line separately so the TurboQuant contract is testable."""
+
+        identity = inspect_gguf(model_path)
+        args = [self.executable or "llama-server", "--model", identity.path, "--host", "127.0.0.1",
+                "--port", str(port), "--no-webui", "--metrics", "--load-mode", "mmap",
+                "--ctx-size", str(context_size), "--parallel", str(parallel), "--threads", str(threads),
+                "--threads-batch", str(threads_batch), "--reasoning", reasoning]
+        if self.turboquant_enabled:
+            args.extend(["--cache-type-k", self.cache_type_k or "turbo3",
+                         "--cache-type-v", self.cache_type_v or "turbo3",
+                         "--flash-attn", self.flash_attn or "auto", "-kvu"])
+        return args
 
     def start_server(self, model_path: str | os.PathLike[str], port: int = 0) -> None:
         identity = self.load(model_path)
@@ -114,11 +163,9 @@ class LlamaCppProvider:
         startup_timeout = float(os.environ.get("SIMPLICIO_LOCAL_LLAMA_STARTUP_TIMEOUT", "300"))
         reasoning = os.environ.get("SIMPLICIO_LOCAL_LLAMA_REASONING", "off").strip().lower()
         self.process = subprocess.Popen(
-            [self.executable, "--model", identity.path, "--host", "127.0.0.1",
-             "--port", str(selected_port), "--no-webui", "--metrics",
-             "--load-mode", "mmap", "--ctx-size", str(context_size),
-             "--parallel", str(parallel), "--threads", str(threads),
-             "--threads-batch", str(threads_batch), "--reasoning", reasoning],
+            self.server_args(identity.path, selected_port, context_size=context_size,
+                             parallel=parallel, threads=threads, threads_batch=threads_batch,
+                             reasoning=reasoning),
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
         )
