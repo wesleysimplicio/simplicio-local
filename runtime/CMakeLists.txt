@@ -72,6 +72,7 @@ add_library(us4_runtime_core
   speculative/peagle_decoder.cpp
   speculative/speculative_telemetry.cpp
   speculative/capability.cpp
+  speculative/ngram_speculative.cpp
   telemetry/telemetry_types.cpp
   telemetry/telemetry_sink.cpp
   tuning/auto_tuner.cpp
