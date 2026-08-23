@@ -51,6 +51,8 @@ def _build_engine():
 def _ensure_oracle_fixture():
     if (GLM_TINY / "config.json").is_file() and (GLM_TINY / "model.safetensors").is_file():
         return True
+    if os.environ.get("COLI_GENERATE_ORACLES") != "1":
+        return False
     result = subprocess.run([sys.executable, str(ORACLE_SCRIPT)], cwd=ENGINE_DIR,
                             capture_output=True, text=True, timeout=180)
     return result.returncode == 0 and (GLM_TINY / "model.safetensors").is_file()
@@ -70,7 +72,7 @@ class ContainerV2AndRssGateTest(unittest.TestCase):
         if not _build_engine():
             raise unittest.SkipTest("nao foi possivel compilar engine/c/glm (make glm falhou)")
         if not _ensure_oracle_fixture():
-            raise unittest.SkipTest("nao foi possivel gerar engine/c/glm_tiny (make_glm_oracle.py falhou)")
+            raise unittest.SkipTest("oracle fixture ausente; defina COLI_GENERATE_ORACLES=1 para gerar")
 
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
