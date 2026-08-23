@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.2.11] - 2026-08-23
+
+- Publish the latest `main` runtime test and fail-closed release-gate fixes.
+
 ## [0.2.10] - 2026-06-01
 
 ### Changed
