@@ -1,0 +1,12 @@
+{
+  "schema": "simplicio-local/speculative-benchmark/v1",
+  "description": "Replace runner argv with a local model command before measuring.",
+  "cases": [
+    {"id": "baseline-coding", "workload": "coding", "strategy": "baseline", "command": ["<runner>", "--strategy", "baseline", "--workload", "coding"]},
+    {"id": "ngram-coding", "workload": "coding", "strategy": "ngram_prompt_lookup", "command": ["<runner>", "--strategy", "ngram_prompt_lookup", "--workload", "coding"]},
+    {"id": "draft-chat", "workload": "chat", "strategy": "draft_model", "command": ["<runner>", "--strategy", "draft_model", "--workload", "chat"]},
+    {"id": "dflash-chat", "workload": "chat", "strategy": "dflash", "command": ["<runner>", "--strategy", "dflash", "--workload", "chat"]},
+    {"id": "mtp-reasoning", "workload": "reasoning", "strategy": "mtp", "command": ["<runner>", "--strategy", "mtp", "--workload", "reasoning"]},
+    {"id": "fast-auto-coding", "workload": "coding", "strategy": "fast_auto", "command": ["<runner>", "--strategy", "fast_auto", "--workload", "coding"]}
+  ]
+}
