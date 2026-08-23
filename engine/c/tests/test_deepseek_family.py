@@ -45,6 +45,8 @@ def _ensure_oracle_fixture():
     if DEEPSEEK_TINY.is_dir() and (DEEPSEEK_TINY / "config.json").is_file() and \
        (DEEPSEEK_TINY / "model.safetensors").is_file() and REF_PATH.is_file():
         return True
+    if os.environ.get("COLI_GENERATE_ORACLES") != "1":
+        return False
     result = subprocess.run([sys.executable, str(ORACLE_SCRIPT)], cwd=ENGINE_DIR,
                             capture_output=True, text=True, timeout=180)
     return result.returncode == 0 and (DEEPSEEK_TINY / "model.safetensors").is_file()
@@ -64,8 +66,7 @@ class DeepseekGroupLimitedRoutingTest(unittest.TestCase):
         if not _build_engine():
             raise unittest.SkipTest("nao foi possivel compilar engine/c/glm (make glm falhou)")
         if not _ensure_oracle_fixture():
-            raise unittest.SkipTest("nao foi possivel gerar engine/c/deepseek_tiny "
-                                     "(make_deepseek_oracle.py falhou)")
+            raise unittest.SkipTest("oracle fixture ausente; defina COLI_GENERATE_ORACLES=1 para gerar")
 
     def _run_glm(self, snap, ref=REF_PATH, extra_env=None, cap=64, ebits=16, dbits=16, tf=False, timeout=60):
         env = dict(os.environ, SNAP=str(snap), REF=str(ref))
@@ -126,6 +127,8 @@ class DeepseekGroupLimitedRoutingTest(unittest.TestCase):
         glm_tiny = ENGINE_DIR / "glm_tiny"
         ref_glm = ENGINE_DIR / "ref_glm.json"
         if not (glm_tiny / "model.safetensors").is_file():
+            if os.environ.get("COLI_GENERATE_ORACLES") != "1":
+                raise unittest.SkipTest("oracle fixture ausente; defina COLI_GENERATE_ORACLES=1 para gerar")
             result = subprocess.run([sys.executable, str(ENGINE_DIR / "tools" / "make_glm_oracle.py")],
                                     cwd=ENGINE_DIR, capture_output=True, text=True, timeout=180)
             if result.returncode != 0 or not (glm_tiny / "model.safetensors").is_file():

@@ -368,8 +368,8 @@ int main() {
     ok &= Expect(
         context.metalQueue().Profile().requiresAutoreleaseBoundary,
         "metal queue should request autorelease boundary on macos probe");
-    ok &= Expect(!context.metalQueue().Dispatch(
-                     us4::MetalKernelKind::kSoftmax, 2, 64, shared),
+    ok &= Expect(!context.metalQueue().Dispatch(us4::MetalKernelKind::kSoftmax,
+                                                2, 64, shared),
                  "metal queue should reject unbound dispatches");
     ok &= Expect(context.metalQueue().DispatchCount() == 0U,
                  "metal queue should not count unexecuted dispatches");
@@ -489,13 +489,13 @@ int main() {
         aneContext.mixedDispatch().Execute(
             fallbackPlan, aneContext.layerOffloader(), aneContext.aneBackend(),
             aneContext.metalQueue(), aneShared);
-    const bool fallbackExecutedOnMetal =
-        fallbackTelemetry.metalStages == fallbackPlan.metalSteps;
-    ok &= Expect(fallbackTelemetry.aneStages == 0U &&
-                     fallbackTelemetry.strategy == "metal-only" &&
-                     (!aneContext.metalQueue().Available() ||
-                      fallbackExecutedOnMetal),
-                 "mixed dispatch should fall back to metal for low-bit plans");
+    ok &= Expect(
+        fallbackTelemetry.aneStages == 0U &&
+            fallbackTelemetry.strategy == "metal-only" &&
+            (!aneContext.metalQueue().Available() ||
+             fallbackTelemetry.metalStages == 0U),
+        "mixed dispatch should keep low-bit plans on Metal and fail closed "
+        "until tensors are bound");
 
     us4::HardwareProbeResult thermalProbe = aneProbe;
     thermalProbe.unifiedMemoryGiB = 24ULL;
