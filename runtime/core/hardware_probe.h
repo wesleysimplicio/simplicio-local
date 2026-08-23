@@ -14,6 +14,10 @@ struct HardwareProbeResult {
   bool isAppleSilicon = false;
   bool hasMlx = false;
   bool hasMetal = false;
+  bool hasCuda = false;
+  unsigned long long gpuMemoryGiB = 0;
+  unsigned long long cudaMemoryGiB = 0;
+  unsigned long long availableMemoryGiB = 0;
   bool hasNeon = false;
   bool hasAne = false;
   bool supportsCoreMl = false;
