@@ -71,6 +71,7 @@ add_library(us4_runtime_core
   speculative/lossless_speculative_session.cpp
   speculative/peagle_decoder.cpp
   speculative/speculative_telemetry.cpp
+  speculative/capability.cpp
   telemetry/telemetry_types.cpp
   telemetry/telemetry_sink.cpp
   tuning/auto_tuner.cpp

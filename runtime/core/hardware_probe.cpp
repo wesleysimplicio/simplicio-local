@@ -44,6 +44,15 @@ unsigned long long DetectMemoryGiB() {
   return 16ULL;
 }
 
+unsigned long long ReadMemoryEnv(const char *name,
+                                 const unsigned long long fallback) {
+  const char *value = std::getenv(name);
+  if (value == nullptr) {
+    return fallback;
+  }
+  return std::strtoull(value, nullptr, 10);
+}
+
 std::string DetectPlatform() {
 #if defined(_WIN32)
   return "windows";
@@ -104,6 +113,12 @@ HardwareProbeResult HardwareProbe::Detect() {
   result.isAppleSilicon =
       (result.platform == "apple" && result.architecture == "arm64");
   result.unifiedMemoryGiB = DetectMemoryGiB();
+  result.availableMemoryGiB = ReadMemoryEnv("US4_AVAILABLE_MEMORY_GIB",
+                                           result.unifiedMemoryGiB);
+  result.hasCuda = ReadBoolEnv("US4_HAS_CUDA", false);
+  result.cudaMemoryGiB = ReadMemoryEnv("US4_CUDA_MEMORY_GIB", 0);
+  result.gpuMemoryGiB =
+      ReadMemoryEnv("US4_GPU_MEMORY_GIB", result.cudaMemoryGiB);
   result.hasMlx = result.isAppleSilicon;
   result.hasMetal = result.isAppleSilicon;
   result.hasNeon = (result.architecture == "arm64");
