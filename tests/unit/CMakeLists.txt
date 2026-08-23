@@ -53,6 +53,7 @@ set(us4_runtime_contract_test_sources
   speculative_capability_contract_test.cpp
   ngram_speculative_contract_test.cpp
   draft_model_compatibility_contract_test.cpp
+  dflash_speculative_contract_test.cpp
   mlx_bridge_contract_test.cpp
   metal_device_kernel_contract_test.cpp
   native_apple_backend_parity_test.cpp
