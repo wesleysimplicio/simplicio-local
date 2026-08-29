@@ -3,6 +3,8 @@
 #include <array>
 #include <cstdint>
 
+#include "cpu/avx2_kernels.h"
+
 #if defined(__ARM_NEON) || defined(__ARM_NEON__)
 #include <arm_neon.h>
 #endif
@@ -199,6 +201,8 @@ std::string_view ToString(const CpuInt8Kernel kernel) {
     return "neon-i8mm";
   case CpuInt8Kernel::kX86Vnni:
     return "x86-vnni";
+  case CpuInt8Kernel::kX86Avx2:
+    return "x86-avx2";
   }
   return "scalar";
 }
@@ -217,6 +221,7 @@ CpuInt8Capabilities DetectCpuInt8Capabilities() {
       __builtin_cpu_supports("avx512f") &&
       __builtin_cpu_supports("avx512bw") &&
       __builtin_cpu_supports("avx512vnni");
+  capabilities.x86Avx2 = __builtin_cpu_supports("avx2");
 #endif
   return capabilities;
 }
@@ -231,6 +236,9 @@ SelectCpuInt8Kernel(const CpuInt8Capabilities &capabilities) {
   }
   if (capabilities.x86Vnni) {
     return {.kernel = CpuInt8Kernel::kX86Vnni, .accelerated = true};
+  }
+  if (capabilities.x86Avx2) {
+    return {.kernel = CpuInt8Kernel::kX86Avx2, .accelerated = true};
   }
   return {};
 }
@@ -272,6 +280,9 @@ void CpuInt8Matmul(const std::int8_t *lhs, const std::int8_t *rhs,
     RunX86Vnni(lhs, rhs, lhsRows, lhsCols, rhsCols, output);
     return;
 #endif
+  case CpuInt8Kernel::kX86Avx2:
+    Avx2Int8Matmul(lhs, rhs, lhsRows, lhsCols, rhsCols, output);
+    return;
   case CpuInt8Kernel::kScalar:
   default:
     ScalarInt8Matmul(lhs, rhs, lhsRows, lhsCols, rhsCols, output);
