@@ -17,6 +17,7 @@ add_library(us4_runtime_core
   core/runtime_context.cpp
   core/tensor.cpp
   cpu/int8_matmul.cpp
+  cpu/avx2_kernels.cpp
   cpu/scalar_matmul.cpp
   cpu/scalar_attention.cpp
   cpu/ternary_lut.cpp

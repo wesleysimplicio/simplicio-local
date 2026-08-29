@@ -11,12 +11,14 @@ enum class CpuInt8Kernel {
   kNeonSdot,
   kNeonI8mm,
   kX86Vnni,
+  kX86Avx2,
 };
 
 struct CpuInt8Capabilities {
   bool neonSdot = false;
   bool neonI8mm = false;
   bool x86Vnni = false;
+  bool x86Avx2 = false;
 };
 
 struct CpuInt8Dispatch {
