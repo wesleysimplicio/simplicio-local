@@ -19,6 +19,7 @@ set(us4_runtime_contract_test_sources
   adaptive_cache_speculation_contract_test.cpp
   backend_selector_contract_test.cpp
   benchmark_observability_contract_test.cpp
+  simd_release_gate_contract_test.cpp
   model_asset_contract_test.cpp
   json_value_contract_test.cpp
   bpe_tokenizer_contract_test.cpp
