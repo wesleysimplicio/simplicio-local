@@ -21,6 +21,7 @@ add_library(us4_runtime_core
   cpu/avx512_kernels.cpp
   cpu/advanced_dispatch.cpp
   cpu/float_kernels.cpp
+  cpu/transformer_kernels.cpp
   cpu/scalar_matmul.cpp
   cpu/scalar_attention.cpp
   cpu/ternary_lut.cpp
