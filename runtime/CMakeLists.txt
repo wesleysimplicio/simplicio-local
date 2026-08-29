@@ -84,6 +84,7 @@ add_library(us4_runtime_core
   speculative/mtp_speculative.cpp
   telemetry/telemetry_types.cpp
   telemetry/telemetry_sink.cpp
+  benchmarks/simd_release_gate.cpp
   tuning/auto_tuner.cpp
   tuning/profile_cache.cpp
   tuning/thermal_monitor.cpp
