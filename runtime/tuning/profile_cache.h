@@ -16,6 +16,16 @@ namespace us4 {
 struct ProfileCacheKey {
   std::string chip;
   std::string modelId;
+  std::string hardwareFingerprint;
+  std::string isa;
+  std::string backend;
+  std::string modelDigest;
+  std::string operation;
+  std::string dtype;
+  std::string shapeClass;
+  std::string runtimeVersion;
+  std::string kernelVersion;
+  std::string layoutVersion;
 };
 
 bool operator==(const ProfileCacheKey& lhs, const ProfileCacheKey& rhs);
@@ -31,6 +41,8 @@ class ProfileCache {
   std::size_t Size() const;
   std::string Serialize() const;
   bool Load(const std::string& body);
+  bool SaveAtomic(const std::string& path) const;
+  bool LoadFile(const std::string& path);
 
  private:
   std::unordered_map<ProfileCacheKey, AutoTunerProfile, ProfileCacheKeyHash>

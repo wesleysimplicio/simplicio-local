@@ -75,3 +75,41 @@ TEST(TuningContractTest, ProfileCacheRejectsMalformedBody) {
   us4::ProfileCache cache;
   EXPECT_FALSE(cache.Load("not-a-real-entry\n"));
 }
+
+TEST(TuningContractTest, BoundedAutotuneRequiresCorrectFastNonRegressiveCandidate) {
+  us4::HardwareProbeResult hardware;
+  const std::vector<us4::AutoTunerCandidate> candidates = {
+      {1U, 1U, 1U, 10.0F, "scalar"},
+      {8U, 8U, 1U, 10.0F, "avx2"},
+      {8U, 8U, 1U, 10.0F, "regressive"},
+  };
+  const auto result = us4::RunBoundedAutoTune(
+      hardware, candidates,
+      [](const us4::AutoTunerCandidate& candidate) {
+        if (candidate.name == "scalar") {
+          return us4::AutoTunerObservation{"scalar", 10.0F, 11.0F, 4U, true, true};
+        }
+        if (candidate.name == "avx2") {
+          return us4::AutoTunerObservation{"avx2", 7.0F, 11.5F, 4U, true, true};
+        }
+        return us4::AutoTunerObservation{"regressive", 5.0F, 20.0F, 4U, true, true};
+      });
+  EXPECT_TRUE(result.promoted);
+  EXPECT_EQ(result.selectedKernel, "avx2");
+  EXPECT_EQ(result.reason, "bounded-autotune-promoted");
+}
+
+TEST(TuningContractTest, ProfileCacheKeyIncludesPhysicalIdentity) {
+  us4::ProfileCache cache;
+  us4::AutoTunerProfile profile;
+  profile.chip = "M3";
+  us4::ProfileCacheKey avx2{"M3", "model", "machine-a", "avx2", "cpu",
+                            "digest-a", "matmul", "int8", "decode", "v1",
+                            "kernel-v1", "layout-v1"};
+  us4::ProfileCacheKey scalar = avx2;
+  scalar.isa = "scalar";
+  cache.Store(avx2, profile);
+  cache.Store(scalar, profile);
+  EXPECT_EQ(cache.Size(), 2U);
+  EXPECT_NE(cache.Serialize().find("hardware=machine-a"), std::string::npos);
+}
