@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <filesystem>
+#include <fstream>
 #include <functional>
 #include <sstream>
 #include <string_view>
@@ -10,14 +12,27 @@
 namespace us4 {
 
 bool operator==(const ProfileCacheKey &lhs, const ProfileCacheKey &rhs) {
-  return lhs.chip == rhs.chip && lhs.modelId == rhs.modelId;
+  return lhs.chip == rhs.chip && lhs.modelId == rhs.modelId &&
+         lhs.hardwareFingerprint == rhs.hardwareFingerprint &&
+         lhs.isa == rhs.isa && lhs.backend == rhs.backend &&
+         lhs.modelDigest == rhs.modelDigest && lhs.operation == rhs.operation &&
+         lhs.dtype == rhs.dtype && lhs.shapeClass == rhs.shapeClass &&
+         lhs.runtimeVersion == rhs.runtimeVersion &&
+         lhs.kernelVersion == rhs.kernelVersion &&
+         lhs.layoutVersion == rhs.layoutVersion;
 }
 
 std::size_t
 ProfileCacheKeyHash::operator()(const ProfileCacheKey &key) const noexcept {
   const std::size_t chipHash = std::hash<std::string>{}(key.chip);
   const std::size_t modelHash = std::hash<std::string>{}(key.modelId);
-  return chipHash ^ (modelHash * 131U);
+  std::size_t result = chipHash ^ (modelHash * 131U);
+  const std::string fingerprint = key.hardwareFingerprint + key.isa + key.backend +
+                                  key.modelDigest + key.operation + key.dtype +
+                                  key.shapeClass + key.runtimeVersion +
+                                  key.kernelVersion + key.layoutVersion;
+  result ^= std::hash<std::string>{}(fingerprint) * 17U;
+  return result;
 }
 
 void ProfileCache::Store(const ProfileCacheKey &key,
@@ -51,6 +66,16 @@ std::string ProfileCache::Serialize() const {
   for (const auto &entry : entries) {
     stream << "chip=" << entry.first.chip
            << ";model=" << entry.first.modelId
+           << ";hardware=" << entry.first.hardwareFingerprint
+           << ";isa=" << entry.first.isa
+           << ";backend=" << entry.first.backend
+           << ";model_digest=" << entry.first.modelDigest
+           << ";operation=" << entry.first.operation
+           << ";dtype=" << entry.first.dtype
+           << ";shape=" << entry.first.shapeClass
+           << ";runtime=" << entry.first.runtimeVersion
+           << ";kernel=" << entry.first.kernelVersion
+           << ";layout=" << entry.first.layoutVersion
            << ";tile_rows=" << entry.second.tileRows
            << ";tile_cols=" << entry.second.tileCols
            << ";batch=" << entry.second.batchSize
@@ -88,6 +113,26 @@ bool ProfileCache::Load(const std::string &body) {
         profile.chip = value;
       } else if (name == "model") {
         key.modelId = value;
+      } else if (name == "hardware") {
+        key.hardwareFingerprint = value;
+      } else if (name == "isa") {
+        key.isa = value;
+      } else if (name == "backend") {
+        key.backend = value;
+      } else if (name == "model_digest") {
+        key.modelDigest = value;
+      } else if (name == "operation") {
+        key.operation = value;
+      } else if (name == "dtype") {
+        key.dtype = value;
+      } else if (name == "shape") {
+        key.shapeClass = value;
+      } else if (name == "runtime") {
+        key.runtimeVersion = value;
+      } else if (name == "kernel") {
+        key.kernelVersion = value;
+      } else if (name == "layout") {
+        key.layoutVersion = value;
       } else if (name == "tile_rows") {
         profile.tileRows = static_cast<std::size_t>(std::strtoul(value.c_str(), nullptr, 10));
       } else if (name == "tile_cols") {
@@ -114,6 +159,46 @@ bool ProfileCache::Load(const std::string &body) {
   }
   profiles_ = std::move(next);
   return true;
+}
+
+bool ProfileCache::SaveAtomic(const std::string &path) const {
+  const std::filesystem::path destination(path);
+  const std::filesystem::path temporary = destination.string() + ".tmp";
+  std::ofstream stream(temporary, std::ios::out | std::ios::trunc);
+  if (!stream) {
+    return false;
+  }
+  stream << Serialize();
+  stream.flush();
+  if (!stream) {
+    stream.close();
+    std::error_code ignored;
+    std::filesystem::remove(temporary, ignored);
+    return false;
+  }
+  stream.close();
+  std::error_code error;
+  std::filesystem::rename(temporary, destination, error);
+  if (error) {
+    std::filesystem::remove(destination, error);
+    error.clear();
+    std::filesystem::rename(temporary, destination, error);
+  }
+  if (error) {
+    std::filesystem::remove(temporary, error);
+    return false;
+  }
+  return true;
+}
+
+bool ProfileCache::LoadFile(const std::string &path) {
+  std::ifstream stream(path);
+  if (!stream) {
+    return false;
+  }
+  std::ostringstream body;
+  body << stream.rdbuf();
+  return Load(body.str());
 }
 
 } // namespace us4
