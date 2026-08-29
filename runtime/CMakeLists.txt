@@ -3,6 +3,7 @@ add_library(us4_runtime_core
   ane/layer_offloader.cpp
   ane/mixed_dispatch.cpp
   core/backend_selector.cpp
+  core/kernel_registry.cpp
   core/runtime_mode.cpp
   core/hardware_probe.cpp
   core/gqa_attention.cpp
