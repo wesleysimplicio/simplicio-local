@@ -2,8 +2,11 @@
 
 #include <array>
 #include <cstdint>
+#include <cstdlib>
+#include <string_view>
 
 #include "cpu/avx2_kernels.h"
+#include "core/kernel_registry.h"
 
 #if defined(__ARM_NEON) || defined(__ARM_NEON__)
 #include <arm_neon.h>
@@ -20,6 +23,28 @@
 namespace us4 {
 
 namespace {
+
+bool SimdDisabledByEnvironment() {
+  const char *raw = std::getenv("US4_DISABLE_SIMD");
+  return raw != nullptr && std::string_view(raw) == "1";
+}
+
+bool RunRegisteredAvx2(const std::int8_t *lhs, const std::int8_t *rhs,
+                       const std::size_t lhsRows, const std::size_t lhsCols,
+                       const std::size_t rhsCols, float *output) {
+  KernelRegistry registry;
+  RegisterCpuInt8Kernels(registry);
+  const KernelSelection selection = registry.Select(
+      KernelOperation::kInt8Matmul, "avx2", {"avx2"});
+  if (selection.implementation == nullptr ||
+      selection.implementation->int8_matmul == nullptr ||
+      selection.effective_kernel != "avx2") {
+    return false;
+  }
+  selection.implementation->int8_matmul(lhs, rhs, lhsRows, lhsCols, rhsCols,
+                                         output);
+  return true;
+}
 
 std::int32_t ScalarDot(const std::int8_t *lhs, const std::int8_t *rhs,
                        const std::size_t rhsCols, const std::size_t column,
@@ -259,7 +284,9 @@ void CpuInt8Matmul(const std::int8_t *lhs, const std::int8_t *rhs,
                    const std::size_t lhsRows, const std::size_t lhsCols,
                    const std::size_t rhsCols, float *output,
                    CpuInt8Dispatch *dispatch) {
-  const CpuInt8Dispatch selected = SelectCpuInt8Kernel();
+  const CpuInt8Dispatch selected = SimdDisabledByEnvironment()
+                                       ? CpuInt8Dispatch{}
+                                       : SelectCpuInt8Kernel();
   if (dispatch != nullptr) {
     *dispatch = selected;
   }
@@ -281,7 +308,13 @@ void CpuInt8Matmul(const std::int8_t *lhs, const std::int8_t *rhs,
     return;
 #endif
   case CpuInt8Kernel::kX86Avx2:
-    Avx2Int8Matmul(lhs, rhs, lhsRows, lhsCols, rhsCols, output);
+    if (RunRegisteredAvx2(lhs, rhs, lhsRows, lhsCols, rhsCols, output)) {
+      return;
+    }
+    if (dispatch != nullptr) {
+      *dispatch = {};
+    }
+    ScalarInt8Matmul(lhs, rhs, lhsRows, lhsCols, rhsCols, output);
     return;
   case CpuInt8Kernel::kScalar:
   default:

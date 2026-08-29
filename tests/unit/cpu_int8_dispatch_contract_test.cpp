@@ -73,3 +73,22 @@ TEST(CpuInt8DispatchContractTest, DispatchedKernelMatchesScalarWithTails) {
     EXPECT_FLOAT_EQ(dispatched[index], scalar[index]) << index;
   }
 }
+
+TEST(CpuInt8DispatchContractTest, RegistryPathAndEnvironmentKillSwitchRemainSafe) {
+  constexpr std::size_t kRows = 1U;
+  constexpr std::size_t kInner = 19U;
+  constexpr std::size_t kColumns = 3U;
+  const auto lhs = MakeValues(kRows * kInner, 11U, 5);
+  const auto rhs = MakeValues(kInner * kColumns, 7U, 3);
+  std::vector<float> expected(kRows * kColumns);
+  std::vector<float> actual(kRows * kColumns);
+  us4::ScalarInt8Matmul(lhs.data(), rhs.data(), kRows, kInner, kColumns,
+                        expected.data());
+  us4::CpuInt8Dispatch dispatch;
+  us4::CpuInt8Matmul(lhs.data(), rhs.data(), kRows, kInner, kColumns,
+                     actual.data(), &dispatch);
+  for (std::size_t index = 0; index < actual.size(); ++index) {
+    EXPECT_FLOAT_EQ(actual[index], expected[index]);
+  }
+  EXPECT_FALSE(us4::ToString(dispatch.kernel).empty());
+}
