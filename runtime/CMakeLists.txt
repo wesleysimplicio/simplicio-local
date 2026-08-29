@@ -20,6 +20,7 @@ add_library(us4_runtime_core
   cpu/avx2_kernels.cpp
   cpu/avx512_kernels.cpp
   cpu/advanced_dispatch.cpp
+  cpu/packing_policy.cpp
   cpu/float_kernels.cpp
   cpu/transformer_kernels.cpp
   cpu/scalar_matmul.cpp
