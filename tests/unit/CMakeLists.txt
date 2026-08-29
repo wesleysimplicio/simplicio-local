@@ -9,6 +9,7 @@ set(us4_runtime_native_contract_runner_sources
 set(us4_runtime_contract_test_sources
   runtime_mode_contract_smoke_test.cpp
   hardware_probe_contract_smoke_test.cpp
+  isa_detection_contract_test.cpp
   telemetry_contract_smoke_test.cpp
   scheduler_contract_test.cpp
   session_pool_contract_test.cpp
