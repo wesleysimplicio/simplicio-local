@@ -63,6 +63,7 @@ set(us4_runtime_contract_test_sources
   cpu_int8_dispatch_contract_test.cpp
   avx2_qkernel_contract_test.cpp
   advanced_dispatch_contract_test.cpp
+  float_kernel_contract_test.cpp
   error_paths_contract_test.cpp
   kernel_registry_contract_test.cpp
   dense_layer_stream_contract_test.cpp

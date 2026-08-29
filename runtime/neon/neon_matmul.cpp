@@ -8,6 +8,7 @@
 #endif
 
 #include "cpu/int8_matmul.h"
+#include "cpu/float_kernels.h"
 #include "cpu/scalar_matmul.h"
 
 namespace us4 {
@@ -191,6 +192,10 @@ bool NeonMatmul(const Tensor &lhs, const Tensor &rhs, Tensor &output,
 #if defined(__ARM_NEON) || defined(__ARM_NEON__)
   RunNeonLane4Matmul(lhs, rhs, output);
 #else
+  if (lhs.dtype() == DType::kFloat32 || lhs.dtype() == DType::kFloat16 ||
+      lhs.dtype() == DType::kBFloat16) {
+    return CpuFloatMatmul(lhs, rhs, output, nullptr, error);
+  }
   RunScalarLane4Matmul(lhs, rhs, output);
 #endif
 
